@@ -8,34 +8,31 @@ namespace clib
 {
      /*!
         \brief
-            Простейший пример собственного int.
+            Простейший пример собственного uint32_t.
 
         \details
             Реализован для тестовой сборки.
      */
-    class flex_int
+    class Uint32
     {
     private:
-        int val_;
+        uint32_t val_;
 
     public:
-        explicit flex_int(int val) noexcept :
+        explicit Uint32(uint32_t val) noexcept :
             val_(val)
         {}
 
-        flex_int operator* (const flex_int& right) const noexcept
+        Uint32 operator* (const Uint32& right) const noexcept
         {
-            return flex_int(val_ * right.val_);
+            return Uint32(val_ * right.val_);
         }
         
-        flex_int operator+ (const flex_int& right) const noexcept
+        Uint32 operator+ (const Uint32& right) const noexcept
         {
-            return flex_int(val_ + right.val_);
+            return Uint32(val_ + right.val_);
         }
 
-        int get_val() const noexcept
-        {
-            return val_;
-        }
+        uint32_t get_uint32_t() const noexcept;
     };
 }

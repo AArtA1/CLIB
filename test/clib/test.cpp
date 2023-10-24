@@ -11,11 +11,11 @@ bool check_bitwise_eq(T a, T b)
 
 TEST_CASE("Simple tests for clib")
 {
-    int a = 1;
-    int b = 2;
+    uint32_t a = 1;
+    uint32_t b = 2;
 
-    clib::flex_int fa(a);
-    clib::flex_int fb(b);
+    clib::Uint32 fa(a);
+    clib::Uint32 fb(b);
 
-    CHECK(check_bitwise_eq(a+a*b, (fa+fa*fb).get_val()));
+    CHECK(check_bitwise_eq(a+a*b, (fa+fa*fb).get_uint32_t()));
 }
