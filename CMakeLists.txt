@@ -43,8 +43,6 @@ option(CLIB_WANDBOX "Включить онлайн-песочницу" ON)
 
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     add_compile_options(
-        -Werror
-
         -Wall
         -Wextra
         -Wpedantic
@@ -72,6 +70,43 @@ endif()
 
 ###################################################################################################
 ##
+##      Boost
+##
+###################################################################################################
+
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+set(Boost_VERSION 1.74.0)
+set(Boost_INCLUDE_LIBRARIES log log_setup)
+set(BOOST_ENABLE_CMAKE ON)
+
+find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES}) 
+
+# if(Boost_FOUND)
+#     message(STATUS "Boost ${Boost_VERSION} найдена")
+# else()
+#     message(STATUS "Не удалось найти Boost ${Boost_VERSION}, будет взята с гитхаба")
+
+#     include(FetchContent)
+#     Set(FETCHCONTENT_QUIET FALSE)
+#     FetchContent_Declare(
+#         Boost
+#         GIT_REPOSITORY https://github.com/boostorg/boost.git
+#         USES_TERMINAL_DOWNLOAD TRUE 
+#         GIT_PROGRESS TRUE
+#         GIT_TAG boost-${Boost_VERSION}
+#     )
+#     FetchContent_MakeAvailable(Boost)
+# endif()
+
+
+
+message(STATUS "${Boost_INCLUDE_DIRS}")
+message(STATUS "${Boost_LIBRARIES}")
+
+###################################################################################################
+##
 ##      Заголовочная библиотека
 ##
 ###################################################################################################
@@ -80,6 +115,7 @@ add_library(clib_headers INTERFACE)
 target_include_directories(clib_headers INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${Boost_INCLUDE_DIRS}
 )
 target_compile_features(clib_headers INTERFACE cxx_std_17)
 
@@ -92,7 +128,7 @@ add_library(clib::headers ALIAS clib_headers)
 ###################################################################################################
 
 add_library(clib_library src/clib/source.cpp)
-target_link_libraries(clib_library PUBLIC clib_headers)
+target_link_libraries(clib_library PUBLIC ${Boost_LIBRARIES} clib_headers)
 
 add_library(clib::library ALIAS clib_library)
 
