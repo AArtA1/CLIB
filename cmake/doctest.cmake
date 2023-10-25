@@ -9,12 +9,13 @@ else()
     message(STATUS
         "doctest ${CLIB_DOCTEST_VERSION} будет взят с гитхаба: ${CLIB_DOCTEST_REPOSITORY}")
 
+    Set(FETCHCONTENT_QUIET FALSE)
     include(FetchContent)
     FetchContent_Declare(doctest
-        GIT_REPOSITORY
-            ${CLIB_DOCTEST_REPOSITORY}
-        GIT_TAG
-            ${CLIB_DOCTEST_VERSION}
+        USES_TERMINAL_DOWNLOAD TRUE 
+        GIT_PROGRESS TRUE
+        GIT_REPOSITORY ${CLIB_DOCTEST_REPOSITORY}
+        GIT_TAG ${CLIB_DOCTEST_VERSION}
     )
     FetchContent_MakeAvailable(doctest)
 endif()
