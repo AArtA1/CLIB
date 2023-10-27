@@ -300,10 +300,94 @@ namespace clib
             return true;
         }
 
-        // get (integer.fractional) representation f.e (1000.001)
+        static bool addition(const FixedPoint& left, const FixedPoint& right, FixedPoint& res){
+            BOOST_LOG_TRIVIAL(trace) << "Addition of two numbers";
+
+            if (!left.is_valid())
+            {
+                BOOST_LOG_TRIVIAL(error) << "Left operand is invalid";
+                throw std::string{"Invalid operand"};
+            }
+
+            if (!left.is_valid())
+            {
+                BOOST_LOG_TRIVIAL(error) << "Right operand is invalid";
+                throw std::string{"Can not create object. Invalid parameters"};
+            }
+
+            if(left.get_n() <= right.get_n()){
+                BOOST_LOG_TRIVIAL(error) << "Left operator must be greater than the right";
+                throw std::string{"Can not calculate operation. Invalid parameters"};
+            }
+
+            BOOST_LOG_TRIVIAL(trace) << "Left operand: " << left;
+            BOOST_LOG_TRIVIAL(trace) << "Right operand: " << right;
+
+            res.s = left.s;
+            res.I = left.I;
+            res.F = left.F;
+
+            uint128_t n_res = left.get_n() + right.get_n();
+
+            res.i = n_res >> res.F;
+            res.f = ((1 << res.F) - 1) & n_res;
+            
+            return true;
+        }
+
+
+        
+        static bool substraction(const FixedPoint& left,const FixedPoint& right, FixedPoint& res){
+            BOOST_LOG_TRIVIAL(trace) << "Substraction of two numbers";
+
+            if (!left.is_valid())
+            {
+                BOOST_LOG_TRIVIAL(error) << "Left operand is invalid";
+                throw std::string{"Invalid operand"};
+            }
+
+            if (!left.is_valid())
+            {
+                BOOST_LOG_TRIVIAL(error) << "Right operand is invalid";
+                throw std::string{"Can not create object. Invalid parameters"};
+            }
+
+            if(left.get_n() <= right.get_n()){
+                BOOST_LOG_TRIVIAL(error) << "Left operator must be greater than the right";
+                throw std::string{"Can not calculate operation. Invalid parameters"};
+            }
+
+            BOOST_LOG_TRIVIAL(trace) << "Left operand: " << left;
+            BOOST_LOG_TRIVIAL(trace) << "Right operand: " << right;
+
+            res.s = left.s;
+            res.I = left.I;
+            res.F = left.F;
+
+            uint128_t n_res = left.get_n() - right.get_n();
+
+            res.i = n_res >> res.F;
+            res.f = ((1 << res.F) - 1) & n_res;
+            
+            return true;
+        }
+
+
+        // get n representation f.e (int|frac) = (1000|001)
         uint128_t get_n() const
         {
             return ((static_cast<uint128_t>(i) << F) | f);
+        }
+
+        // Comparison operator > 
+        friend bool operator>(const FixedPoint& first, const FixedPoint& second){
+            // check for signs 
+            if(first.s == second.s){                
+                return first.s == 0 ? first.get_n() > second.get_n() : first.get_n() < second.get_n();
+            }
+            else{
+                return first.s == 0;
+            }
         }
 
         friend std::ostream &operator<<(std::ostream &oss, const FixedPoint &num)
