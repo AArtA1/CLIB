@@ -275,7 +275,7 @@ namespace clib
             if (!right.is_valid())
             {
                 BOOST_LOG_TRIVIAL(error) << "Right operand is invalid";
-                throw std::string{"Can not create object. Invalid parameters"};
+                throw std::string{"Invalid operand"};
             }
 
             BOOST_LOG_TRIVIAL(trace) << "Left operand: " << left;
@@ -312,7 +312,7 @@ namespace clib
             if (!right.is_valid())
             {
                 BOOST_LOG_TRIVIAL(error) << "Right operand is invalid";
-                throw std::string{"Can not create object. Invalid parameters"};
+                throw std::string{"Invalid operand"};
             }
 
             if(left.get_n() <= right.get_n()){
@@ -349,7 +349,7 @@ namespace clib
             if (!right.is_valid())
             {
                 BOOST_LOG_TRIVIAL(error) << "Right operand is invalid";
-                throw std::string{"Can not create object. Invalid parameters"};
+                throw std::string{"Invalid operand"};
             }
 
             if(left.get_n() <= right.get_n()){
