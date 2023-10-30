@@ -1,11 +1,18 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/console.hpp>
+
+#include <clib/logs.hpp>
+
+#include <string>
 
 int main(int argc, char** argv) 
 {
-    boost::log::add_console_log(std::cout, boost::log::keywords::format = ">> %Message%");
+    init_logs();
+    init_filter();
+
+
+    boost::log::sources::severity_logger <clib::severity_level> slg;
+    BOOST_LOG_SEV(slg, clib::warning) << "A regular message";
     
     doctest::Context context;
 

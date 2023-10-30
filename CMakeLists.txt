@@ -78,7 +78,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
 set(Boost_VERSION 1.74.0)
-set(Boost_INCLUDE_LIBRARIES log log_setup)
+set(Boost_INCLUDE_LIBRARIES log log_setup utility)
 set(BOOST_ENABLE_CMAKE ON)
 
 find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES}) 
@@ -127,7 +127,12 @@ add_library(clib::headers ALIAS clib_headers)
 ##
 ###################################################################################################
 
-add_library(clib_library src/clib/source.cpp)
+add_library(clib_library 
+            src/clib/Flexfloat.cpp
+            src/clib/FixedPoint.cpp
+            src/clib/logs.cpp
+            src/clib/Uint32.cpp
+)
 target_link_libraries(clib_library PUBLIC ${Boost_LIBRARIES} clib_headers)
 
 add_library(clib::library ALIAS clib_library)
