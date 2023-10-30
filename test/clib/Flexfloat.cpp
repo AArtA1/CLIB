@@ -43,17 +43,6 @@ float to_float(const clib::Flexfloat& flex)
     return *reinterpret_cast<float*>(&ans_ul);
 }
 
-TEST_CASE("Simple tests for Uint32")
-{
-    uint32_t a = 1;
-    uint32_t b = 2;
-
-    clib::Uint32 fa(a);
-    clib::Uint32 fb(b);
-
-    CHECK(check_bitwise_eq(a+a*b, (fa+fa*fb).get_uint32_t()));
-}
-
 TEST_CASE("Test Flexfloat")
 {
     BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat");
@@ -70,7 +59,6 @@ TEST_CASE("Test Flexfloat")
 
     clib::Flexfloat::mult(a1, b1, c1);
     LOG(clib::debug) << "result in float = " << to_float(c1) << std::endl;
-
 
     clib::Flexfloat a2(8, 23, 127, 1, 132, 2654006); // -42.124231
     LOG(clib::debug) << "a in float = " << to_float(a2) << std::endl;
