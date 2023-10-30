@@ -49,6 +49,9 @@ bool FixedPoint::multiplication(const FixedPoint &left, const FixedPoint &right,
         return false;
     }   
 
+
+    res.n = static_cast<uint64_t>(n_res);
+
     // res.i = n_res >> res.F;
     // res.f = ((1 << res.F) - 1) & n_res;
     LOG(trace) << "Result of multiplication: " << res;
@@ -100,6 +103,10 @@ uint64_t FixedPoint::get_int() const{
 
 uint64_t FixedPoint::get_frac() const{
     return ((static_cast<uint64_t>(1) << F) - 1) & n;
+}
+
+uint64_t FixedPoint::get_n() const{
+    return n;
 }
 
 }

@@ -25,10 +25,14 @@ public:
 
     friend std::ostream &operator<<(std::ostream &oss, const FixedPoint &num);
 
-private:
     bool is_valid() const;
+    
     uint64_t get_int() const;
+
     uint64_t get_frac() const;
+
+    uint64_t get_n() const;
+
 };
 
 
