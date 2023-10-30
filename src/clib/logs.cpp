@@ -9,6 +9,8 @@
 #include <boost/core/null_deleter.hpp>
 
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 
 namespace clib {
 

@@ -25,4 +25,6 @@ std::ostream& operator<< (std::ostream& strm, severity_level level);
 
 void init_logs();
 
+void init_filter();
+
 }

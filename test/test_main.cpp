@@ -7,8 +7,8 @@
 
 int main(int argc, char** argv) 
 {
-    init_logs();
-    init_filter();
+    clib::init_logs();
+    clib::init_filter();
 
 
     boost::log::sources::severity_logger <clib::severity_level> slg;
