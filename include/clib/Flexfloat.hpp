@@ -10,34 +10,44 @@ namespace clib {
 \details
     Число поддерживает денормализованные числа; нет NaN; нет ±inf
 */
+
+using Stype = uint8_t;
+using Etype = uint8_t;
+using Mtype = uint8_t;
+using Btype = int;
+
+using etype = uint64_t;
+using mtype = uint64_t;
+using stype = uint8_t;
+
+
 class Flexfloat
 {
-    int B;               // BIAS
-    uint8_t E;           // EXPONENT WIDTH
-    uint8_t M;           // MANTISSA WIDTH
-    const uint8_t S = 1; // SIGN WIDTH
+    Btype B;             // BIAS
+    Etype E;             // EXPONENT WIDTH
+    Mtype M;             // MANTISSA WIDTH
+    const Stype S = 1;   // SIGN WIDTH
 
-    uint8_t s;  // [0, 1]
-    uint64_t e; // [0, 2^E - 1]
-    uint64_t m; // [0, 2^M - 1]
+    stype s; // [0, 1]
+    etype e; // [0, 2^E - 1]
+    mtype m; // [0, 2^M - 1]
 
 public:
-    Flexfloat(uint8_t E_n, uint8_t M_n, int B_n, uint8_t s_n, uint64_t e_n, uint64_t m_n);
+    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
+    inline etype get_e() const noexcept { return e; }
+    inline stype get_s() const noexcept { return s; }
+    inline mtype get_m() const noexcept { return m; }
+    inline Btype get_B() const noexcept { return B; }
+    inline Mtype get_M() const noexcept { return M; }
+    inline Etype get_E() const noexcept { return E; }
 
-    inline uint64_t get_e() const noexcept { return e; }
-    inline uint8_t get_s()  const noexcept { return s; }
-    inline uint64_t get_m() const noexcept { return m; }
-    inline int get_B()      const noexcept { return B; }
-    inline uint8_t get_M()  const noexcept { return M; }
-    inline uint8_t get_E()  const noexcept { return E; }
+    inline etype max_exp() const;
+    inline mtype max_mant() const;
+    inline static etype max_exp(Etype E);
+    inline static mtype max_mant(Mtype M);
 
-    inline uint64_t max_exp() const;
-    inline uint64_t max_mant() const;
-    inline static uint64_t max_exp(uint8_t E);
-    inline static uint64_t max_mant(uint8_t M);
-
-    static uint8_t msb(uint128_t val);
+    static Mtype msb(uint128_t val);
     Flexfloat& operator=(const Flexfloat& other);
 
 
@@ -56,7 +66,7 @@ private:
     //           0 <= cur_exp  < 2^E
     //           0 <= cur_mant < 2^M
     //
-    static Flexfloat normalise(uint8_t cur_sign, int128_t cur_exp, uint128_t cur_mant, uint8_t E, uint8_t M, int B);
+    static Flexfloat normalise(uint8_t cur_sign, int128_t cur_exp, uint128_t cur_mant, Etype E, Mtype M, Btype B);
 
     bool is_valid() const;
 };

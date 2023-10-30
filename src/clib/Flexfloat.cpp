@@ -3,7 +3,7 @@
 
 namespace clib {
 
-Flexfloat::Flexfloat(uint8_t E_n, uint8_t M_n, int B_n, uint8_t s_n, uint64_t e_n, uint64_t m_n) : 
+Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n) :
     B(B_n),
     E(E_n),
     M(M_n),
@@ -20,30 +20,30 @@ Flexfloat::Flexfloat(uint8_t E_n, uint8_t M_n, int B_n, uint8_t s_n, uint64_t e_
     LOG(trace) << "Object successfully created";
 }
 
-inline uint64_t Flexfloat::max_exp() const
+inline etype Flexfloat::max_exp() const
 {
-    return (static_cast<uint64_t>(1) << E) - 1;
+    return (static_cast<etype>(1) << E) - 1;
 }
-inline uint64_t Flexfloat::max_mant() const
+inline mtype Flexfloat::max_mant() const
 {
-    return (static_cast<uint64_t>(1) << M) - 1;
+    return (static_cast<mtype>(1) << M) - 1;
 }
-inline uint64_t Flexfloat::max_exp(uint8_t E)
+inline etype Flexfloat::max_exp(Etype E)
 {
-    return (static_cast<uint64_t>(1) << E) - 1;
+    return (static_cast<etype>(1) << E) - 1;
 }
-inline uint64_t Flexfloat::max_mant(uint8_t M)
+inline mtype Flexfloat::max_mant(Mtype M)
 {
-    return (static_cast<uint64_t>(1) << M) - 1;
+    return (static_cast<mtype>(1) << M) - 1;
 }
 
-uint8_t Flexfloat::msb(uint128_t val)
+Mtype Flexfloat::msb(uint128_t val)
 {
     // val must be > 0!
     if (val == 0)
         throw std::string{"Can find msb. Input must be > 0"};
     
-    uint8_t msb = 0;
+    Mtype msb = 0;
     while (val > 0)
     {
         val >>= 1;
@@ -109,12 +109,11 @@ void Flexfloat::mult(
                     -right.B;
 
     // Largest M. All calculations will be with the largest mantissa
-    uint8_t LM = std::max({left.M, right.M, res.M});
+    Mtype LM = std::max({left.M, right.M, res.M});
 
     // Casting all mantissa's to LM
-    uint64_t left_m  = left.m  << (LM - left.M);
-    uint64_t right_m = right.m << (LM - right.M);
-    //int64_t res_m   = res.m   << (LM - res.M);
+    mtype left_m  = left.m  << (LM - left.M);
+    mtype right_m = right.m << (LM - right.M);
 
     // if e > 0  -> normalized value   -> m' = 2^M + m
     // if e == 0 -> denormalized value -> m' = 2*m
@@ -201,7 +200,7 @@ std::ostream& operator<<(std::ostream &oss, const Flexfloat &num)
 //           0 <= cur_mant < 2^M
 //
 Flexfloat Flexfloat::normalise(
-    uint8_t cur_sign, int128_t cur_exp, uint128_t cur_mant, uint8_t E, uint8_t M, int B
+    uint8_t cur_sign, int128_t cur_exp, uint128_t cur_mant, Etype E, Mtype M, Btype B
 )
 {
     // for logs
@@ -373,7 +372,7 @@ Flexfloat Flexfloat::normalise(
 
     return Flexfloat(
         E, M, B, 
-        cur_sign, static_cast<uint64_t>(cur_exp), static_cast<uint64_t>(cur_mant)
+        cur_sign, static_cast<etype>(cur_exp), static_cast<mtype>(cur_mant)
     );
 }
 
@@ -385,9 +384,9 @@ bool Flexfloat::is_valid() const
         goto ivalid_obj;
     if (!(s <= 1))
         goto ivalid_obj;
-    if (!(e <= static_cast<uint64_t>((1 << E) - 1)))
+    if (!(e <= static_cast<etype>((1 << E) - 1)))
         goto ivalid_obj;
-    if (!(m <= static_cast<uint64_t>((1 << M) - 1)))
+    if (!(m <= static_cast<mtype>((1 << M) - 1)))
         goto ivalid_obj;
 
     LOG(trace) << "Object is valid";

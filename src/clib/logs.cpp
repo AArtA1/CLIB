@@ -11,8 +11,12 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <string>
 
 namespace clib {
+
+
+boost::log::sources::severity_logger< severity_level > slg;
 
 std::ostream& operator<< (std::ostream& strm, severity_level level)
 {
@@ -34,7 +38,7 @@ std::ostream& operator<< (std::ostream& strm, severity_level level)
     return strm;
 }
 
-boost::log::sources::severity_logger< severity_level > slg;
+
 
 namespace logging = boost::log;
 namespace src = boost::log::sources;
@@ -44,7 +48,7 @@ namespace attrs = boost::log::attributes;
 namespace keywords = boost::log::keywords;
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(line_id, "LineID", unsigned int)
-BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", clib::severity_level)
+BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", severity_level)
 BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
 
 void init_logs()
@@ -61,6 +65,7 @@ void init_logs()
 
     // Initialize sink
     typedef sinks::synchronous_sink< sinks::text_ostream_backend > text_sink;
+
      // create sink to stdout
     boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
     sink->locked_backend()->add_stream(
@@ -78,9 +83,30 @@ void init_logs()
     //->
 }
 
-void init_filter()
+void default_filter()
 {   
-    logging::core::get()->set_filter(severity >= clib::warning || (expr::has_attr(tag_attr) && tag_attr == "IMPORTANT_MESSAGE"));//Set filter level
+    logging::core::get()->set_filter(severity >= error);
 }
+
+void severity_level_filter(severity_level sev)
+{   
+    logging::core::get()->set_filter(severity >= sev);
+}
+
+void tag_filter(std::string tag)
+{   
+    logging::core::get()->set_filter(expr::has_attr(tag_attr) && tag_attr == tag);
+}
+
+void turn_logs_off()
+{   
+    logging::core::get()->set_filter(expr::has_attr(tag_attr) && tag_attr == "THIS_TAG_WILL_BE_NEVER_EXIST");
+}
+
+void turn_logs_on()
+{   
+    logging::core::get()->set_filter(severity >= trace);
+}
+
 
 }

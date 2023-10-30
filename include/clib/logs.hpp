@@ -2,6 +2,7 @@
 #include "common.hpp"
 
 #include <boost/log/trivial.hpp>
+#include <boost/log/attributes/scoped_attribute.hpp>
 
 namespace clib {
 
@@ -16,15 +17,28 @@ enum severity_level
     fatal
 };
 
+//
+// global logger
+//
 extern boost::log::sources::severity_logger< severity_level > slg;
 
+// 
 // The operator puts a human-friendly representation of the severity level to the stream
+//
 std::ostream& operator<< (std::ostream& strm, severity_level level);
 
 #define LOG(lvl) BOOST_LOG_SEV(slg, lvl)
 
 void init_logs();
 
-void init_filter();
+void default_filter();
+
+void severity_level_filter(severity_level sev);
+
+void tag_filter(std::string tag);
+
+void turn_logs_off();
+
+void turn_logs_on();
 
 }

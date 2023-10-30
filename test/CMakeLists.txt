@@ -1,7 +1,7 @@
 include(${PROJECT_SOURCE_DIR}/cmake/doctest.cmake)
 
 add_executable(clib-unit-tests test_main.cpp)
-target_sources(clib-unit-tests PRIVATE clib/test.cpp)
+target_sources(clib-unit-tests PRIVATE clib/Flexfloat.cpp)
 target_link_libraries(clib-unit-tests
     PRIVATE
         clib::library

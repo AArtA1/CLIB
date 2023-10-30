@@ -8,8 +8,8 @@
 int main(int argc, char** argv) 
 {
     clib::init_logs();
-    clib::init_filter();
-
+    clib::turn_logs_on();
+    //clib::severity_level_filter(clib::trace);
 
     boost::log::sources::severity_logger <clib::severity_level> slg;
     BOOST_LOG_SEV(slg, clib::warning) << "A regular message";

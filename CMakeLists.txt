@@ -83,25 +83,6 @@ set(BOOST_ENABLE_CMAKE ON)
 
 find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES}) 
 
-# if(Boost_FOUND)
-#     message(STATUS "Boost ${Boost_VERSION} найдена")
-# else()
-#     message(STATUS "Не удалось найти Boost ${Boost_VERSION}, будет взята с гитхаба")
-
-#     include(FetchContent)
-#     Set(FETCHCONTENT_QUIET FALSE)
-#     FetchContent_Declare(
-#         Boost
-#         GIT_REPOSITORY https://github.com/boostorg/boost.git
-#         USES_TERMINAL_DOWNLOAD TRUE 
-#         GIT_PROGRESS TRUE
-#         GIT_TAG boost-${Boost_VERSION}
-#     )
-#     FetchContent_MakeAvailable(Boost)
-# endif()
-
-
-
 message(STATUS "${Boost_INCLUDE_DIRS}")
 message(STATUS "${Boost_LIBRARIES}")
 

@@ -1,5 +1,6 @@
 #include <clib/Flexfloat.hpp>
 #include <clib/Uint32.hpp>
+#include "clib/logs.hpp"
 
 #include <doctest/doctest.h>
 #include <string>
@@ -8,11 +9,13 @@
 
 #include <iostream>
 #include <iomanip>   // std::setprecision, std::setw
-#include <iostream>  // std::cout, std::fixed
+#include <iostream>  // LOG(clib::debug), std::fixed
 
 #include <boost/log/trivial.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/expressions.hpp>
+
+boost::log::sources::severity_logger< clib::severity_level > slg;
 
 template <typename T>
 bool check_bitwise_eq(T a, T b)
@@ -53,30 +56,32 @@ TEST_CASE("Simple tests for Uint32")
 
 TEST_CASE("Test Flexfloat")
 {
-    std::cout << std::fixed << std::setprecision(5);
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat");
+
+    LOG(clib::debug) << std::fixed << std::setprecision(5);
 
     clib::Flexfloat a1(8, 23, 127, 0, 129, 4194304); // 6 in float
-    std::cout << "a in float = " << to_float(a1) << std::endl;
+    LOG(clib::debug) << "a in float = " << to_float(a1) << std::endl;
 
     clib::Flexfloat b1(8, 23, 127, 0, 129, 6291456); // 7 in float
-    std::cout << "b in float = " << to_float(b1) << std::endl;
+    LOG(clib::debug) << "b in float = " << to_float(b1) << std::endl;
 
     clib::Flexfloat c1(8, 23, 127, 1, 1, 1);
 
     clib::Flexfloat::mult(a1, b1, c1);
-    std::cout << "result in float = " << to_float(c1) << std::endl;
+    LOG(clib::debug) << "result in float = " << to_float(c1) << std::endl;
 
 
     clib::Flexfloat a2(8, 23, 127, 1, 132, 2654006); // -42.124231
-    std::cout << "a in float = " << to_float(a2) << std::endl;
+    LOG(clib::debug) << "a in float = " << to_float(a2) << std::endl;
 
     clib::Flexfloat b2(8, 23, 127, 0, 142, 451618); // 34532.1324
-    std::cout << "b in float = " << to_float(b2) << std::endl;
+    LOG(clib::debug) << "b in float = " << to_float(b2) << std::endl;
 
     clib::Flexfloat c2(8, 23, 127, 1, 1, 1);
-
+    
     clib::Flexfloat::mult(a2, b2, c2);
-    std::cout << "result in float = " << to_float(c2) << std::endl;
-
+    LOG(clib::debug) << "result in float = " << to_float(c2) << std::endl;
+    
     CHECK(1);
 }
