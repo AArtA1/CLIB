@@ -15,7 +15,6 @@
 
 namespace clib {
 
-
 boost::log::sources::severity_logger< severity_level > slg;
 
 std::ostream& operator<< (std::ostream& strm, severity_level level)

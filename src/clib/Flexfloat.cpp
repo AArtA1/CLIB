@@ -13,11 +13,11 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
 {
     if (!is_valid())
     {
-        LOG(error) << "Can not create object. Invalid parameters";
+        CLOG(error) << "Can not create object. Invalid parameters";
         throw std::string{"Can not create object. Invalid parameters"};
     }
 
-    LOG(trace) << "Object successfully created";
+    CLOG(trace) << "Object successfully created";
 }
 
 inline etype Flexfloat::max_exp() const
@@ -77,27 +77,27 @@ Flexfloat& Flexfloat::operator=(const Flexfloat& other)
 void Flexfloat::mult(
     const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
 {
-    LOG(trace) << "Multiplication of two numbers";
+    CLOG(trace) << "Multiplication of two numbers";
 
     if (!left.is_valid())
     {
-        LOG(error) << "Left operand is invalid. Can not multiplicate";
+        CLOG(error) << "Left operand is invalid. Can not multiplicate";
         throw std::string{"Invalid operand"};
     }
     if (!right.is_valid())
     {
-        LOG(error) << "Right operand is invalid. Can not multiplicate";
+        CLOG(error) << "Right operand is invalid. Can not multiplicate";
         throw std::string{"Invalid operand"};
     }
     if (!res.is_valid())
     {
-        LOG(error) << "Result operand is invalid. Can not multiplicate";
+        CLOG(error) << "Result operand is invalid. Can not multiplicate";
         throw std::string{"Invalid operand"};
     }
 
-    LOG(trace) << "Left  operand:" << std::endl
+    CLOG(trace) << "Left  operand:" << std::endl
                                 << left;
-    LOG(trace) << "Right operand:" << std::endl
+    CLOG(trace) << "Right operand:" << std::endl
                                 << right;
 
     uint8_t nsign = left.s ^ right.s;
@@ -160,7 +160,7 @@ void Flexfloat::mult(
     Flexfloat norm_ans = normalise(nsign, nexp, nmant, res.E, LM, res.B);
     res = norm_ans;
 
-    LOG(trace) << "Result:" << std::endl << res;
+    CLOG(trace) << "Result:" << std::endl << res;
 
     return; 
 }
@@ -206,12 +206,12 @@ Flexfloat Flexfloat::normalise(
     // for logs
     llu_t cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
     llu_t cur_mant_printable = *reinterpret_cast<llu_t *>(&cur_mant);
-    LOG(trace) << "==================== Values before normalisation =====================";
-    LOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
-    LOG(trace) << "      " << cur_exp_printable;
-    LOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
-    LOG(trace) << "      " << cur_mant_printable;
-    LOG(trace) << "======================================================================";
+    CLOG(trace) << "==================== Values before normalisation =====================";
+    CLOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
+    CLOG(trace) << "      " << cur_exp_printable;
+    CLOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
+    CLOG(trace) << "      " << cur_mant_printable;
+    CLOG(trace) << "======================================================================";
     
 
     if (cur_exp > 0 && cur_mant == 0)
@@ -225,19 +225,19 @@ Flexfloat Flexfloat::normalise(
     if (cur_exp <= 0)
     {
         // We must decrease mantissa, unless exponent != 0
-        LOG(trace) << "cur_exp < 0";
+        CLOG(trace) << "cur_exp < 0";
 
         if (cur_mant == 0)
         {
-            LOG(trace) << "cur_mant = 0";
-            LOG(trace) << "undeflow";
+            CLOG(trace) << "cur_mant = 0";
+            CLOG(trace) << "undeflow";
             cur_exp = 0;
             cur_mant = 0;
         }
         else if (msb(cur_mant) <= M)
         {
-            LOG(trace) << "msb(cur_mant) <= M";
-            LOG(trace) << "rshift";
+            CLOG(trace) << "msb(cur_mant) <= M";
+            CLOG(trace) << "rshift";
             uint128_t rshift = static_cast<uint128_t>(-cur_exp);
         
             cur_mant = cur_mant >> rshift;
@@ -245,16 +245,16 @@ Flexfloat Flexfloat::normalise(
         }
         else
         {
-            LOG(trace) << "msb(cur_mant) > M";
+            CLOG(trace) << "msb(cur_mant) > M";
             if (delta_m > delta_e)
             {
-                LOG(trace) << "overflow";
+                CLOG(trace) << "overflow";
                 cur_mant = max_mant(M+1);
                 cur_exp = max_exp(E);
             }
             else
             {
-                LOG(trace) << "rshift";
+                CLOG(trace) << "rshift";
                 int128_t rshift = std::max(-cur_exp, delta_m);
 
                 cur_mant = cur_mant >> rshift;
@@ -265,12 +265,12 @@ Flexfloat Flexfloat::normalise(
     else if (cur_exp > 0 && cur_exp <= max_exp(E))
     { 
         // Exponent is normal. We must normalise mantissa
-        LOG(trace) << "cur_exp > 0 && cur_exp <= max_exp(E)";
+        CLOG(trace) << "cur_exp > 0 && cur_exp <= max_exp(E)";
 
         if (msb(cur_mant) <= M)
         {
-            LOG(trace) << "msb(cur_mant) <= M";
-            LOG(trace) << "lshift";
+            CLOG(trace) << "msb(cur_mant) <= M";
+            CLOG(trace) << "lshift";
 
             int128_t lshift = std::min(cur_exp, delta_m);
         
@@ -279,17 +279,17 @@ Flexfloat Flexfloat::normalise(
         }
         else
         {
-            LOG(trace) << "msb(cur_mant) > M";
+            CLOG(trace) << "msb(cur_mant) > M";
 
             if (delta_m > delta_e)
             {
-                LOG(trace) << "overflow";
+                CLOG(trace) << "overflow";
                 cur_mant = max_mant(M+1);
                 cur_exp = max_exp(E);
             }
             else
             {
-                LOG(trace) << "rshift";
+                CLOG(trace) << "rshift";
                 int128_t rshift = delta_m ;
 
                 cur_mant = cur_mant >> rshift;
@@ -300,21 +300,21 @@ Flexfloat Flexfloat::normalise(
     else
     { 
         // Exponent is big. We must decrease it, unless exponent > max_exp
-        LOG(trace) << "cur_exp > max_exp(E)";
+        CLOG(trace) << "cur_exp > max_exp(E)";
 
         if (msb(cur_mant) <= M)
         {
-            LOG(trace) << "msb(cur_mant) <= M";
+            CLOG(trace) << "msb(cur_mant) <= M";
 
             if (delta_m < delta_e)
             {
-                LOG(trace) << "overflow";
+                CLOG(trace) << "overflow";
                 cur_mant = max_mant(M+1);
                 cur_exp = max_exp(E);
             }
             else
             {
-                LOG(trace) << "lshift";
+                CLOG(trace) << "lshift";
                 int128_t lshift = std::min(delta_m, cur_exp);
 
                 cur_mant = cur_mant << lshift;
@@ -323,8 +323,8 @@ Flexfloat Flexfloat::normalise(
         }
         else
         {
-            LOG(trace) << "msb(cur_mant) > M";
-            LOG(trace) << "overflow";
+            CLOG(trace) << "msb(cur_mant) > M";
+            CLOG(trace) << "overflow";
 
             cur_mant = max_mant(M+1);
             cur_exp = max_exp(E);
@@ -333,36 +333,36 @@ Flexfloat Flexfloat::normalise(
 
     cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
     cur_mant_printable = *reinterpret_cast<llu_t *>(&cur_mant);
-    LOG(trace) << "=================== Values after pre-normalisation ===================";
-    LOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
-    LOG(trace) << "      " << cur_exp_printable;
-    LOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
-    LOG(trace) << "      " << cur_mant_printable;
-    LOG(trace) << "======================================================================";
+    CLOG(trace) << "=================== Values after pre-normalisation ===================";
+    CLOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
+    CLOG(trace) << "      " << cur_exp_printable;
+    CLOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
+    CLOG(trace) << "      " << cur_mant_printable;
+    CLOG(trace) << "======================================================================";
 
     assert(cur_exp >= 0);
     if (cur_exp > 0)
     {
-        LOG(trace) << "cur_exp > 0: Value is normalized";
+        CLOG(trace) << "cur_exp > 0: Value is normalized";
 
         assert(cur_mant >= max_mant(M));
         cur_mant -= static_cast<uint128_t>(max_mant(M) + 1);
     }
     else
     {
-        LOG(trace) << "cur_exp > 0: Value is denormalized";
+        CLOG(trace) << "cur_exp > 0: Value is denormalized";
 
         cur_mant >>= 1;
     }
 
     cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
     cur_mant_printable = *reinterpret_cast<llu_t *>(&cur_mant);
-    LOG(trace) << "===================== Values after normalisation ====================";
-    LOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
-    LOG(trace) << "      " << cur_exp_printable;
-    LOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
-    LOG(trace) << "      " << cur_mant_printable;
-    LOG(trace) << "======================================================================";
+    CLOG(trace) << "===================== Values after normalisation ====================";
+    CLOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
+    CLOG(trace) << "      " << cur_exp_printable;
+    CLOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
+    CLOG(trace) << "      " << cur_mant_printable;
+    CLOG(trace) << "======================================================================";
 
     assert(E <= 64);
     assert(M <= 64);
@@ -389,11 +389,11 @@ bool Flexfloat::is_valid() const
     if (!(m <= static_cast<mtype>((1 << M) - 1)))
         goto ivalid_obj;
 
-    LOG(trace) << "Object is valid";
+    CLOG(trace) << "Object is valid";
     return true;
 
 ivalid_obj:
-    LOG(error) << "Object is invalid";
+    CLOG(error) << "Object is invalid";
     return false;
 }
 }

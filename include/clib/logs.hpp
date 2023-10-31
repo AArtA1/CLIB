@@ -27,7 +27,8 @@ extern boost::log::sources::severity_logger< severity_level > slg;
 //
 std::ostream& operator<< (std::ostream& strm, severity_level level);
 
-#define LOG(lvl) BOOST_LOG_SEV(slg, lvl)
+#define CLOG(lvl) BOOST_LOG_SEV(slg, lvl)
+#define LOG(lvl)  BOOST_LOG_SEV(clib::slg, clib::lvl)
 
 void init_logs();
 

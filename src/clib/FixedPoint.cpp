@@ -8,32 +8,32 @@ FixedPoint::FixedPoint(uint8_t I_n, uint8_t F_n, uint8_t s_n, uint64_t n_n) :
 {
     if (!is_valid())
     {
-        LOG(error) << "Can not create object. Invalid parameters";
+        CLOG(error) << "Can not create object. Invalid parameters";
         throw std::string{"Can not create object. Invalid parameters"};
     }
 
-    LOG(trace) << "Object successfully created";
+    CLOG(trace) << "Object successfully created";
 }
 
 bool FixedPoint::multiplication(const FixedPoint &left, const FixedPoint &right, FixedPoint &res)
 {
 
-    LOG(trace) << "Multiplication of two numbers";
+    CLOG(trace) << "Multiplication of two numbers";
 
     if (!left.is_valid())
     {
-        LOG(error) << "Left operand is invalid";
+        CLOG(error) << "Left operand is invalid";
         throw std::string{"Invalid operand"};
     }
 
     if (!left.is_valid())
     {
-        LOG(error) << "Right operand is invalid";
+        CLOG(error) << "Right operand is invalid";
         throw std::string{"Can not create object. Invalid parameters"};
     }
 
-    LOG(trace) << "Left operand: " << left;
-    LOG(trace) << "Right operand: " << right;
+    CLOG(trace) << "Left operand: " << left;
+    CLOG(trace) << "Right operand: " << right;
 
     res.s = left.s ^ right.s;
     res.I = left.I;
@@ -54,7 +54,7 @@ bool FixedPoint::multiplication(const FixedPoint &left, const FixedPoint &right,
 
     // res.i = n_res >> res.F;
     // res.f = ((1 << res.F) - 1) & n_res;
-    LOG(trace) << "Result of multiplication: " << res;
+    CLOG(trace) << "Result of multiplication: " << res;
     return true;
 }
 
@@ -89,11 +89,11 @@ bool FixedPoint::is_valid() const
     if (!(f <= static_cast<uint64_t>((1 << F) - 1)))
         goto ivalid_obj;
 
-    LOG(trace) << "Object is valid";
+    CLOG(trace) << "Object is valid";
     return true;
 
 ivalid_obj:
-    LOG(error) << "Object is invalid";
+    CLOG(error) << "Object is invalid";
     return false;
 }
 
