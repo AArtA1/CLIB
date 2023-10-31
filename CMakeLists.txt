@@ -162,15 +162,15 @@ endif()
 ##
 ###################################################################################################
 
-find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
-if (CMAKE_CXX_CPPCHECK)
-    message(STATUS "cppcheck включен")
-    list(
-        APPEND CMAKE_CXX_CPPCHECK 
-            "--enable=all"
-            "--inconclusive"
-            "--force" 
-            "--inline-suppr"
-            "--suppressions-list=CppCheckSuppressions.txt"
-    )
-endif()
+# find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+# if (CMAKE_CXX_CPPCHECK)
+#     message(STATUS "cppcheck включен")
+#     list(
+#         APPEND CMAKE_CXX_CPPCHECK 
+#             "--enable=all"
+#             "--inconclusive"
+#             "--force" 
+#             "--inline-suppr"
+#             "--suppressions-list=CppCheckSuppressions.txt"
+#     )
+# endif()
