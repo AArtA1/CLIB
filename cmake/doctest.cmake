@@ -1,4 +1,5 @@
-set(CLIB_DOCTEST_VERSION 2.4.7)
+set(CLIB_DOCTEST_VERSION 2.4.11)
+set(CLIB_DOCTEST_TAG     "v2.4.11")
 set(CLIB_DOCTEST_REPOSITORY https://github.com/doctest/doctest.git)
 
 find_package(doctest ${CLIB_DOCTEST_VERSION})
@@ -15,7 +16,7 @@ else()
         USES_TERMINAL_DOWNLOAD TRUE 
         GIT_PROGRESS TRUE
         GIT_REPOSITORY ${CLIB_DOCTEST_REPOSITORY}
-        GIT_TAG ${CLIB_DOCTEST_VERSION}
+        GIT_TAG ${CLIB_DOCTEST_TAG}
     )
     FetchContent_MakeAvailable(doctest)
 endif()

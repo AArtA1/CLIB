@@ -25,15 +25,9 @@ if (IS_SUBPROJECT AND NOT DEFINED CLIB_DOC)
     set(CLIB_DOC OFF)
 endif()
 
-if (IS_SUBPROJECT AND NOT DEFINED CLIB_WANDBOX)
-    message(STATUS "Онлайн-песочница для clib выключена в режиме подмодуля")
-    set(CLIB_WANDBOX OFF)
-endif()
-
 option(CLIB_TESTING "Включить модульное тестирование" ON)
 option(CLIB_COVERAGE "Включить измерение покрытия кода тестами" OFF)
 option(CLIB_DOC "Включить документирование" ON)
-option(CLIB_WANDBOX "Включить онлайн-песочницу" ON)
 
 ###################################################################################################
 ##
@@ -78,13 +72,13 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
 set(Boost_VERSION 1.74.0)
-set(Boost_INCLUDE_LIBRARIES log log_setup utility)
+set(Boost_INCLUDE_LIBRARIES log log_setup)
 set(BOOST_ENABLE_CMAKE ON)
 
 find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES}) 
 
-message(STATUS "${Boost_INCLUDE_DIRS}")
-message(STATUS "${Boost_LIBRARIES}")
+message(STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
+message(STATUS "Boost_LIBRARIES = ${Boost_LIBRARIES}")
 
 ###################################################################################################
 ##
@@ -164,12 +158,19 @@ endif()
 
 ###################################################################################################
 ##
-##      Онлайн-песочница
+##      cppcheck
 ##
 ###################################################################################################
 
-if(NOT CLIB_WANDBOX)
-    message(STATUS "Онлайн-песочница для проекта clib выключена")
-else()
-    add_subdirectory(online)
+find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+if (CMAKE_CXX_CPPCHECK)
+    message(STATUS "cppcheck включен")
+    list(
+        APPEND CMAKE_CXX_CPPCHECK 
+            "--enable=all"
+            "--inconclusive"
+            "--force" 
+            "--inline-suppr"
+            "--suppressions-list=CppCheckSuppressions.txt"
+    )
 endif()

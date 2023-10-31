@@ -18,7 +18,6 @@ Contents
     4.  [check](#check)
     5.  [coverage](#coverage)
     6.  [doc](#doc)
-    7.  [wandbox](#wandbox)
 4.  [Examples](#examples)
 5.  [Usage](#usage)
     1.  [Through the installation](#through-the-installation)
@@ -136,13 +135,6 @@ cmake --build path/to/build/directory --target doc
 
 Generates source code documentation using [Doxygen](http://doxygen.nl).
 
-### wandbox
-
-```shell
-cmake --build path/to/build/directory --target wandbox
-```
-
-The [Wandbox](https://wandbox.org) service is used. Please, don't abuse it.
 
 ### Cppcheck
 
@@ -231,6 +223,3 @@ Tools
 
     Switching the language of the generated documentation is provided by the [`DOXYGEN_OUTPUT_LANGUAGE`](#DOXYGEN_OUTPUT_LANGUAGE) option.
 
-4.  [Python 3](https://www.python.org) interpreter
-
-    Used to generate an [online sandbox](#wandbox).

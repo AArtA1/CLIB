@@ -11,7 +11,6 @@ target_include_directories(clib-unit-tests PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clib>
 )
 
-
 find_program(GCOVR_EXECUTABLE gcovr)
 if(CLIB_COVERAGE AND GCOVR_EXECUTABLE)
     message(STATUS "Измерение покрытия кода тестами включено")
@@ -29,6 +28,7 @@ if(CLIB_COVERAGE AND GCOVR_EXECUTABLE)
                 --filter=${PROJECT_SOURCE_DIR}/include
                 --filter=${PROJECT_SOURCE_DIR}/src
                 --object-directory=${PROJECT_BINARY_DIR}
+                --html-details COVERAGE_OUTPUT.html
         DEPENDS
             check
     )
