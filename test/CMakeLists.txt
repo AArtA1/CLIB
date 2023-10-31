@@ -7,6 +7,10 @@ target_link_libraries(clib-unit-tests
         clib::library
         doctest::doctest
 )
+target_include_directories(clib-unit-tests PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clib>
+)
+
 
 find_program(GCOVR_EXECUTABLE gcovr)
 if(CLIB_COVERAGE AND GCOVR_EXECUTABLE)
