@@ -3,11 +3,11 @@
 
 namespace clib {
 
-FlexFixed::FlexFixed(Itype I_n,Ftype F_n): I(I_n), F(F_n){
+Flexfixed::Flexfixed(Itype I_n,Ftype F_n): I(I_n), F(F_n){
     LOG(trace) << "Object successfully created";
 }
 
-FlexFixed::FlexFixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : 
+Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : 
     I(I_n), F(F_n), s(s_n), n(n_n)
 {
     if (!is_valid())
@@ -20,7 +20,7 @@ FlexFixed::FlexFixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) :
 }
 
 
-FlexFixed& FlexFixed::operator=(const FlexFixed& other){
+Flexfixed& Flexfixed::operator=(const Flexfixed& other){
     if(this != &other){
         I = other.I;
         F = other.F;
@@ -32,7 +32,7 @@ FlexFixed& FlexFixed::operator=(const FlexFixed& other){
 
 
 // consider we already have res parameters: I and F 
-void FlexFixed::multiplication(const FlexFixed& left,const FlexFixed& right, FlexFixed& res){
+void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Flexfixed& res){
     LOG(trace) << "Flex multiplication of two numbers";
 
 
@@ -77,7 +77,7 @@ void FlexFixed::multiplication(const FlexFixed& left,const FlexFixed& right, Fle
 }
 
 
-void FlexFixed::addition(const FlexFixed& left,const FlexFixed& right, FlexFixed& res){
+void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed& res){
     
     LOG(trace) << "Flex addition of two numbers";
 
@@ -136,8 +136,8 @@ void FlexFixed::addition(const FlexFixed& left,const FlexFixed& right, FlexFixed
     LOG(trace) << "Result of flex addition: " << res;
 }
 
-void FlexFixed::substraction(const FlexFixed& left, const FlexFixed& right, FlexFixed& res){
-    FlexFixed right_temp = right;
+void Flexfixed::substraction(const Flexfixed& left, const Flexfixed& right, Flexfixed& res){
+    Flexfixed right_temp = right;
 
     if(right_temp.s == 0){
         right_temp.s = 1;
@@ -148,12 +148,12 @@ void FlexFixed::substraction(const FlexFixed& left, const FlexFixed& right, Flex
         } 
     }
 
-    FlexFixed::addition(left,right_temp,res);
+    Flexfixed::addition(left,right_temp,res);
 }
 
 
 
-bool operator>(const FlexFixed& left,const FlexFixed& right) {
+bool operator>(const Flexfixed& left,const Flexfixed& right) {
     //todo for different signs
     return left.get_int() != right.get_int() ? left.get_int() > right.get_int() : left.get_frac() > right.get_frac();    
 }
@@ -161,7 +161,7 @@ bool operator>(const FlexFixed& left,const FlexFixed& right) {
 
 
 
-std::ostream& operator<<(std::ostream &oss, const FlexFixed &num)
+std::ostream& operator<<(std::ostream &oss, const Flexfixed &num)
 {
     oss << "INT_WIDTH:" << static_cast<int>(num.I) << "\n";
     oss << "FRAC_WIDTH:" << static_cast<int>(num.F) << "\n";
@@ -181,7 +181,7 @@ std::ostream& operator<<(std::ostream &oss, const FlexFixed &num)
     return oss;
 }
 
-bool FlexFixed::is_valid() const
+bool Flexfixed::is_valid() const
 {
     if (!(s <= 1))
         goto ivalid_obj;
@@ -196,15 +196,15 @@ ivalid_obj:
     return false;
 }
 
-ntype FlexFixed::get_int() const{
+ntype Flexfixed::get_int() const{
     return n >> F;
 }
 
-ntype FlexFixed::get_frac() const{
+ntype Flexfixed::get_frac() const{
     return ((static_cast<ntype>(1) << F) - 1) & n;
 }
 
-ntype FlexFixed::get_n() const{
+inline ntype Flexfixed::get_n() const{
     return n;
 }
 

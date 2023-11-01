@@ -34,9 +34,9 @@ public:
     * \param[in] E_n Количество бит в экспоненте
     * \param[in] M_n Количество бит в мантиссе
     * \param[in] B_n Bias
-    * \param[in] B_n Sign
-    * \param[in] B_n Exponent
-    * \param[in] B_n Mantissa
+    * \param[in] s_n Sign
+    * \param[in] e_n Exponent
+    * \param[in] m_n Mantissa
     */
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
