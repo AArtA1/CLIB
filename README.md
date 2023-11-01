@@ -128,6 +128,8 @@ See also [`check`](#check).
 
 ### doc
 
+!Doxygen must be installed 
+
 ```shell
 cmake --build path/to/build/directory --target doc
 ```
