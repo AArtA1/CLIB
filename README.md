@@ -1,5 +1,4 @@
-Template for clib
-====================================
+# clib
 
 Contents
 --------
