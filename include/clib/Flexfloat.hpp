@@ -3,15 +3,6 @@
 
 namespace clib {
 
-using Stype = uint8_t;
-using Etype = uint8_t;
-using Mtype = uint8_t;
-using Btype = int;
-
-using etype = uint64_t;
-using mtype = uint64_t;
-using stype = uint8_t;
-
 /*!
  * \brief Число с плавующей запятой с настриваемой мантиссой и экспонентой.
  *
@@ -19,6 +10,17 @@ using stype = uint8_t;
  */
 class Flexfloat
 {
+public:
+    using Stype = uint8_t;
+    using Etype = uint8_t;
+    using Mtype = uint8_t;
+    using Btype = int;
+    
+    using etype = uint64_t;
+    using mtype = uint64_t;
+    using stype = uint8_t;
+
+private:
     Btype B;             /// BIAS
     Etype E;             /// EXPONENT WIDTH
     Mtype M;             /// MANTISSA WIDTH
