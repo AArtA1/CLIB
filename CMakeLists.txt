@@ -104,7 +104,7 @@ add_library(clib::headers ALIAS clib_headers)
 
 add_library(clib_library 
             src/clib/Flexfloat.cpp
-            src/clib/Fixedpoint.cpp
+            src/clib/Flexfixed.cpp
             src/clib/logs.cpp
             src/clib/Uint32.cpp
 )

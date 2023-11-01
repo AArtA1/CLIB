@@ -3,11 +3,11 @@
 
 namespace clib {
 
-FlexFixed::FlexFixed(uint8_t I_n,uint8_t F_n): I(I_n), F(F_n){
+FlexFixed::FlexFixed(Itype I_n,Ftype F_n): I(I_n), F(F_n){
     LOG(trace) << "Object successfully created";
 }
 
-FlexFixed::FlexFixed(uint8_t I_n, uint8_t F_n, uint8_t s_n, uint64_t n_n) : 
+FlexFixed::FlexFixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : 
     I(I_n), F(F_n), s(s_n), n(n_n)
 {
     if (!is_valid())
@@ -53,9 +53,9 @@ void FlexFixed::multiplication(const FlexFixed& left,const FlexFixed& right, Fle
 
     res.s = left.s ^ right.s;
 
-    int8_t delta_f = left.F - res.F + right.F;
+    int16_t delta_f = static_cast<int16_t>(left.F) + right.F - res.F;
 
-    uint128_t res_n = left.n + right.n;
+    ntype res_n = left.n + right.n;
 
     if(delta_f >= 0){
         res_n = res_n >> delta_f;
@@ -65,8 +65,8 @@ void FlexFixed::multiplication(const FlexFixed& left,const FlexFixed& right, Fle
     }
 
     // overflow
-    if(res_n >= static_cast<uint64_t>(1) << (res.I + res.F)){
-        res_n = (static_cast<uint64_t>(1) << (res.I + res.F)) - 1;
+    if(res_n >= static_cast<ntype>(1) << (res.I + res.F)){
+        res_n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
     }
 
 
@@ -99,24 +99,24 @@ void FlexFixed::addition(const FlexFixed& left,const FlexFixed& right, FlexFixed
     LOG(trace) << "Left operand: " << left;
     LOG(trace) << "Right operand: " << right;
 
-    uint8_t max_F = std::max(left.F, right.F);
+    Ftype max_F = std::max(left.F, right.F);
     
-    uint64_t left_n = left.n << (max_F - left.F), right_n = right.n << (max_F - right.F); 
+    ntype left_n = left.n << (max_F - left.F), right_n = right.n << (max_F - right.F); 
 
 
     bool flag = false; 
 
     // check for |a| >= |b|
     // |a| < |b|
-    if(!((left_n << max_F >= right_n << max_F) || (left_n << max_F == right_n << max_F && (1 << max_F - 1) & left_n >= (1 << max_F - 1) & right_n))){
+    if(!((left_n << max_F >= right_n << max_F) || (left_n << max_F == right_n << max_F && (((static_cast<ntype>(1) << max_F) - 1) & left_n) >= (((static_cast<ntype>(1) << max_F) - 1) & right_n)))){
         std::swap(left_n,right_n);
         flag = true;
     }
 
-    uint128_t res_n = left.s == right.s?left_n + right_n:left_n - right_n;
+    ntype res_n = left.s == right.s?left_n + right_n:left_n - right_n;
 
 
-    int8_t delta_F = max_F - res.F;
+    int16_t delta_F = static_cast<int16_t>(max_F) - res.F;
 
     if(delta_F >= 0 ){
         res_n = res_n >> delta_F;
@@ -127,8 +127,8 @@ void FlexFixed::addition(const FlexFixed& left,const FlexFixed& right, FlexFixed
 
     res.s = flag?right.s:left.s;
     // overflow
-    if(res_n >= static_cast<uint64_t>(1) << (res.I  + res.F)){
-        res_n = static_cast<uint64_t>(1) << (res.I  + res.F) - 1;
+    if(res_n >= static_cast<ntype>(1) << (res.I  + res.F)){
+        res_n = (static_cast<ntype>(1) << (res.I  + res.F)) - 1;
     }
 
     res.n = res_n;
@@ -185,7 +185,7 @@ bool FlexFixed::is_valid() const
 {
     if (!(s <= 1))
         goto ivalid_obj;
-    if (n > (static_cast<uint64_t>(1) << (I+F)) - 1)
+    if (n > (static_cast<ntype>(1) << (I+F)) - 1)
         goto ivalid_obj;
 
     LOG(trace) << "Object is valid";
@@ -196,15 +196,15 @@ ivalid_obj:
     return false;
 }
 
-uint64_t FlexFixed::get_int() const{
+ntype FlexFixed::get_int() const{
     return n >> F;
 }
 
-uint64_t FlexFixed::get_frac() const{
-    return ((static_cast<uint64_t>(1) << F) - 1) & n;
+ntype FlexFixed::get_frac() const{
+    return ((static_cast<ntype>(1) << F) - 1) & n;
 }
 
-uint64_t FlexFixed::get_n() const{
+ntype FlexFixed::get_n() const{
     return n;
 }
 
