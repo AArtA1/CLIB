@@ -20,6 +20,36 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
     CLOG(trace) << "Object successfully created";
 }
 
+Flexfloat Flexfloat::ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
+{
+    return Flexfloat(E_n, M_n, B_n, s_n, max_exp(E_n), max_mant(M_n));
+}
+
+Flexfloat Flexfloat::zero(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
+{
+    return Flexfloat(E_n, M_n, B_n, s_n, 0, 0);
+}
+
+Flexfloat Flexfloat::min_denorm(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
+{
+    return Flexfloat(E_n, M_n, B_n, s_n, 0, 1);
+}
+
+Flexfloat Flexfloat::max_denorm(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
+{
+    return Flexfloat(E_n, M_n, B_n, s_n, 0, max_mant(M_n));
+}
+
+Flexfloat Flexfloat::min_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
+{
+    return Flexfloat(E_n, M_n, B_n, s_n, 1, 1);
+}
+
+Flexfloat Flexfloat::max_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
+{
+    return Flexfloat(E_n, M_n, B_n, s_n, max_exp(E_n), max_mant(M_n));
+}
+
 Flexfloat::etype Flexfloat::max_exp() const
 {
     return (static_cast<etype>(1) << E) - 1;
@@ -39,9 +69,8 @@ Flexfloat::mtype Flexfloat::max_mant(Mtype M)
 
 Flexfloat::Mtype Flexfloat::msb(uint128_t val)
 {
-    // val must be > 0!
     if (val == 0)
-        throw std::string{"Can find msb. Input must be > 0"};
+        return 0;
     
     Mtype msb = 0;
     while (val > 0)
@@ -51,6 +80,12 @@ Flexfloat::Mtype Flexfloat::msb(uint128_t val)
     }
     
     return msb - 1;
+}
+
+bool Flexfloat::is_zero(const Flexfloat& val)
+{
+    if (val.m == 0 && val.e == 0) return true;
+    else return false;
 }
 
 Flexfloat& Flexfloat::operator=(const Flexfloat& other)
@@ -101,6 +136,14 @@ void Flexfloat::mult(
                                 << right;
 
     uint8_t nsign = left.s ^ right.s;
+
+    // Corner cases
+    if (is_zero(left) || is_zero(right))
+    {
+        res.e = res.m = 0;
+        res.s = nsign;
+        return;
+    }
 
     int128_t nexp = +static_cast<int128_t>(left.e) 
                     +right.e 
@@ -161,49 +204,44 @@ void Flexfloat::mult(
     res = norm_ans;
 
     CLOG(trace) << "Result:" << std::endl << res;
-
     return; 
 }
 
 std::ostream& operator<<(std::ostream &oss, const Flexfloat &num)
 {
-    const size_t s_size = sizeof(num.s) * 8;
-    const size_t e_size = sizeof(num.e) * 8;
-    const size_t m_size = sizeof(num.m) * 8;
-
     oss << "M: " << +num.M << std::endl;
     oss << "E: " << +num.E << std::endl;
     oss << "B: " << +num.B << std::endl;
 
-    std::string sign_s = std::bitset<s_size>(num.s).to_string();
-    std::string exp_s  = std::bitset<e_size>(num.e).to_string();
-    std::string mant_s = std::bitset<m_size>(num.m).to_string();
-
-    sign_s = sign_s.substr(s_size - num.S, std::string::npos);
-    exp_s  = exp_s.substr (e_size - num.E, std::string::npos);
-    mant_s = mant_s.substr(m_size - num.M, std::string::npos);
-
-    oss << "Sign: " << sign_s << std::endl;
-    oss << "Exp:  " << exp_s  << std::endl;
-    oss << "Mant: " << mant_s << std::endl << std::endl;
+    oss << "Bits: " << num.bits() << std::endl << std::endl;
 
     return oss;
 }
 
-// Fitting values in correct range
+std::string Flexfloat::bits() const
+{
+    const size_t s_size = sizeof(s) * 8;
+    const size_t e_size = sizeof(e) * 8;
+    const size_t m_size = sizeof(m) * 8;
+
+    std::string sign_s = std::bitset<s_size>(s).to_string();
+    std::string exp_s  = std::bitset<e_size>(e).to_string();
+    std::string mant_s = std::bitset<m_size>(m).to_string();
+
+    sign_s = sign_s.substr(s_size - S, std::string::npos);
+    exp_s  = exp_s.substr (e_size - E, std::string::npos);
+    mant_s = mant_s.substr(m_size - M, std::string::npos);
+
+    return sign_s + "|" + exp_s + "|" + mant_s;
+}
+
 //
-// Input: -inf <  cur_exp  < +inf
-//           0 <= cur_mant < +inf
-//
-// Desired output: Flexfloat with
-//           0 <= cur_exp  < 2^E
-//           0 <= cur_mant < 2^M
+// See gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
 //
 Flexfloat Flexfloat::normalise(
     uint8_t cur_sign, int128_t cur_exp, uint128_t cur_mant, Etype E, Mtype M, Btype B
 )
 {
-    // for logs
     llu_t cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
     llu_t cur_mant_printable = *reinterpret_cast<llu_t *>(&cur_mant);
     CLOG(trace) << "==================== Values before normalisation =====================";
@@ -212,13 +250,41 @@ Flexfloat Flexfloat::normalise(
     CLOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
     CLOG(trace) << "      " << cur_mant_printable;
     CLOG(trace) << "======================================================================";
-    
 
     if (cur_exp > 0 && cur_mant == 0)
     {
         cur_exp -= 1;
         cur_mant = 1;
     }
+
+    auto rshift = [&cur_exp, &cur_mant](int128_t n) 
+    { 
+        CLOG(trace) << "rshift on n = " << static_cast<uint64_t>(n);
+        cur_mant = cur_mant >> n;
+        cur_exp = n + cur_exp;
+    };
+    auto lshift = [&cur_exp, &cur_mant](int128_t n) 
+    { 
+        CLOG(trace) << "lshift on n = " << static_cast<uint64_t>(n);
+        cur_mant = cur_mant << n;
+        cur_exp = cur_exp - n;
+    };
+
+    auto ovf = [&cur_exp, &cur_mant, M, E]() 
+    { 
+        CLOG(trace) << "overflow";
+
+        cur_mant = max_mant(M+1);
+        cur_exp = max_exp(E);
+    };
+    auto unf = [&cur_exp, &cur_mant, M, E]() 
+    { 
+        CLOG(trace) << "underflow";
+
+        cur_mant = 0;
+        cur_exp = 0;
+    };
+
     int128_t delta_m = (cur_mant > 0) ? abs<int128_t>(msb(cur_mant) - M) : 0;
     int128_t delta_e = abs<int128_t>(cur_exp - max_exp(E));
 
@@ -230,36 +296,20 @@ Flexfloat Flexfloat::normalise(
         if (cur_mant == 0)
         {
             CLOG(trace) << "cur_mant = 0";
-            CLOG(trace) << "undeflow";
-            cur_exp = 0;
-            cur_mant = 0;
+            unf();
         }
         else if (msb(cur_mant) <= M)
         {
             CLOG(trace) << "msb(cur_mant) <= M";
-            CLOG(trace) << "rshift";
-            uint128_t rshift = static_cast<uint128_t>(-cur_exp);
-        
-            cur_mant = cur_mant >> rshift;
-            cur_exp = 0;
+            rshift(-cur_exp);
         }
         else
         {
             CLOG(trace) << "msb(cur_mant) > M";
             if (delta_m > delta_e)
-            {
-                CLOG(trace) << "overflow";
-                cur_mant = max_mant(M+1);
-                cur_exp = max_exp(E);
-            }
+                ovf();
             else
-            {
-                CLOG(trace) << "rshift";
-                int128_t rshift = std::max(-cur_exp, delta_m);
-
-                cur_mant = cur_mant >> rshift;
-                cur_exp = cur_exp + static_cast<int128_t>(rshift);   
-            }
+                rshift(std::max(-cur_exp, delta_m));
         }
     }
     else if (cur_exp > 0 && cur_exp <= max_exp(E))
@@ -270,31 +320,16 @@ Flexfloat Flexfloat::normalise(
         if (msb(cur_mant) <= M)
         {
             CLOG(trace) << "msb(cur_mant) <= M";
-            CLOG(trace) << "lshift";
-
-            int128_t lshift = std::min(cur_exp, delta_m);
-        
-            cur_mant = cur_mant << lshift;
-            cur_exp = cur_exp - static_cast<int128_t>(lshift);
+            lshift(std::min(cur_exp, delta_m));
         }
         else
         {
             CLOG(trace) << "msb(cur_mant) > M";
 
             if (delta_m > delta_e)
-            {
-                CLOG(trace) << "overflow";
-                cur_mant = max_mant(M+1);
-                cur_exp = max_exp(E);
-            }
+                ovf();
             else
-            {
-                CLOG(trace) << "rshift";
-                int128_t rshift = delta_m ;
-
-                cur_mant = cur_mant >> rshift;
-                cur_exp = cur_exp + static_cast<int128_t>(rshift);   
-            }
+                rshift(delta_m);
         }
     }
     else
@@ -307,27 +342,14 @@ Flexfloat Flexfloat::normalise(
             CLOG(trace) << "msb(cur_mant) <= M";
 
             if (delta_m < delta_e)
-            {
-                CLOG(trace) << "overflow";
-                cur_mant = max_mant(M+1);
-                cur_exp = max_exp(E);
-            }
+                ovf();
             else
-            {
-                CLOG(trace) << "lshift";
-                int128_t lshift = std::min(delta_m, cur_exp);
-
-                cur_mant = cur_mant << lshift;
-                cur_exp = cur_exp - static_cast<int128_t>(lshift);   
-            }
+                std::min(delta_m, cur_exp);
         }
         else
         {
             CLOG(trace) << "msb(cur_mant) > M";
-            CLOG(trace) << "overflow";
-
-            cur_mant = max_mant(M+1);
-            cur_exp = max_exp(E);
+            ovf();
         }
     }
 

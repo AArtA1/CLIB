@@ -42,6 +42,24 @@ public:
     */
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
+    //! Generate Overflow number with s = 1; e = 2^E - 1; m = 2^M - 1
+    static Flexfloat ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+
+    //! Generate Zero number with s = e = m = 0
+    static Flexfloat zero(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+
+    //! Generate minimal denormalized value = 2^(1-B-M)
+    static Flexfloat min_denorm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+
+    //! Generate maximal denormalized value = 2^(1-B) - min_denorm
+    static Flexfloat max_denorm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+
+    //! Generate minimal normalized value = 2^(1-B)
+    static Flexfloat min_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+
+    //! Generate maximal normalized value = 2^(Emax - B) * (1 - 2^(-M))
+    static Flexfloat max_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+
     etype get_e() const noexcept { return e; }
     stype get_s() const noexcept { return s; }
     mtype get_m() const noexcept { return m; }
@@ -66,6 +84,8 @@ public:
     */
     static Mtype msb(uint128_t val);
 
+    static bool is_zero(const Flexfloat& val);
+
 
     /*! @brief Обрезает мантиссу и экспоненту числа other до
      *          размеров мантиссы и экспоненты числа this
@@ -82,6 +102,9 @@ public:
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
+
+    /// Выводит Flexfloat в битовом виде
+    std::string bits() const;
 
 private:
 
