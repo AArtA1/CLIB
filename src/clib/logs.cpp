@@ -61,7 +61,7 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
 #define FMT_OUT_cyan    "6"	
 #define FMT_OUT_white   "7;0"
 
-#define FMT_OUT_normal ";0"
+#define FMT_OUT_normal ";5"
 #define FMT_OUT_bold   ";1"
 #define FMT_OUT_faint  ";2"
 
@@ -148,7 +148,7 @@ void default_filter()
     logging::core::get()->set_filter(severity >= error);
 }
 
-void severity_level_filter(severity_level sev)
+void sev_filter(severity_level sev)
 {   
     logging::core::get()->set_filter(severity >= sev);
 }
@@ -156,6 +156,11 @@ void severity_level_filter(severity_level sev)
 void tag_filter(std::string tag)
 {   
     logging::core::get()->set_filter(expr::has_attr(tag_attr) && tag_attr == tag);
+}
+
+void tag_sev_filter(std::string tag, severity_level sev)
+{   
+    logging::core::get()->set_filter(expr::has_attr(tag_attr) && tag_attr == tag && severity >= sev);
 }
 
 void turn_logs_off()

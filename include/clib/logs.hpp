@@ -34,9 +34,11 @@ void init_logs();
 
 void default_filter();
 
-void severity_level_filter(severity_level sev);
+void sev_filter(severity_level sev);
 
 void tag_filter(std::string tag);
+
+void tag_sev_filter(std::string tag, severity_level sev);
 
 void turn_logs_off();
 
