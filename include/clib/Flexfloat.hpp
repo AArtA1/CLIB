@@ -42,22 +42,22 @@ public:
     */
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
-    inline etype get_e() const noexcept { return e; }
-    inline stype get_s() const noexcept { return s; }
-    inline mtype get_m() const noexcept { return m; }
-    inline Btype get_B() const noexcept { return B; }
-    inline Mtype get_M() const noexcept { return M; }
-    inline Etype get_E() const noexcept { return E; }
+    etype get_e() const noexcept { return e; }
+    stype get_s() const noexcept { return s; }
+    mtype get_m() const noexcept { return m; }
+    Btype get_B() const noexcept { return B; }
+    Mtype get_M() const noexcept { return M; }
+    Etype get_E() const noexcept { return E; }
 
     //! \return 2^E - 1
-    inline etype max_exp() const;
+    etype max_exp() const;
     //! \return 2^M - 1
-    inline mtype max_mant() const;
+    mtype max_mant() const;
 
     //! \return 2^E - 1
-    inline static etype max_exp(Etype E);
+    static etype max_exp(Etype E);
     //! \return 2^M - 1
-    inline static mtype max_mant(Mtype M);
+    static mtype max_mant(Mtype M);
 
     /*! @brief Ищет MSB в числе
     *

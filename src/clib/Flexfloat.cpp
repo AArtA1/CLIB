@@ -20,19 +20,19 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
     CLOG(trace) << "Object successfully created";
 }
 
-inline Flexfloat::etype Flexfloat::max_exp() const
+Flexfloat::etype Flexfloat::max_exp() const
 {
     return (static_cast<etype>(1) << E) - 1;
 }
-inline Flexfloat::mtype Flexfloat::max_mant() const
+Flexfloat::mtype Flexfloat::max_mant() const
 {
     return (static_cast<mtype>(1) << M) - 1;
 }
-inline Flexfloat::etype Flexfloat::max_exp(Etype E)
+Flexfloat::etype Flexfloat::max_exp(Etype E)
 {
     return (static_cast<etype>(1) << E) - 1;
 }
-inline Flexfloat::mtype Flexfloat::max_mant(Mtype M)
+Flexfloat::mtype Flexfloat::max_mant(Mtype M)
 {
     return (static_cast<mtype>(1) << M) - 1;
 }
