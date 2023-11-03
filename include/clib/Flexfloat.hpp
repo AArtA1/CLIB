@@ -42,6 +42,15 @@ public:
     */
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
+    /*! @brief Создает Flexfloat из аналогичного битового представления
+    *
+    * \param[in] E_n Количество бит в экспоненте
+    * \param[in] M_n Количество бит в мантиссе
+    * \param[in] B_n Bias
+    * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
+    */
+    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
+
     //! Generate Overflow number with s = 1; e = 2^E - 1; m = 2^M - 1
     static Flexfloat ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
 

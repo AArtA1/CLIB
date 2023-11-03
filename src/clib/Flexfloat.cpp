@@ -14,7 +14,28 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
     if (!is_valid())
     {
         CLOG(error) << "Can not create object. Invalid parameters";
-        throw std::string{"Can not create object. Invalid parameters"};
+        throw std::runtime_error{"Can not create object. Invalid parameters"};
+    }
+
+    CLOG(trace) << "Object successfully created";
+}
+
+Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) :
+    B(B_n),
+    E(E_n),
+    M(M_n),
+    s(0),
+    e(0),
+    m(0)
+{
+    m = static_cast<mtype>((value >> 0)     & ((1u << M) - 1u));
+    e = static_cast<etype>((value >> M)     & ((1u << E) - 1u));
+    s = static_cast<stype>((value >> (M+E)) & ((1u << S) - 1u));   
+
+    if (!is_valid())
+    {
+        CLOG(error) << "Can not create object. Invalid parameters";
+        throw std::runtime_error{"Can not create object. Invalid parameters"};
     }
 
     CLOG(trace) << "Object successfully created";
@@ -117,17 +138,17 @@ void Flexfloat::mult(
     if (!left.is_valid())
     {
         CLOG(error) << "Left operand is invalid. Can not multiplicate";
-        throw std::string{"Invalid operand"};
+        throw std::runtime_error{"Invalid operand"};
     }
     if (!right.is_valid())
     {
         CLOG(error) << "Right operand is invalid. Can not multiplicate";
-        throw std::string{"Invalid operand"};
+        throw std::runtime_error{"Invalid operand"};
     }
     if (!res.is_valid())
     {
         CLOG(error) << "Result operand is invalid. Can not multiplicate";
-        throw std::string{"Invalid operand"};
+        throw std::runtime_error{"Invalid operand"};
     }
 
     CLOG(trace) << "Left  operand:" << std::endl
@@ -401,21 +422,35 @@ Flexfloat Flexfloat::normalise(
 bool Flexfloat::is_valid() const
 {
     if (!(M <= sizeof(m)*8))
-        goto ivalid_obj;
+    {
+        CLOG(error) << "!(M <= sizeof(m)*8)";
+        return false;
+    }
     if (!(E <= sizeof(e)*8))
-        goto ivalid_obj;
+    {
+        CLOG(error) << "!(E <= sizeof(e)*8)";
+        return false;
+    }
+
     if (!(s <= 1))
-        goto ivalid_obj;
+    {
+        CLOG(error) << "!(s <= 1)";
+        return false;
+    }
     if (!(e <= static_cast<etype>((1 << E) - 1)))
-        goto ivalid_obj;
+    {
+        CLOG(error) << "!(e <= static_cast<etype>((1 << E) - 1))";
+        return false;
+    }
     if (!(m <= static_cast<mtype>((1 << M) - 1)))
-        goto ivalid_obj;
+    {
+        CLOG(error) << "!(m <= static_cast<mtype>((1 << M) - 1))";
+        return false;
+    }
 
     CLOG(trace) << "Object is valid";
     return true;
 
-ivalid_obj:
-    CLOG(error) << "Object is invalid";
-    return false;
 }
-}
+
+} //namespace clib 
