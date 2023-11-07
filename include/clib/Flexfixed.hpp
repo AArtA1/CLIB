@@ -3,12 +3,6 @@
 
 namespace clib {
 
-using Itype = uint8_t; // size of INT_WIDTH 
-using Ftype = uint8_t; // size of FRAC_WIDTH
-
-using stype = uint8_t; // size of SIGN
-using ntype = uint64_t; // size of NUMERATOR
-
 
 /*!
  * \brief Число с фиксированной запятой.
@@ -18,6 +12,12 @@ using ntype = uint64_t; // size of NUMERATOR
  */
 class Flexfixed
 {
+public:
+    using Itype = uint8_t; // size of INT_WIDTH 
+    using Ftype = uint8_t; // size of FRAC_WIDTH
+
+    using stype = uint8_t; // size of SIGN
+    using ntype = uint64_t; // size of NUMERATOR
 private:
      /// INT_WIDTH
     Itype I;
