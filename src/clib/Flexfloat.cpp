@@ -166,7 +166,7 @@ void Flexfloat::mult(
         return;
     }
 
-    int128_t nexp = +static_cast<int128_t>(left.e) 
+    eexttype nexp = +static_cast<int128_t>(left.e) 
                     +right.e 
                     +res.B 
                     -left.B 
@@ -183,45 +183,19 @@ void Flexfloat::mult(
     // if e == 0 -> denormalized value -> m' = 2*m
     //
     // m'_res = m'_left  * m'_right >> LM
-    //
-    // Sorting out all variants of normalized/denormalized operand
-    uint128_t nmant = static_cast<uint128_t>(left_m) * static_cast<uint128_t>(right_m);
+    mexttype nmant = 1;
 
     if (left.e == 0)
-    {
-        // 2 * left_m * 2 * right_m
-        //
-        // nmant = left_m * right_m >> (LM-2)
-        if (right.e == 0)
-        {
-            nmant = nmant >> (LM - 2);
-        }
-        // 2 * left_m * (2^LM + right_m) = 2^(LM+1) * left_m + 2 * left_m * right_m;
-        //
-        // nmant = ( 2^(LM+1)*left_m + 2*left_m*right_m ) >> LM
-        else
-        {
-            nmant = 2 * left_m + (nmant >> (LM - 1));
-        }
-    }
+        nmant *= ( 2 * static_cast<mexttype>(left_m) );
     else
-    {
-        // Same as left.e == 0 && right.e != 0
-        if (right.e == 0)
-        {
-            nmant = 2 * right_m + (nmant >> (LM - 1));
-        }
-        // (2^LM + left_m) * (2^LM + right_m) =
-        // 2^(2*LM) + 2^LM * (left_m + right_m) + left_m * right_m
-        //
-        // nmant = ( 2^(2*LM) + 2^LM * (left_m + right_m) + left_m * right_m ) >> LM
-        else
-        {
-            nmant = (1 << LM) + left_m + right_m + ((left_m * right_m) >> LM);
-        }
-    }
+        nmant *= ( (1 << LM) + static_cast<mexttype>(left_m) );
 
-    Flexfloat norm_ans = normalise(nsign, nexp, nmant, res.E, LM, res.B);
+    if (right.e == 0)
+        nmant *= ( 2 * static_cast<mexttype>(right_m) );
+    else
+        nmant *= ( (1 << LM) + static_cast<mexttype>(right_m) );
+
+    Flexfloat norm_ans = normalise(nsign, nexp, nmant >> LM, nmant, res.E, LM, res.B);
     res = norm_ans;
 
     CLOG(trace) << "Result:" << std::endl << res;
@@ -260,7 +234,7 @@ std::string Flexfloat::bits() const
 // See gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
 //
 Flexfloat Flexfloat::normalise(
-    uint8_t cur_sign, int128_t cur_exp, uint128_t cur_mant, Etype E, Mtype M, Btype B
+    stype cur_sign, eexttype cur_exp, mexttype cur_mant, mexttype ext_mant, Etype E, Mtype M, Btype B
 )
 {
     llu_t cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
@@ -284,10 +258,14 @@ Flexfloat Flexfloat::normalise(
         cur_mant = cur_mant >> n;
         cur_exp = n + cur_exp;
     };
-    auto lshift = [&cur_exp, &cur_mant](int128_t n) 
+    auto lshift = [&cur_exp, &cur_mant, ext_mant, M](int128_t n) 
     { 
         CLOG(trace) << "lshift on n = " << static_cast<uint64_t>(n);
-        cur_mant = cur_mant << n;
+
+        if (M > n)
+            cur_mant = ext_mant >> (M-n);
+        else
+            cur_mant = ext_mant << (n-M);
         cur_exp = cur_exp - n;
     };
 
@@ -393,7 +371,7 @@ Flexfloat Flexfloat::normalise(
     }
     else
     {
-        CLOG(trace) << "cur_exp > 0: Value is denormalized";
+        CLOG(trace) << "cur_exp == 0: Value is denormalized";
 
         cur_mant >>= 1;
     }

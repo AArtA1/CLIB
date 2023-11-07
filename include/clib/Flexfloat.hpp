@@ -20,6 +20,12 @@ public:
     using mtype = uint64_t;
     using stype = uint8_t;
 
+    // type for storing multiplication of mantissa
+    using mexttype = uint128_t;
+
+    // type for storing sum of exp and bias
+    using eexttype = int128_t;
+
 private:
     Btype B;             /// BIAS
     Etype E;             /// EXPONENT WIDTH
@@ -126,7 +132,9 @@ private:
     //           0 <= cur_exp  < 2^E
     //           0 <= cur_mant < 2^M
     //
-    static Flexfloat normalise(uint8_t cur_sign, int128_t cur_exp, uint128_t cur_mant, Etype E, Mtype M, Btype B);
+    static Flexfloat normalise(
+        stype cur_sign, eexttype cur_exp, mexttype cur_mant, mexttype ext_mant, Etype E, Mtype M, Btype B
+    );
 
     bool is_valid() const;
 };
