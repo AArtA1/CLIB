@@ -38,6 +38,9 @@ public:
     * \param[in] F_n Ширина дробной части числа в битах. Количество бит указывает желаемую точность после запятой.
     */
     Flexfixed(Itype I_n,Ftype F_n);
+    
+
+    Flexfixed(const Flexfixed&) = default;
 
 
     /*! @brief Создает Flexfixed
@@ -52,7 +55,7 @@ public:
     /// @brief Оператор копирования Flexfixed
     /// @param other Копируемое значение
     /// @return Возвращает ссылку на новый объект
-    Flexfixed& operator=(const Flexfixed& other);
+    Flexfixed& operator=(const Flexfixed& other) = default;
 
     /*! @brief Умножение Flexfixed
     *

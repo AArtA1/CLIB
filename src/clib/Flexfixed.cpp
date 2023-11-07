@@ -20,17 +20,6 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) :
 }
 
 
-Flexfixed& Flexfixed::operator=(const Flexfixed& other){
-    if(this != &other){
-        I = other.I;
-        F = other.F;
-        s = other.s;
-        n = other.n;
-    }
-    return *this;
-}
-
-
 // consider we already have res parameters: I and F 
 void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Flexfixed& res){
     LOG(trace) << "Flex multiplication of two numbers";
