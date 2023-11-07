@@ -92,15 +92,22 @@ public:
 
     /// Проверяет корректность числа. Значение n должно быть меньше 2^(I+F)
     bool is_valid() const;
+
     
+    inline Itype get_I() const { return I; } 
+
+    inline Ftype get_F() const { return F; }
+
     //! \return Возвращает первые I бит от n - целые биты числа.
-    ntype get_int() const;
+    inline ntype get_int() const { return n >> F; }
 
     //! \return Возвращает последние F бит от n - дробные биты числа.
-    ntype get_frac() const;
+    inline ntype get_frac() const{ return ((static_cast<ntype>(1) << F) - 1) & n;} 
+
+    inline stype get_s() const{ return s; }
 
     //! \return Возвращает n
-    inline ntype get_n() const;
+    inline ntype get_n() const{ return n; }
 
 };
 

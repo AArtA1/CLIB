@@ -3,7 +3,7 @@
 
 namespace clib {
 
-Flexfixed::Flexfixed(Itype I_n,Ftype F_n): I(I_n), F(F_n){
+Flexfixed::Flexfixed(Itype I_n,Ftype F_n): I(I_n), F(F_n), s(0), n(0){
     LOG(trace) << "Object successfully created";
 }
 
@@ -194,18 +194,6 @@ bool Flexfixed::is_valid() const
 ivalid_obj:
     LOG(error) << "Object is invalid";
     return false;
-}
-
-ntype Flexfixed::get_int() const{
-    return n >> F;
-}
-
-ntype Flexfixed::get_frac() const{
-    return ((static_cast<ntype>(1) << F) - 1) & n;
-}
-
-inline ntype Flexfixed::get_n() const{
-    return n;
 }
 
 }
