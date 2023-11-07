@@ -133,7 +133,7 @@ private:
     //           0 <= cur_mant < 2^M
     //
     static Flexfloat normalise(
-        stype cur_sign, eexttype cur_exp, mexttype cur_mant, mexttype ext_mant, Etype E, Mtype M, Btype B
+        stype cur_sign, eexttype cur_exp, mexttype cur_mant, Etype E, Mtype M, Btype B
     );
 
     bool is_valid() const;

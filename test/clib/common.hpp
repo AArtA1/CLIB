@@ -4,7 +4,7 @@
 #include <clib/Uint32.hpp>
 #include "clib/logs.hpp"
 
-#include <doctest/doctest.h>
+#include <../doctest.h>
 #include <string>
 #include <cstring>
 #include <cassert>

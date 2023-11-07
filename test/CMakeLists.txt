@@ -1,13 +1,11 @@
-include(${PROJECT_SOURCE_DIR}/cmake/doctest.cmake)
-
 add_executable(clib-unit-tests test_main.cpp)
 target_sources(clib-unit-tests PRIVATE clib/Flexfloat.cpp)
 target_link_libraries(clib-unit-tests
     PRIVATE
         clib::library
-        doctest::doctest
 )
 target_include_directories(clib-unit-tests PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clib>
 )
 
