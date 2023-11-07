@@ -61,6 +61,23 @@ add_compile_options(
     -Wredundant-decls
     -Wsign-conversion
     -Wsign-promo
+    -fdiagnostics-show-option
+    -Wfloat-equal
+    -Wlogical-op
+    -Wundef
+    -Wshadow
+    -Wstrict-overflow=5
+    -Wwrite-strings
+    -Wpointer-arith
+    -Wformat=2
+    -Wswitch-default
+    -Wmissing-include-dirs
+    -Wswitch-enum
+    -Wdisabled-optimization
+    -Weffc++
+    -Winvalid-pch
+    -Wunused-but-set-variable
+    -Wunused-result
 )
 
 ###################################################################################################

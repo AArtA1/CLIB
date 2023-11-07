@@ -65,7 +65,7 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
 #define FMT_OUT_bold   ";1"
 #define FMT_OUT_faint  ";2"
 
-void coloring_formatter(
+static void coloring_formatter(
     logging::record_view const& rec, logging::formatting_ostream& strm)
 {
     auto sseverity = rec[severity];
