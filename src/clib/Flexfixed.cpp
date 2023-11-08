@@ -42,7 +42,7 @@ void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Fle
 
     res.s = left.s ^ right.s;
 
-    int16_t delta_f = static_cast<int16_t>(left.F) + right.F - res.F;
+    int16_t delta_f = static_cast<int16_t>(left.F + right.F - res.F);
 
     ntype res_n = left.n + right.n;
 
