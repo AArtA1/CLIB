@@ -7,6 +7,8 @@ namespace clib {
  * \brief Число с плавующей запятой с настриваемой мантиссой и экспонентой.
  *
  * \details Число поддерживает денормализованные числа; нет NaN; нет ±inf
+ * 
+ * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
  */
 class Flexfloat
 {
@@ -112,8 +114,20 @@ public:
     * \param[in] left Левый операнд
     * \param[in] right Правый операнд
     * \param[in] res Результат
+    * 
+    * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
     */
     static void mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
+
+    /*! @brief Сложение Flexfloat
+    *
+    * \param[in] left Левый операнд
+    * \param[in] right Правый операнд
+    * \param[in] res Результат
+    * 
+    * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
+    */
+    static void sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
@@ -132,6 +146,7 @@ private:
     //           0 <= cur_exp  < 2^E
     //           0 <= cur_mant < 2^M
     //
+    // See https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
     static Flexfloat normalise(
         stype cur_sign, eexttype cur_exp, mexttype cur_mant, Etype E, Mtype M, Btype B
     );

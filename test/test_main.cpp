@@ -10,7 +10,7 @@ boost::log::sources::severity_logger< clib::severity_level > slg;
 int main(int argc, char** argv) 
 {
     clib::init_logs();
-    clib::turn_logs_on();
+    clib::tag_filter("Flexfloat sum");
     
     doctest::Context context;
 

@@ -24,4 +24,13 @@ T abs(T a)
         return a;
 }
 
+template <typename T>
+T delta(T a, T b)
+{
+    if (a < b)
+        return b-a;
+    else
+        return a-b;
+}
+
 }

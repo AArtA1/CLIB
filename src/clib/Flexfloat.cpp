@@ -213,6 +213,91 @@ std::ostream& operator<<(std::ostream &oss, const Flexfloat &num)
     return oss;
 }
 
+void Flexfloat::sum(
+    const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
+{
+    CLOG(trace) << "Sum of two numbers";
+
+    if (!left.is_valid())
+    {
+        CLOG(error) << "Left operand is invalid. Can not multiplicate";
+        throw std::runtime_error{"Invalid operand"};
+    }
+    if (!right.is_valid())
+    {
+        CLOG(error) << "Right operand is invalid. Can not multiplicate";
+        throw std::runtime_error{"Invalid operand"};
+    }
+    if (!res.is_valid())
+    {
+        CLOG(error) << "Result operand is invalid. Can not multiplicate";
+        throw std::runtime_error{"Invalid operand"};
+    }
+
+    CLOG(trace) << "Left  operand:" << std::endl << left;
+    CLOG(trace) << "Right operand:" << std::endl << right;
+
+    // if e > 0  -> normalized value   -> m' = 2^M + m
+    // if e == 0 -> denormalized value -> m' = 2*m
+    mexttype left_m  = 0;
+    mexttype right_m = 0;
+
+    if (left.e == 0)
+        left_m = ( 2 * static_cast<mexttype>(left.m) );
+    else
+        left_m = ( (1 << left.M) + static_cast<mexttype>(left.m) );
+
+    if (right.e == 0)
+        right_m = ( 2 * static_cast<mexttype>(right.m) );
+    else
+        right_m = ( (1 << right.M) + static_cast<mexttype>(right.m) );
+
+    // Largest M. All calculations will be with the largest mantissa
+    Mtype LM = std::max({left.M, right.M, res.M});
+
+    // Casting all mantissa's to LM
+    left_m  <<= (LM - left.M);
+    right_m <<= (LM - right.M);
+    eexttype right_e = right.e;
+    eexttype left_e  = left.e;
+
+    // Casting inputs to maximum exponent
+    etype nexp = 0;
+    if (left_e + left.B > right_e + right.B)
+    {
+        auto delta_e = left_e + left.B - right_e - right.B;
+        right_e += delta_e;
+        right_m >>= delta_e;
+        nexp = static_cast<etype>(left_e - left.B + res.B);
+    }
+    else 
+    {
+        auto delta_e = right_e + right.B - left_e - left.B;
+        left_e += delta_e;
+        left_m >>= delta_e;
+        nexp = static_cast<etype>(right_e - right.B + res.B);
+    }
+
+    mexttype nmant = 0;
+    if (left.s == right.s)
+        nmant = left_m + right_m;
+    else
+        nmant = delta(left_m, right_m);        
+
+    stype nsign = 0;
+    if (left_m > right_m)
+        nsign = left.s;
+    else
+        nsign = right.s;
+
+
+    Flexfloat norm_ans = normalise(nsign, nexp, nmant, res.E, LM, res.B);
+    res = norm_ans;
+
+    CLOG(trace) << "Result:" << std::endl << res;
+    return; 
+}
+
 std::string Flexfloat::bits() const
 {
     const size_t s_size = sizeof(s) * 8;

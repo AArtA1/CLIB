@@ -63,3 +63,34 @@ TEST_CASE("Test Flexfloat mult")
     
     CHECK(1);
 }
+
+TEST_CASE("Test Flexfloat sum")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat sum");
+    LOG(debug) << std::fixed << std::setprecision(5);
+    using ff = clib::Flexfloat;
+
+    ff a1(8, 23, 127, 0, 129, 4194304); // 6 in float
+    LOG(debug) << "a in float = " << to_float(a1) << std::endl;
+
+    ff b1(8, 23, 127, 0, 129, 6291456); // 7 in float
+    LOG(debug) << "b in float = " << to_float(b1) << std::endl;
+
+    ff c1(8, 23, 127, 1, 1, 1);
+
+    ff::sum(a1, b1, c1);
+    LOG(debug) << "result in float = " << to_float(c1) << std::endl;
+
+    ff a2(8, 23, 127, 1, 132, 2654006); // -42.124231
+    LOG(debug) << "a in float = " << to_float(a2) << std::endl;
+
+    ff b2(8, 23, 127, 0, 142, 451618); // 34532.1324
+    LOG(debug) << "b in float = " << to_float(b2) << std::endl;
+
+    ff c2(8, 23, 127, 1, 1, 1);
+    
+    ff::sum(a2, b2, c2);
+    LOG(debug) << "result in float = " << to_float(c2) << std::endl;
+    
+    CHECK(1);
+}
