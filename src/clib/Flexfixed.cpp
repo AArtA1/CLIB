@@ -7,6 +7,19 @@ Flexfixed::Flexfixed(Itype I_n,Ftype F_n): I(I_n), F(F_n), s(0), n(0){
     CLOG(trace) << "Object successfully created";
 }
 
+Flexfixed::Flexfixed(Itype I_n,Ftype F_n, nrestype value) : I(I_n),F(F_n),s(0),n(0){
+    s = static_cast<stype>(value >> (I_n + F_n));
+    n = static_cast<ntype>(((static_cast<ntype>(1) << (I_n+F_n)) - 1) & value);
+
+    if (!is_valid())
+    {
+        CLOG(error) << "Can not create object. Invalid parameters";
+        throw std::string{"Can not create object. Invalid parameters"};
+    }
+
+    CLOG(trace) << "Object successfully created";   
+}
+
 Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : 
     I(I_n), F(F_n), s(s_n), n(n_n)
 {
@@ -183,17 +196,23 @@ std::ostream& operator<<(std::ostream &oss, const Flexfixed &num)
 
 bool Flexfixed::is_valid() const
 {
-    if (!(s <= 1))
-        goto ivalid_obj;
-    if (n > (static_cast<ntype>(1) << (I+F)) - 1)
-        goto ivalid_obj;
+    if(!(I+F <= sizeof(n)*8)){
+        CLOG(error) << "!(W=(I+F) <= sizeof(n)*8)";
+        return false;
+    }
 
+    if (!(s <= 1))
+    {
+        CLOG(error) << "!(s <= 1)";
+        return false;
+    }
+    if (!(n <= get_max_n(I,F)))
+    {
+        CLOG(error) << "!(n <= static_cast<ntype>((1 << (I+F)) - 1))";
+        return false;
+    }
     CLOG(trace) << "Object is valid";
     return true;
-
-ivalid_obj:
-    CLOG(error) << "Object is invalid";
-    return false;
 }
 
 }
