@@ -18,6 +18,7 @@ public:
 
     using stype = uint8_t; // size of SIGN
     using ntype = uint64_t; // size of NUMERATOR
+    using nrestype = uint128_t;
 private:
      /// INT_WIDTH
     Itype I;
@@ -42,6 +43,7 @@ public:
 
     Flexfixed(const Flexfixed&) = default;
 
+    Flexfixed(Itype I_n,Ftype F_n, nrestype value);
 
     /*! @brief Создает Flexfixed
     *
@@ -110,7 +112,9 @@ public:
     inline stype get_s() const{ return s; }
 
     //! \return Возвращает n
-    inline ntype get_n() const{ return n; }
+    inline ntype get_n() const{ return n; } 
+
+    inline ntype get_max_n(Itype I_n,Ftype F_n) const { return ((static_cast<ntype>(1) << (I_n+F_n)) - 1);}
 
 };
 
