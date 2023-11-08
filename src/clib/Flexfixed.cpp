@@ -4,7 +4,7 @@
 namespace clib {
 
 Flexfixed::Flexfixed(Itype I_n,Ftype F_n): I(I_n), F(F_n), s(0), n(0){
-    LOG(trace) << "Object successfully created";
+    CLOG(trace) << "Object successfully created";
 }
 
 Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : 
@@ -12,39 +12,41 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) :
 {
     if (!is_valid())
     {
-        LOG(error) << "Can not create object. Invalid parameters";
+        CLOG(error) << "Can not create object. Invalid parameters";
         throw std::string{"Can not create object. Invalid parameters"};
     }
 
-    LOG(trace) << "Object successfully created";
+    CLOG(trace) << "Object successfully created";
 }
 
 
 // consider we already have res parameters: I and F 
 void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Flexfixed& res){
-    LOG(trace) << "Flex multiplication of two numbers";
+    CLOG(trace) << "Flex multiplication of two numbers";
 
 
     if (!left.is_valid())
     {
-        LOG(error) << "Left operand is invalid";
+        CLOG(error) << "Left operand is invalid";
         throw std::string{"Invalid operand"};
     }
 
     if (!right.is_valid())
     {
-        LOG(error) << "Right operand is invalid";
+        CLOG(error) << "Right operand is invalid";
         throw std::string{"Invalid operand"};
     }
 
-    LOG(trace) << "Left operand: " << left;
-    LOG(trace) << "Right operand: " << right;
+    CLOG(trace) << "Left operand: " << left;
+    CLOG(trace) << "Right operand: " << right;
 
     res.s = left.s ^ right.s;
 
     int16_t delta_f = static_cast<int16_t>(left.F + right.F - res.F);
 
-    ntype res_n = left.n + right.n;
+    CLOG(trace) << "DELTA_F:" << delta_f;
+
+    ntype res_n = left.n * right.n;
 
     if(delta_f >= 0){
         res_n = res_n >> delta_f;
@@ -55,40 +57,44 @@ void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Fle
 
     // overflow
     if(res_n >= static_cast<ntype>(1) << (res.I + res.F)){
+        CLOG(trace) << "IS_OVERFLOW: TRUE"; 
         res_n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
     }
-
+    else{
+        CLOG(trace) << "IS_OVERFLOW: FALSE";
+    }
 
     res.n = res_n;
 
-    LOG(trace) << "Result of flex multiplication: " << res;
+    CLOG(trace) << "Result of flex multiplication: " << res;
 
 }
 
 
 void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed& res){
     
-    LOG(trace) << "Flex addition of two numbers";
+    CLOG(trace) << "Flex addition of two numbers";
 
 
     if (!left.is_valid())
     {
-        LOG(error) << "Left operand is invalid";
+        CLOG(error) << "Left operand is invalid";
         throw std::string{"Invalid operand"};
     }
 
     if (!right.is_valid())
     {
-        LOG(error) << "Right operand is invalid";
+        CLOG(error) << "Right operand is invalid";
         throw std::string{"Invalid operand"};
     }
 
 
 
-    LOG(trace) << "Left operand: " << left;
-    LOG(trace) << "Right operand: " << right;
+    CLOG(trace) << "Left operand: " << left;
+    CLOG(trace) << "Right operand: " << right;
 
     Ftype max_F = std::max(left.F, right.F);
+
     
     ntype left_n = left.n << (max_F - left.F), right_n = right.n << (max_F - right.F); 
 
@@ -104,8 +110,9 @@ void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed
 
     ntype res_n = left.s == right.s?left_n + right_n:left_n - right_n;
 
-
     int16_t delta_F = static_cast<int16_t>(max_F) - res.F;
+
+    CLOG(trace) << "DELTA_F: " << delta_F;
 
     if(delta_F >= 0 ){
         res_n = res_n >> delta_F;
@@ -115,14 +122,18 @@ void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed
     }
 
     res.s = flag?right.s:left.s;
+
     // overflow
     if(res_n >= static_cast<ntype>(1) << (res.I  + res.F)){
+        CLOG(trace) << "IS_OVERFLOW: TRUE"; 
         res_n = (static_cast<ntype>(1) << (res.I  + res.F)) - 1;
+    } else{
+        CLOG(trace) << "IS_OVERFLOW: FALSE"; 
     }
 
     res.n = res_n;
 
-    LOG(trace) << "Result of flex addition: " << res;
+    CLOG(trace) << "Result of flex addition: " << res;
 }
 
 void Flexfixed::substraction(const Flexfixed& left, const Flexfixed& right, Flexfixed& res){
@@ -177,11 +188,11 @@ bool Flexfixed::is_valid() const
     if (n > (static_cast<ntype>(1) << (I+F)) - 1)
         goto ivalid_obj;
 
-    LOG(trace) << "Object is valid";
+    CLOG(trace) << "Object is valid";
     return true;
 
 ivalid_obj:
-    LOG(error) << "Object is invalid";
+    CLOG(error) << "Object is invalid";
     return false;
 }
 
