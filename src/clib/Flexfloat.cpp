@@ -16,8 +16,6 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
         CLOG(error) << "Can not create object. Invalid parameters";
         throw std::runtime_error{"Can not create object. Invalid parameters"};
     }
-
-    CLOG(trace) << "Object successfully created";
 }
 
 Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) :
@@ -37,8 +35,6 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) :
         CLOG(error) << "Can not create object. Invalid parameters";
         throw std::runtime_error{"Can not create object. Invalid parameters"};
     }
-
-    CLOG(trace) << "Object successfully created";
 }
 
 Flexfloat Flexfloat::ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
@@ -129,43 +125,40 @@ Flexfloat& Flexfloat::operator=(const Flexfloat& other)
     return *this;
 }
 
+void Flexfloat::check_ffs(std::initializer_list<Flexfloat> list)
+{
+    for (auto& elem : list)
+    {
+        if (!elem.is_valid())
+        {
+            CLOG(error) << "Operand is invalid. Can not multiplicate";
+            throw std::runtime_error{"Invalid operand"};
+        }
+    }
+}
 
 void Flexfloat::mult(
     const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
 {
+#ifndef NDEBUG
     CLOG(trace) << "Multiplication of two numbers";
-
-    if (!left.is_valid())
-    {
-        CLOG(error) << "Left operand is invalid. Can not multiplicate";
-        throw std::runtime_error{"Invalid operand"};
-    }
-    if (!right.is_valid())
-    {
-        CLOG(error) << "Right operand is invalid. Can not multiplicate";
-        throw std::runtime_error{"Invalid operand"};
-    }
-    if (!res.is_valid())
-    {
-        CLOG(error) << "Result operand is invalid. Can not multiplicate";
-        throw std::runtime_error{"Invalid operand"};
-    }
-
-    CLOG(trace) << "Left  operand:" << std::endl
-                                << left;
-    CLOG(trace) << "Right operand:" << std::endl
-                                << right;
-
-    uint8_t nsign = left.s ^ right.s;
+    check_ffs({left, right, res});
+    CLOG(trace) << "Left  operand: " << left;
+    CLOG(trace) << "Right operand: " << right;
+#endif
 
     // Corner cases
     if (is_zero(left) || is_zero(right))
     {
         res.e = res.m = 0;
-        res.s = nsign;
+        res.s = left.s ^ right.s;
         return;
     }
+    
+    mexttype left_m  = unzip(left);
+    mexttype right_m = unzip(right);
 
+    uint8_t nsign = left.s ^ right.s;
     eexttype nexp = +static_cast<int128_t>(left.e) 
                     +right.e 
                     +res.B 
@@ -176,39 +169,24 @@ void Flexfloat::mult(
     Mtype LM = std::max({left.M, right.M, res.M});
 
     // Casting all mantissa's to LM
-    mtype left_m  = left.m  << (LM - left.M);
-    mtype right_m = right.m << (LM - right.M);
+    left_m  <<= (LM - left.M);
+    right_m <<= (LM - right.M);
 
-    // if e > 0  -> normalized value   -> m' = 2^M + m
-    // if e == 0 -> denormalized value -> m' = 2*m
-    //
-    // m'_res = m'_left  * m'_right >> LM
-    mexttype nmant = 1;
-
-    if (left.e == 0)
-        nmant *= ( 2 * static_cast<mexttype>(left_m) );
-    else
-        nmant *= ( (1 << LM) + static_cast<mexttype>(left_m) );
-
-    if (right.e == 0)
-        nmant *= ( 2 * static_cast<mexttype>(right_m) );
-    else
-        nmant *= ( (1 << LM) + static_cast<mexttype>(right_m) );
+    mexttype nmant = left_m * right_m;
 
     Flexfloat norm_ans = normalise(nsign, nexp - LM, nmant, res.E, LM, res.B);
     res = norm_ans;
 
-    CLOG(trace) << "Result:" << std::endl << res;
+#ifndef NDEBUG
+    CLOG(trace) << "Result: " << res;
+#endif
     return; 
 }
 
 std::ostream& operator<<(std::ostream &oss, const Flexfloat &num)
 {
-    oss << "M: " << +num.M << std::endl;
-    oss << "E: " << +num.E << std::endl;
-    oss << "B: " << +num.B << std::endl;
-
-    oss << "Bits: " << num.bits() << std::endl << std::endl;
+    oss << "(E, M, B) = (" << +num.E << ", " << +num.M << ", " << +num.B << ")";
+    oss << "  val = " << num.bits();
 
     return oss;
 }
@@ -216,41 +194,15 @@ std::ostream& operator<<(std::ostream &oss, const Flexfloat &num)
 void Flexfloat::sum(
     const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
 {
+#ifndef NDEBUG
     CLOG(trace) << "Sum of two numbers";
+    check_ffs({left, right, res});
+    CLOG(trace) << "Left  operand: " << left;
+    CLOG(trace) << "Right operand: " << right;
+#endif
 
-    if (!left.is_valid())
-    {
-        CLOG(error) << "Left operand is invalid. Can not multiplicate";
-        throw std::runtime_error{"Invalid operand"};
-    }
-    if (!right.is_valid())
-    {
-        CLOG(error) << "Right operand is invalid. Can not multiplicate";
-        throw std::runtime_error{"Invalid operand"};
-    }
-    if (!res.is_valid())
-    {
-        CLOG(error) << "Result operand is invalid. Can not multiplicate";
-        throw std::runtime_error{"Invalid operand"};
-    }
-
-    CLOG(trace) << "Left  operand:" << std::endl << left;
-    CLOG(trace) << "Right operand:" << std::endl << right;
-
-    // if e > 0  -> normalized value   -> m' = 2^M + m
-    // if e == 0 -> denormalized value -> m' = 2*m
-    mexttype left_m  = 0;
-    mexttype right_m = 0;
-
-    if (left.e == 0)
-        left_m = ( 2 * static_cast<mexttype>(left.m) );
-    else
-        left_m = ( (1 << left.M) + static_cast<mexttype>(left.m) );
-
-    if (right.e == 0)
-        right_m = ( 2 * static_cast<mexttype>(right.m) );
-    else
-        right_m = ( (1 << right.M) + static_cast<mexttype>(right.m) );
+    mexttype left_m  = unzip(left);
+    mexttype right_m = unzip(right);
 
     // Largest M. All calculations will be with the largest mantissa
     Mtype LM = std::max({left.M, right.M, res.M});
@@ -263,38 +215,57 @@ void Flexfloat::sum(
 
     // Casting inputs to maximum exponent
     etype nexp = 0;
-    if (left_e + left.B > right_e + right.B)
+    if (left_e - left.B > right_e - right.B)
     {
-        auto delta_e = left_e + left.B - right_e - right.B;
+        auto delta_e = left_e - right_e - left.B + right.B;
         right_e += delta_e;
         right_m >>= delta_e;
+
+        assert(left_e - left.B + res.B >= 0);
         nexp = static_cast<etype>(left_e - left.B + res.B);
     }
     else 
     {
-        auto delta_e = right_e + right.B - left_e - left.B;
+        auto delta_e = right_e - left_e - right.B + left.B;
         left_e += delta_e;
         left_m >>= delta_e;
+
+        assert(right_e - right.B + res.B >= 0);
         nexp = static_cast<etype>(right_e - right.B + res.B);
     }
 
+#ifndef NDEBUG
+    CLOG(trace) << "=================== Values after casting ====================";
+    CLOG(trace) << "left_e:  " << clib::bits(left_e);
+    CLOG(trace) << "left_m:  " << clib::bits(left_m);
+    CLOG(trace) << "right_e: " << clib::bits(right_e);
+    CLOG(trace) << "right_m: " << clib::bits(right_m);
+    CLOG(trace) << "=============================================================";
+#endif
+
     mexttype nmant = 0;
-    if (left.s == right.s)
-        nmant = left_m + right_m;
-    else
-        nmant = delta(left_m, right_m);        
-
     stype nsign = 0;
-    if (left_m > right_m)
-        nsign = left.s;
-    else
-        nsign = right.s;
 
+    if (left.s == right.s)
+    {
+        nsign = left.s;
+        nmant = left_m + right_m;
+    }
+    else if (left_m >= right_m)
+    {
+        nsign = left.s;
+        nmant = left_m - right_m; 
+    }
+    else
+    {
+        nsign = right.s;
+        nmant = right_m - left_m; 
+    }
 
     Flexfloat norm_ans = normalise(nsign, nexp, nmant, res.E, LM, res.B);
     res = norm_ans;
 
-    CLOG(trace) << "Result:" << std::endl << res;
+    CLOG(trace) << "Result: " << res;
     return; 
 }
 
@@ -322,14 +293,12 @@ Flexfloat Flexfloat::normalise(
     stype cur_sign, eexttype cur_exp, mexttype cur_mant, Etype E, Mtype M, Btype B
 )
 {
-    llu_t cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
-    llu_t cur_mant_printable = *reinterpret_cast<llu_t *>(&cur_mant);
-    CLOG(trace) << "==================== Values before normalisation =====================";
-    CLOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
-    CLOG(trace) << "      " << cur_exp_printable;
-    CLOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
-    CLOG(trace) << "      " << cur_mant_printable;
-    CLOG(trace) << "======================================================================";
+#ifndef NDEBUG
+    CLOG(trace) << "============== Values before normalisation ==================";
+    CLOG(trace) << "exp:  " << clib::bits(cur_exp);
+    CLOG(trace) << "mant: " << clib::bits(cur_mant);
+    CLOG(trace) << "=============================================================";
+#endif
 
     if (cur_exp > 0 && cur_mant == 0)
     {
@@ -338,15 +307,16 @@ Flexfloat Flexfloat::normalise(
     }
 
     auto rshift = [&cur_exp, &cur_mant](int128_t n) 
-    { 
+    {
+        assert(n >= 0);
         CLOG(trace) << "rshift on n = " << static_cast<uint64_t>(n);
         cur_mant = cur_mant >> n;
         cur_exp = n + cur_exp;
     };
     auto lshift = [&cur_exp, &cur_mant](int128_t n) 
-    { 
+    {
+        assert(n >= 0);
         CLOG(trace) << "lshift on n = " << static_cast<uint64_t>(n);
-
         cur_mant = cur_mant << n;
         cur_exp = cur_exp - n;
     };
@@ -354,14 +324,12 @@ Flexfloat Flexfloat::normalise(
     auto ovf = [&cur_exp, &cur_mant, M, E]() 
     { 
         CLOG(trace) << "overflow";
-
         cur_mant = max_mant(M+1);
         cur_exp = max_exp(E);
     };
     auto unf = [&cur_exp, &cur_mant, M, E]() 
     { 
         CLOG(trace) << "underflow";
-
         cur_mant = 0;
         cur_exp = 0;
     };
@@ -406,7 +374,6 @@ Flexfloat Flexfloat::normalise(
         else
         {
             CLOG(trace) << "msb(cur_mant) > M";
-
             if (delta_m > delta_e)
                 ovf();
             else
@@ -434,81 +401,97 @@ Flexfloat Flexfloat::normalise(
         }
     }
 
-    cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
-    cur_mant_printable = *reinterpret_cast<llu_t *>(&cur_mant);
-    CLOG(trace) << "=================== Values after pre-normalisation ===================";
-    CLOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
-    CLOG(trace) << "      " << cur_exp_printable;
-    CLOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
-    CLOG(trace) << "      " << cur_mant_printable;
-    CLOG(trace) << "======================================================================";
-
+    assert(E < sizeof(etype)*8);
+    assert(M < sizeof(mtype)*8);
     assert(cur_exp >= 0);
-    if (cur_exp > 0)
-    {
-        CLOG(trace) << "cur_exp > 0: Value is normalized";
+    assert(cur_exp <= max_exp(E));
+    assert(msb(cur_mant) <= sizeof(mtype)*8);    
+    
+    mtype mant = zip(cur_exp, cur_mant, M);
+    etype exp = static_cast<etype>(cur_exp);
 
-        assert(cur_mant >= max_mant(M));
-        cur_mant -= static_cast<uint128_t>(max_mant(M) + 1);
+#ifndef NDEBUG
+    CLOG(trace) << "================ Values after normalisation =================";
+    CLOG(trace) << "exp:  " << clib::bits(cur_exp);
+    CLOG(trace) << "mant: " << clib::bits(cur_mant);
+    CLOG(trace) << "=============================================================";
+    CLOG(trace) << "===================== Values after zip ======================";
+    CLOG(trace) << "exp:  " << clib::bits(cur_exp);
+    CLOG(trace) << "mant: " << clib::bits(cur_mant);
+    CLOG(trace) << "=============================================================";
+#endif
+
+    return Flexfloat(E, M, B, cur_sign, exp, mant);
+}
+
+// if e > 0  -> normalized value   -> m' = 2^M + m
+// if e == 0 -> denormalized value -> m' = 2*m
+Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype M)
+{
+    if (exp > 0)
+    {
+        CLOG(trace) << "exp > 0: Value is normalized";
+
+        assert(ext_mant >= max_mant(M));
+        ext_mant -= max_mant(M) + 1;
     }
     else
     {
-        CLOG(trace) << "cur_exp == 0: Value is denormalized";
+        CLOG(trace) << "exp == 0: Value is denormalized";
 
-        cur_mant >>= 1;
+        ext_mant >>= 1;
     }
 
-    cur_exp_printable  = *reinterpret_cast<llu_t *>(&cur_exp);
-    cur_mant_printable = *reinterpret_cast<llu_t *>(&cur_mant);
-    CLOG(trace) << "===================== Values after normalisation ====================";
-    CLOG(trace) << "exp:  " << std::bitset<sizeof(llu_t)*8>(cur_exp_printable);
-    CLOG(trace) << "      " << cur_exp_printable;
-    CLOG(trace) << "mant: " << std::bitset<sizeof(llu_t)*8>(cur_mant_printable);
-    CLOG(trace) << "      " << cur_mant_printable;
-    CLOG(trace) << "======================================================================";
-
-    assert(E <= 64);
-    assert(M <= 64);
-    assert(cur_exp >= 0);
-    assert(msb(static_cast<uint128_t>(cur_exp)) <= 63);
-    assert(msb(cur_mant) <= 63);
-
-    return Flexfloat(
-        E, M, B, 
-        cur_sign, static_cast<etype>(cur_exp), static_cast<mtype>(cur_mant)
-    );
+    assert(ext_mant <= max_mant(M));
+    return static_cast<mtype>(ext_mant);
 }
 
+// if e > 0  -> normalized value   -> m' = 2^M + m
+// if e == 0 -> denormalized value -> m' = 2*m
+Flexfloat::mexttype Flexfloat::unzip(etype exp, mtype mant, Mtype M)
+{
+    if (exp == 0)
+        return ( 2 * static_cast<mexttype>(mant) );
+    else
+        return ( (1 << M) + static_cast<mexttype>(mant) );
+}
+Flexfloat::mexttype Flexfloat::unzip(const Flexfloat& ff)
+{
+    if (ff.e == 0)
+        return ( 2 * static_cast<mexttype>(ff.m) );
+    else
+        return ( (1 << ff.M) + static_cast<mexttype>(ff.m) );
+}
+
+ 
 bool Flexfloat::is_valid() const
 {
-    if (!(M <= sizeof(m)*8))
+    if (M > sizeof(m)*8)
     {
-        CLOG(error) << "!(M <= sizeof(m)*8)";
+        CLOG(error) << "M > sizeof(m)*8";
         return false;
     }
-    if (!(E <= sizeof(e)*8))
+    if (E > sizeof(e)*8)
     {
-        CLOG(error) << "!(E <= sizeof(e)*8)";
+        CLOG(error) << "E > sizeof(e)*8";
+        return false;
+    }
+    if (s > 1)
+    {
+        CLOG(error) << "s > 1";
+        return false;
+    }
+    if (e > static_cast<etype>((1 << E) - 1))
+    {
+        CLOG(error) << "e > static_cast<etype>((1 << E) - 1)";
+        return false;
+    }
+    if (m > static_cast<mtype>((1 << M) - 1))
+    {
+        CLOG(error) << "m > static_cast<mtype>((1 << M) - 1)";
         return false;
     }
 
-    if (!(s <= 1))
-    {
-        CLOG(error) << "!(s <= 1)";
-        return false;
-    }
-    if (!(e <= static_cast<etype>((1 << E) - 1)))
-    {
-        CLOG(error) << "!(e <= static_cast<etype>((1 << E) - 1))";
-        return false;
-    }
-    if (!(m <= static_cast<mtype>((1 << M) - 1)))
-    {
-        CLOG(error) << "!(m <= static_cast<mtype>((1 << M) - 1))";
-        return false;
-    }
-
-    CLOG(trace) << "Object is valid";
     return true;
 
 }

@@ -81,16 +81,18 @@ TEST_CASE("Test Flexfloat sum")
     ff::sum(a1, b1, c1);
     LOG(debug) << "result in float = " << to_float(c1) << std::endl;
 
-    ff a2(8, 23, 127, 1, 132, 2654006); // -42.124231
-    LOG(debug) << "a in float = " << to_float(a2) << std::endl;
 
-    ff b2(8, 23, 127, 0, 142, 451618); // 34532.1324
-    LOG(debug) << "b in float = " << to_float(b2) << std::endl;
 
-    ff c2(8, 23, 127, 1, 1, 1);
+    ff a2(5, 10, 15, 1028);
+    //LOG(debug) << "a in float = " << to_float(a2) << std::endl;
+
+    ff b2(5, 10, 15, 53248);
+    //LOG(debug) << "b in float = " << to_float(b2) << std::endl;
+
+    ff c2(5, 10, 15, 1);
     
     ff::sum(a2, b2, c2);
-    LOG(debug) << "result in float = " << to_float(c2) << std::endl;
+    LOG(debug) << "result\n" << c2 << std::endl;
     
     CHECK(1);
 }

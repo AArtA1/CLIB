@@ -59,6 +59,9 @@ public:
     */
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
 
+
+    Flexfloat(const Flexfloat&) = default;
+
     //! Generate Overflow number with s = 1; e = 2^E - 1; m = 2^M - 1
     static Flexfloat ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
 
@@ -151,6 +154,14 @@ private:
         stype cur_sign, eexttype cur_exp, mexttype cur_mant, Etype E, Mtype M, Btype B
     );
 
+    // Преобразует число с расширенной мантиссой в число с обычной мантиссой
+    static mtype zip(eexttype exp, mexttype ext_mant, Mtype M);
+    
+    // Преобразует число с обычной мантиссой в число с расширенной мантиссой
+    static mexttype unzip(etype exp, mtype mant, Mtype M);
+    static mexttype unzip(const Flexfloat& ff);
+
     bool is_valid() const;
+    void static check_ffs(std::initializer_list<Flexfloat> list);
 };
 }

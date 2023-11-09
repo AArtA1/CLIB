@@ -14,6 +14,11 @@ if (NOT CMAKE_COMPILER)
 endif()
 set(CXX "g++-12")
 
+# By default - debug
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug")
+endif()
+message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 project(clib VERSION 1.0 LANGUAGES CXX)
 get_directory_property(IS_SUBPROJECT PARENT_DIRECTORY)
