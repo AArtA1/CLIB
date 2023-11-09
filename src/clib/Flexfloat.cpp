@@ -392,21 +392,21 @@ Flexfloat Flexfloat::normalise(
             if (delta_m < delta_e)
                 ovf();
             else
-                std::min(delta_m, cur_exp);
+                lshift(std::min(delta_m, cur_exp));
         }
         else
         {
             CLOG(trace) << "msb(cur_mant) > M";
             ovf();
         }
-    }
-
+    } 
+    
     assert(E < sizeof(etype)*8);
     assert(M < sizeof(mtype)*8);
     assert(cur_exp >= 0);
     assert(cur_exp <= max_exp(E));
-    assert(msb(cur_mant) <= sizeof(mtype)*8);    
-    
+    assert(msb(cur_mant) <= sizeof(mtype)*8);
+
     mtype mant = zip(cur_exp, cur_mant, M);
     etype exp = static_cast<etype>(cur_exp);
 
@@ -416,8 +416,8 @@ Flexfloat Flexfloat::normalise(
     CLOG(trace) << "mant: " << clib::bits(cur_mant);
     CLOG(trace) << "=============================================================";
     CLOG(trace) << "===================== Values after zip ======================";
-    CLOG(trace) << "exp:  " << clib::bits(cur_exp);
-    CLOG(trace) << "mant: " << clib::bits(cur_mant);
+    CLOG(trace) << "exp:  " << clib::bits(exp);
+    CLOG(trace) << "mant: " << clib::bits(mant);
     CLOG(trace) << "=============================================================";
 #endif
 
