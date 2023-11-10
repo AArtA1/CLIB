@@ -8,7 +8,7 @@ namespace clib {
  *
  * \details Число поддерживает денормализованные числа; нет NaN; нет ±inf
  * 
- * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
+ * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
  */
 class Flexfloat
 {
@@ -118,7 +118,7 @@ public:
     * \param[in] right Правый операнд
     * \param[in] res Результат
     * 
-    * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
+    * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
     */
     static void mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
@@ -128,9 +128,52 @@ public:
     * \param[in] right Правый операнд
     * \param[in] res Результат
     * 
-    * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
+    * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
     */
     static void sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
+
+    /*! @brief Получение 1/x
+    *
+    * \param[in] x Число для инвертирования
+    * \param[in] res Результат
+    * 
+    * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
+    */
+    static void inv(const Flexfloat &x, Flexfloat &res, size_t precision = 0);
+
+    /*! @brief Получение нормализованного числа из денормализованного
+    *
+    * \param[in] x Число для инвертирования
+    * \param[in] res Результат
+    * 
+    * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
+    * \see TODO
+    */
+    struct ext_ff 
+    {
+        eexttype exp = 0; 
+        mexttype mant = 0;
+    };
+    static ext_ff get_normalized(const Flexfloat &denorm);
+
+    /*! @brief Конвертация целого числа в FlexFloat
+    *
+    * \param[in] x целое число
+    * \return FlexFloat
+    * 
+    * \see TODO
+    */
+    static Flexfloat ff_from_int(Etype E, Mtype M, Btype B, int x);
+
+    /*! @brief Округление FlexFloat до ближайшего целого числа вниз
+    *
+    * \return ближайшее целое число меньшее FlexFloat
+    * 
+    * \see TODO
+    */
+    int ceil() const;
+
+
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
@@ -149,7 +192,7 @@ private:
     //           0 <= cur_exp  < 2^E
     //           0 <= cur_mant < 2^M
     //
-    // See https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
+    // See gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
     static Flexfloat normalise(
         stype cur_sign, eexttype cur_exp, mexttype cur_mant, Etype E, Mtype M, Btype B
     );

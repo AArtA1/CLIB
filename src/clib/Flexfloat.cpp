@@ -269,6 +269,114 @@ void Flexfloat::sum(
     return; 
 }
 
+Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
+{
+#ifndef NDEBUG
+    CLOG(trace) << "Getting normal value of denormal";
+    check_ffs({denorm});
+    CLOG(trace) << "Value " << denorm;
+
+    assert(denorm.e == 0);
+#endif
+
+    if (denorm.m == 0)
+        return ext_ff {0, 0};
+
+    auto N = msb(denorm.m);
+    auto n = denorm.m - (1 << msb(denorm.m));
+    auto delta_N = denorm.M - N;
+
+    auto ext_exp = static_cast<eexttype>(1) - delta_N;
+    auto ext_mant = n << delta_N;
+
+#ifndef NDEBUG
+    CLOG(trace) << "Extended exp  = " << static_cast<int64_t>(ext_exp);
+    CLOG(trace) << "Extended mant = " << clib::bits(ext_mant);
+#endif
+
+    return ext_ff {ext_exp, ext_mant};
+}
+
+void Flexfloat::inv(const Flexfloat &x, Flexfloat &res, size_t precision)
+{
+#ifndef NDEBUG
+    CLOG(trace) << "Inv: 1/x";
+    check_ffs({x, res});
+    CLOG(trace) << "x: " << x;
+#endif
+
+    if (x.m == 0 && x.e == 0) 
+        throw std::runtime_error("division by zero");
+
+    eexttype nexp = x.e;
+    mexttype nmant = x.m;
+    if (x.e == 0)
+    {
+        ext_ff normal = get_normalized(x);
+        nexp  = normal.exp;
+        nmant = normal.mant;
+    }
+
+    // (1-x)/(1+x) = 1 - x
+    if (precision == 0)
+    {
+        nexp  = -nexp + (x.B + res.B - static_cast<eexttype>(1));
+        nmant = static_cast<mexttype>(1 << x.M) - x.m;
+        
+        // normalise expects extended mantissa
+        nmant += static_cast<mexttype>(1 << x.M);
+        Flexfloat norm_ans = normalise(x.s, nexp, nmant, res.E, res.M, res.B);
+        res = norm_ans;
+    }
+    // Lagrange polinomials
+    else
+    {
+        assert(0);
+    }
+}
+
+Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n)
+{
+#ifndef NDEBUG
+    CLOG(trace) << "FlexFloat from int = " << n;
+#endif
+
+    if (n == 0)
+    {
+        return Flexfloat(E, M, B, 0);
+    }
+
+    stype s = 0;
+    if (n < 0)
+    {
+        n = -n;
+        s = 1;
+    }
+
+    Mtype N = msb(static_cast<uint128_t>(n));
+    mexttype mant = 0;
+    mexttype delta_N = static_cast<mexttype>(n) - (1 << N);
+    if (N > M)
+        mant = delta_N >> (N-M);
+    else
+        mant = delta_N << (M-N);
+
+    // normalise expects extended mantissa
+    mant += static_cast<mexttype>(1 << M);
+    return normalise(s, N + B, mant, E, M, B);
+}
+
+int Flexfloat::ceil() const
+{
+#ifndef NDEBUG
+    CLOG(trace) << "ceil";
+    check_ffs({*this});
+    CLOG(trace) << "ff: " << *this;
+#endif
+
+    return 0;
+}
+
 std::string Flexfloat::bits() const
 {
     const size_t s_size = sizeof(s) * 8;
@@ -340,7 +448,7 @@ Flexfloat Flexfloat::normalise(
     if (cur_exp <= 0)
     {
         // We must decrease mantissa, unless exponent != 0
-        CLOG(trace) << "cur_exp < 0";
+        CLOG(trace) << "cur_exp <= 0";
 
         if (cur_mant == 0)
         {

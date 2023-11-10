@@ -37,6 +37,9 @@ T delta(T a, T b)
 template <typename T>
 std::string bits(T val)
 {
+    if (val < 0)
+        return std::to_string(static_cast<int64_t>(val));
+
     if (sizeof(T) > sizeof(uint64_t))
     {
         using basetype = uint64_t;

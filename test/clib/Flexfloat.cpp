@@ -96,3 +96,73 @@ TEST_CASE("Test Flexfloat sum")
     
     CHECK(1);
 }
+
+TEST_CASE("Test Flexfloat get_normalized")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat get_normalized");
+    LOG(debug) << std::fixed << std::setprecision(5);
+    using ff = clib::Flexfloat;
+
+    ff a1(4, 4, 10, 0, 0, 13);
+    ff a2(4, 4, 10, 0, 0, 1);
+    ff a3(4, 4, 10, 0, 0, 0);
+
+    ff::get_normalized(a1);
+    ff::get_normalized(a2);
+    ff::get_normalized(a3);
+   
+    CHECK(1);
+}
+
+
+TEST_CASE("Test Flexfloat inv")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat inv");
+    LOG(debug) << std::fixed << std::setprecision(5);
+    using ff = clib::Flexfloat;
+
+    ff c(8, 23, 127, 1, 1, 1);
+
+    ff a(8, 23, 127, 0, 129, 4194304); // 6 in float
+    LOG(debug) << "a in float = " << to_float(a) << std::endl;
+    ff::inv(a, c);
+    LOG(debug) << "1 / a in float = " << to_float(c) << std::endl;
+
+    ff b(8, 23, 127, 0, 129, 6291456); // 7 in float
+    LOG(debug) << "b in float = " << to_float(b) << std::endl;
+    ff::inv(b, c);
+    LOG(debug) << "1 / b in float = " << to_float(c) << std::endl;
+
+    ff d(8, 23, 127, 0, 127, 0); // 1 in float
+    LOG(debug) << "d in float = " << to_float(d) << std::endl;
+    ff::inv(d, c);
+    LOG(debug) << "1 / d in float = " << to_float(c) << std::endl;
+
+    ff e(8, 23, 127, 0, 0, 4194304); // small value in float
+    // LOG(debug) << "e in float = " << to_float(e) << std::endl;
+    ff::inv(e, c);
+    LOG(debug) << "1 / e in float = " << to_float(c) << std::endl;
+
+    CHECK(1);
+}
+
+
+TEST_CASE("Test Flexfloat ff_from_int")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat ff_from_int");
+    LOG(debug) << std::fixed << std::setprecision(5);
+    using ff = clib::Flexfloat;
+
+    auto ans = ff::ff_from_int(8, 23, 127, 1);
+    if (ans.get_e() != 0) LOG(debug) << "1 in float = " << to_float(ans) << std::endl;
+
+    ans = ff::ff_from_int(8, 23, 127, 3);
+    if (ans.get_e() != 0) LOG(debug) << "3 in float = " << to_float(ans) << std::endl;
+
+    ans = ff::ff_from_int(8, 23, 127, 10000);
+    if (ans.get_e() != 0) LOG(debug) << "10000 in float = " << to_float(ans) << std::endl;
+
+    ans = ff::ff_from_int(8, 23, 127, -7123465);
+    if (ans.get_e() != 0) LOG(debug) << "-7123465 in float = " << to_float(ans) << std::endl;
+    CHECK(1);
+}
