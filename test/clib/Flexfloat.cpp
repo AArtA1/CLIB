@@ -166,3 +166,17 @@ TEST_CASE("Test Flexfloat ff_from_int")
     if (ans.get_e() != 0) LOG(debug) << "-7123465 in float = " << to_float(ans) << std::endl;
     CHECK(1);
 }
+
+TEST_CASE("Test Flexfloat ceil")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat ceil");
+    LOG(debug) << std::fixed << std::setprecision(5);
+    using ff = clib::Flexfloat;
+
+    ff a(8, 23, 127, 1, 129, 400000);
+    int ceiled = a.ceil();
+    LOG(debug) << "a in float = " << to_float(a);
+    LOG(debug) << "a ceiled = " << ceiled << std::endl;
+
+    CHECK(1);
+}

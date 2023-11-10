@@ -372,9 +372,29 @@ int Flexfloat::ceil() const
     CLOG(trace) << "ceil";
     check_ffs({*this});
     CLOG(trace) << "ff: " << *this;
+
+    // assert(e < std::numeric_limits<Btype>::max); TODO
 #endif
 
-    return 0;
+    Btype eps = static_cast<Btype>(e) - B;
+    if (eps < 0)
+        return 0;
+    else if (eps == 0)
+        return s == 0 ? 1 : -1;
+    else if (eps <= M)
+    {
+        // TODO asserts
+        int m0 = static_cast<int>(m / (1 << (M-eps)));
+        int ceiled = (1 << eps) + m0;
+        return s > 0 ? ceiled : -ceiled;
+    }
+    else
+    {
+        // TODO asserts
+        size_t shift = static_cast<size_t>(eps-M);
+        int ceiled = static_cast<int>(1 << shift * ((1 << M) + m));
+        return s > 0 ? ceiled : -ceiled;
+    }
 }
 
 std::string Flexfloat::bits() const

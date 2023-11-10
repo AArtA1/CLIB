@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 {
     clib::init_logs();
     //clib::sev_filter(clib::trace);
-    clib::tag_filter("Flexfloat ff_from_int");
+    clib::tag_filter("Flexfloat ceil");
     
     doctest::Context context;
 
