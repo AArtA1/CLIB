@@ -18,7 +18,8 @@ public:
 
     using stype = uint8_t; // size of SIGN
     using ntype = uint64_t; // size of NUMERATOR
-    using nrestype = uint128_t;
+    using nrestype = uint128_t; // size for calculating operations with ntype
+    using wtype = int16_t; // size for calculating operations with itype and ftype 
 private:
      /// INT_WIDTH
     Itype I;
@@ -68,6 +69,12 @@ public:
     static void multiplication(const Flexfixed& left, const Flexfixed & right, Flexfixed & res);
 
 
+    static void inversion(const Flexfixed& value, Flexfixed& res);
+
+
+    static wtype msb(const Flexfixed& res) {return (res.I + res.F - 1);};
+
+
     /*! @brief Сложение Flexfixed
     *
     * \param[in] left Левый операнд
@@ -85,6 +92,11 @@ public:
     */
     static void substraction(const Flexfixed& left,const Flexfixed& right, Flexfixed& res);
 
+    static void check_fxs(std::initializer_list<Flexfixed> list);
+
+    std::string bits() const;
+
+    std::string bits(const Itype width_I,const Ftype width_F) const;
 
     /// @brief Сравнивает два Flexfixed значения 
     /// @param left Левый операнд

@@ -35,27 +35,15 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) :
 
 // consider we already have res parameters: I and F 
 void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Flexfixed& res){
-    CLOG(trace) << "Flex multiplication of two numbers";
-
-
-    if (!left.is_valid())
-    {
-        CLOG(error) << "Left operand is invalid";
-        throw std::string{"Invalid operand"};
-    }
-
-    if (!right.is_valid())
-    {
-        CLOG(error) << "Right operand is invalid";
-        throw std::string{"Invalid operand"};
-    }
-
-    CLOG(trace) << "Left operand: " << left;
+    
+    CLOG(trace) << "Multiplication of two numbers";
+    check_fxs({left, right, res});
+    CLOG(trace) << "Left  operand: " << left;
     CLOG(trace) << "Right operand: " << right;
 
     res.s = left.s ^ right.s;
 
-    int16_t delta_f = static_cast<int16_t>(left.F + right.F - res.F);
+    wtype delta_f = static_cast<wtype>(left.F + right.F - res.F);
 
     CLOG(trace) << "DELTA_F:" << delta_f;
 
@@ -86,24 +74,9 @@ void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Fle
 
 void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed& res){
     
-    CLOG(trace) << "Flex addition of two numbers";
-
-
-    if (!left.is_valid())
-    {
-        CLOG(error) << "Left operand is invalid";
-        throw std::string{"Invalid operand"};
-    }
-
-    if (!right.is_valid())
-    {
-        CLOG(error) << "Right operand is invalid";
-        throw std::string{"Invalid operand"};
-    }
-
-
-
-    CLOG(trace) << "Left operand: " << left;
+    CLOG(trace) << "Addition of two numbers";
+    check_fxs({left, right, res});
+    CLOG(trace) << "Left  operand: " << left;
     CLOG(trace) << "Right operand: " << right;
 
     Ftype max_F = std::max(left.F, right.F);
@@ -123,7 +96,7 @@ void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed
 
     ntype res_n = left.s == right.s?left_n + right_n:left_n - right_n;
 
-    int16_t delta_F = static_cast<int16_t>(max_F) - res.F;
+    wtype delta_F = static_cast<wtype>(max_F) - res.F;
 
     CLOG(trace) << "DELTA_F: " << delta_F;
 
@@ -166,9 +139,73 @@ void Flexfixed::substraction(const Flexfixed& left, const Flexfixed& right, Flex
 
 
 
+void Flexfixed::inversion(const Flexfixed& value, Flexfixed& res){
+    CLOG(trace) << "Number inversion";
+    check_fxs({value, res});
+    CLOG(trace) << "Value: " << value;
+
+    res.s = value.s;
+
+    wtype L = msb(value);
+
+    wtype R = L + 1;
+
+    nrestype res_n = ((static_cast<ntype>(1) << L) + (static_cast<ntype>(1) << R) - value.n) << (value.F + res.F);
+    
+    uint8_t lsb = (res_n >> (L + R - 1)) % 2;  
+
+    res_n = res_n >> (L+R);
+
+    //res_n += lsb;
+
+    // overflow
+    if(res_n >= static_cast<ntype>(1) << (res.I  + res.F)){
+        CLOG(trace) << "IS_OVERFLOW: TRUE"; 
+        res_n = (static_cast<ntype>(1) << (res.I  + res.F)) - 1;
+    } else{
+        CLOG(trace) << "IS_OVERFLOW: FALSE"; 
+    }
+
+    res.n = static_cast<ntype>(res_n);
+
+    CLOG(trace) << "Result of value inversion: " << res;
+}
+
+
 bool operator>(const Flexfixed& left,const Flexfixed& right) {
     //todo for different signs
     return left.get_int() != right.get_int() ? left.get_int() > right.get_int() : left.get_frac() > right.get_frac();    
+}
+
+std::string Flexfixed::bits() const
+{
+    /*
+
+    std::stringstream ostream;
+    
+    ostream << bitset(1,s) << "|" << bitset((I+F),n);
+    
+    std::string str = ostream.str();
+
+    str.insert(I+2,"|");
+
+    return str;
+    */
+
+   std::stringstream ostream;
+
+   ostream << bitset(s,1) << "|" << bitset(get_int(),I) << "|" << bitset(get_frac(),F);
+
+   return ostream.str();
+}
+
+
+std::string Flexfixed::bits(const Itype width_I,const Ftype width_F) const{
+    std::stringstream ostream;
+
+    ostream << bitset(s,1) << "|" << bitset(get_int(),I,width_I,false) << "|" << bitset(get_frac(),F,width_F,true);
+
+    return ostream.str();   
 }
 
 
@@ -176,23 +213,25 @@ bool operator>(const Flexfixed& left,const Flexfixed& right) {
 
 std::ostream& operator<<(std::ostream &oss, const Flexfixed &num)
 {
-    oss << "INT_WIDTH:" << static_cast<int>(num.I) << "\n";
-    oss << "FRAC_WIDTH:" << static_cast<int>(num.F) << "\n";
+    oss << "(S, I, F) = (" << 1 << ", " << +num.I << ", " << +num.F << ")";
+    //oss << "  val = " << num.bits();
 
-    std::string sign_s = std::bitset<8>(num.s).to_string();
-    std::string int_s = std::bitset<64>(num.get_int()).to_string();
-    std::string frac_s = std::bitset<64>(num.get_frac()).to_string();
-
-    sign_s = sign_s.substr(8 - 1, std::string::npos);
-    int_s = int_s.substr(64 - num.I, std::string::npos);
-    frac_s = frac_s.substr(64 - num.F, std::string::npos);
-
-    oss << "Sign: " << sign_s << std::endl;
-    oss << "Int:  " << int_s << std::endl;
-    oss << "Frac: " << frac_s << std::endl;
-    oss << "Presentation of flex_fixed " << int_s << "." << frac_s << std::endl;
     return oss;
 }
+
+
+void Flexfixed::check_fxs(std::initializer_list<Flexfixed> list)
+{
+    for (auto& elem : list)
+    {
+        if (!elem.is_valid())
+        {
+            CLOG(error) << "Operand is invalid. Please check parameter correctness";
+            throw std::runtime_error{"Invalid operand"};
+        }
+    }
+}
+
 
 bool Flexfixed::is_valid() const
 {

@@ -7,8 +7,11 @@
 #include <cassert>
 #include <ostream>
 #include <fstream>
+#include <sstream>
 
 namespace clib {
+
+#define arg_t uint32_t
 
 using uint128_t = __uint128_t;
 using int128_t  = __int128_t;
@@ -83,5 +86,76 @@ std::string bits(T val)
         
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
+
+
+
+class bitset {
+public:
+    bitset(arg_t value, const size_t n) : arr_(new bool[n]), n_(n), width_(n),to_left_side_(false){
+        make_bitset(value);
+    }
+
+    bitset(arg_t value,const size_t n, const size_t width, bool to_left_side) : arr_(new bool[n]), n_(n), width_(width),to_left_side_(to_left_side){
+        make_bitset(value);
+    }
+
+    ~bitset(){
+        delete[] arr_;
+    }
+
+    void make_bitset(arg_t &value) const {
+        for (size_t i = 0; i < n_; ++i) {
+            arr_[i] = value & (static_cast<arg_t>(1) << i);
+        }
+    }
+
+    arg_t convert2uint() const {
+        arg_t res = 0;
+        for (size_t i = 0; i < n_; ++i) {
+            res = res | ((arr_[i] ? 1 : 0) << i);
+        }
+        return res;
+    }
+
+    friend bool operator==(const bitset &left, const bitset &right) {
+        if (left.n_ != right.n_) {
+            throw "Sizes of bitsets have to be the same!";
+        }
+        for (size_t i = 0; i < left.n_; ++i) {
+            if (left.arr_[i] != right.arr_[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    friend std::ostream &operator<<(std::ostream &oss, const bitset &num){
+        if(!num.to_left_side_){
+            for(int i = 0; i < (num.width_ - num.n_); ++i){
+                oss << " ";
+            }
+            for (int i = num.n_ - 1; i >= 0; --i) {
+                oss << num.arr_[i];
+            }
+        }
+        else{
+            for (int i = num.n_ - 1; i >= 0; --i) {
+                oss << num.arr_[i];
+            }
+            for(int i = 0; i < (num.width_ - num.n_); ++i){
+                oss << " ";
+            }
+        }
+        return oss;
+    }
+
+private:
+    bool *arr_;
+    const size_t n_;
+    const size_t width_;
+    const bool to_left_side_;
+};
+
 
 }
