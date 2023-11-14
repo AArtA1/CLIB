@@ -66,6 +66,10 @@ Flexfloat Flexfloat::max_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
 {
     return Flexfloat(E_n, M_n, B_n, s_n, max_exp(E_n), max_mant(M_n));
 }
+Flexfloat Flexfloat::max_norm() const
+{
+    return Flexfloat(E, M, B, s, max_exp(), max_mant());
+}
 
 Flexfloat::etype Flexfloat::max_exp() const
 {
@@ -279,15 +283,16 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
     assert(denorm.e == 0);
 #endif
 
+    mexttype ext_mant = denorm.m;
     if (denorm.m == 0)
-        return ext_ff {0, 0};
+        ext_mant = 1;
 
-    auto N = msb(denorm.m);
-    auto n = denorm.m - (1 << msb(denorm.m));
+    auto N = msb(ext_mant);
+    auto n = ext_mant - (1 << msb(ext_mant));
     auto delta_N = denorm.M - N;
 
-    auto ext_exp = static_cast<eexttype>(1) - delta_N;
-    auto ext_mant = n << delta_N;
+    eexttype ext_exp = static_cast<eexttype>(1) - delta_N;
+    ext_mant = n << delta_N;
 
 #ifndef NDEBUG
     CLOG(trace) << "Extended exp  = " << static_cast<int64_t>(ext_exp);
@@ -297,16 +302,20 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
     return ext_ff {ext_exp, ext_mant};
 }
 
-void Flexfloat::inv(const Flexfloat &x, Flexfloat &res, size_t precision)
+void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
 {
+    size_t precision = 0; // TODO
 #ifndef NDEBUG
     CLOG(trace) << "Inv: 1/x";
     check_ffs({x, res});
     CLOG(trace) << "x: " << x;
 #endif
 
-    if (x.m == 0 && x.e == 0) 
-        throw std::runtime_error("division by zero");
+    if (x.m == 0 && x.e == 0)
+    {
+        res = res.max_norm();
+        return;
+    }
 
     eexttype nexp = x.e;
     mexttype nmant = x.m;
@@ -317,15 +326,19 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res, size_t precision)
         nmant = normal.mant;
     }
 
+    // Largest M. All calculations will be with the largest mantissa
+    Mtype LM = std::max({x.M, res.M});
+    nmant <<= (LM - x.M);
+
     // (1-x)/(1+x) = 1 - x
     if (precision == 0)
     {
         nexp  = -nexp + (x.B + res.B - static_cast<eexttype>(1));
-        nmant = static_cast<mexttype>(1 << x.M) - x.m;
-        
+        nmant = static_cast<mexttype>(1 << LM) - nmant - 1;
+
         // normalise expects extended mantissa
-        nmant += static_cast<mexttype>(1 << x.M);
-        Flexfloat norm_ans = normalise(x.s, nexp, nmant, res.E, res.M, res.B);
+        nmant += static_cast<mexttype>(1 << LM);
+        Flexfloat norm_ans = normalise(x.s, nexp, nmant, res.E, LM, res.B);
         res = norm_ans;
     }
     // Lagrange polinomials

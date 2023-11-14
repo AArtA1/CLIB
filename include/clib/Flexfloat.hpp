@@ -79,6 +79,7 @@ public:
 
     //! Generate maximal normalized value = 2^(Emax - B) * (1 - 2^(-M))
     static Flexfloat max_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+    Flexfloat max_norm() const;
 
     etype get_e() const noexcept { return e; }
     stype get_s() const noexcept { return s; }
@@ -139,7 +140,7 @@ public:
     * 
     * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
     */
-    static void inv(const Flexfloat &x, Flexfloat &res, size_t precision = 0);
+    static void inv(const Flexfloat &x, Flexfloat &res);
 
     /*! @brief Получение нормализованного числа из денормализованного
     *

@@ -143,6 +143,10 @@ TEST_CASE("Test Flexfloat inv")
     ff::inv(e, c);
     LOG(debug) << "1 / e in float = " << to_float(c) << std::endl;
 
+    ff f(5, 10, 15, 1, 0, 1023); // small value in float
+    ff::inv(f, c);
+    LOG(debug) << "1 / f in float = " << to_float(c) << std::endl;
+
     CHECK(1);
 }
 
