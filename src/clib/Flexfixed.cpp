@@ -3,6 +3,8 @@
 
 namespace clib {
 
+//#define LSB
+
 Flexfixed::Flexfixed(Itype I_n,Ftype F_n): I(I_n), F(F_n), s(0), n(0){
     CLOG(trace) << "Object successfully created";
 }
@@ -47,7 +49,7 @@ void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Fle
 
     CLOG(trace) << "DELTA_F:" << delta_f;
 
-    ntype res_n = left.n * right.n;
+    nrestype res_n = left.n * right.n;
 
     if(delta_f >= 0){
         res_n = res_n >> delta_f;
@@ -94,7 +96,7 @@ void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed
         flag = true;
     }
 
-    ntype res_n = left.s == right.s?left_n + right_n:left_n - right_n;
+    nrestype res_n = left.s == right.s?left_n + right_n:left_n - right_n;
 
     wtype delta_F = static_cast<wtype>(max_F) - res.F;
 
@@ -140,11 +142,20 @@ void Flexfixed::substraction(const Flexfixed& left, const Flexfixed& right, Flex
 
 
 void Flexfixed::inversion(const Flexfixed& value, Flexfixed& res){
+    
     CLOG(trace) << "Number inversion";
     check_fxs({value, res});
     CLOG(trace) << "Value: " << value;
 
     res.s = value.s;
+
+    // overflow 
+    if(value.n == 0){
+        CLOG(trace) << "IS_OVERFLOW: TRUE"; 
+        res.n = (static_cast<ntype>(1) << (res.I  + res.F)) - 1;
+        CLOG(trace) << "Result of value inversion: " << res;
+        return;
+    }
 
     wtype L = msb(value);
 
@@ -152,11 +163,15 @@ void Flexfixed::inversion(const Flexfixed& value, Flexfixed& res){
 
     nrestype res_n = ((static_cast<ntype>(1) << L) + (static_cast<ntype>(1) << R) - value.n) << (value.F + res.F);
     
+    #ifdef LSB
     uint8_t lsb = (res_n >> (L + R - 1)) % 2;  
+    #endif
 
     res_n = res_n >> (L+R);
 
-    //res_n += lsb;
+    #ifdef LSB
+    res_n += lsb;
+    #endif
 
     // overflow
     if(res_n >= static_cast<ntype>(1) << (res.I  + res.F)){
@@ -171,6 +186,15 @@ void Flexfixed::inversion(const Flexfixed& value, Flexfixed& res){
     CLOG(trace) << "Result of value inversion: " << res;
 }
 
+Flexfixed::wtype Flexfixed::msb(const Flexfixed& val){
+    wtype r = 0;
+    ntype n_t = val.n;
+    while(n_t >>= 1){
+        ++r;
+    }
+    return r;
+}
+
 
 bool operator>(const Flexfixed& left,const Flexfixed& right) {
     //todo for different signs
@@ -179,42 +203,29 @@ bool operator>(const Flexfixed& left,const Flexfixed& right) {
 
 std::string Flexfixed::bits() const
 {
-    /*
-
     std::stringstream ostream;
-    
-    ostream << bitset(1,s) << "|" << bitset((I+F),n);
-    
-    std::string str = ostream.str();
 
-    str.insert(I+2,"|");
+    ostream << std::bitset<1>(s) << "|" << to_string_int() << "|" << to_string_frac();
 
-    return str;
-    */
-
-   std::stringstream ostream;
-
-   ostream << bitset(s,1) << "|" << bitset(get_int(),I) << "|" << bitset(get_frac(),F);
-
-   return ostream.str();
+    return ostream.str();
 }
 
 
-std::string Flexfixed::bits(const Itype width_I,const Ftype width_F) const{
+std::string Flexfixed::bits(const Itype width_I,const Ftype width_F) const
+{
     std::stringstream ostream;
 
-    ostream << bitset(s,1) << "|" << bitset(get_int(),I,width_I,false) << "|" << bitset(get_frac(),F,width_F,true);
+    ostream << std::bitset<1>(s) << "|" << std::setw(width_I - I) << to_string_int() << "|" << to_string_frac() << std::setw(width_F - F);
 
     return ostream.str();   
 }
 
 
 
-
 std::ostream& operator<<(std::ostream &oss, const Flexfixed &num)
 {
     oss << "(S, I, F) = (" << 1 << ", " << +num.I << ", " << +num.F << ")";
-    //oss << "  val = " << num.bits();
+    oss << "  val = " << num.bits();
 
     return oss;
 }
@@ -253,5 +264,9 @@ bool Flexfixed::is_valid() const
     CLOG(trace) << "Object is valid";
     return true;
 }
+
+#ifdef LSB 
+#undef LSB
+#endif
 
 }

@@ -399,20 +399,23 @@ int Flexfloat::ceil() const
 
 std::string Flexfloat::bits() const
 {
-    const size_t s_size = sizeof(s) * 8;
-    const size_t e_size = sizeof(e) * 8;
-    const size_t m_size = sizeof(m) * 8;
+    std::stringstream ostream;
 
-    std::string sign_s = std::bitset<s_size>(s).to_string();
-    std::string exp_s  = std::bitset<e_size>(e).to_string();
-    std::string mant_s = std::bitset<m_size>(m).to_string();
+    ostream << std::bitset<1>(s) << "|" << to_string_e() << "|" << to_string_m();
 
-    sign_s = sign_s.substr(s_size - S, std::string::npos);
-    exp_s  = exp_s.substr (e_size - E, std::string::npos);
-    mant_s = mant_s.substr(m_size - M, std::string::npos);
-
-    return sign_s + "|" + exp_s + "|" + mant_s;
+    return ostream.str();
 }
+
+
+std::string Flexfloat::bits(const Etype width_E,const Mtype width_M) const
+{
+    std::stringstream ostream;
+
+    ostream << std::bitset<1>(s) << "|" << std::setw(width_E - E) << to_string_e() << "|" << to_string_m() << std::setw(width_M - M);
+
+    return ostream.str();   
+}
+
 
 //
 // See gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf

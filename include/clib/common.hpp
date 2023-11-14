@@ -8,10 +8,13 @@
 #include <ostream>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
+#include <vector>
+
 
 namespace clib {
 
-#define arg_t uint32_t
+//#define arg_t uint32_t
 
 using uint128_t = __uint128_t;
 using int128_t  = __int128_t;
@@ -87,8 +90,15 @@ std::string bits(T val)
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
 
+/*
+std::initializer_list<std::string> print(std::initializer_list<Flexfloat> list){
+
+}
+*/
 
 
+
+/*
 class bitset {
 public:
     bitset(arg_t value, const size_t n) : arr_(new bool[n]), n_(n), width_(n),to_left_side_(false){
@@ -156,6 +166,7 @@ private:
     const size_t width_;
     const bool to_left_side_;
 };
+*/
 
 
 }

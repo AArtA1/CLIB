@@ -181,6 +181,14 @@ public:
     /// Выводит Flexfloat в битовом виде
     std::string bits() const;
 
+    std::string bits(const Etype width_E,const Mtype width_M) const;
+
+    inline std::string to_string_e() const { return std::bitset<sizeof(Etype)*8>(get_e()).to_string().substr(sizeof(Etype)*8 - E,E);}
+
+    inline std::string to_string_m() const { return std::bitset<sizeof(Mtype)*8>(get_m()).to_string().substr(sizeof(Mtype)*8 - M,M);}
+
+    inline std::pair<Etype,Mtype> get_params() const {return {E,M};}
+
 private:
 
     // Обрезает мантиссу и экспоненту числа до необходимых значений

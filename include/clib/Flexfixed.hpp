@@ -72,8 +72,9 @@ public:
     static void inversion(const Flexfixed& value, Flexfixed& res);
 
 
-    static wtype msb(const Flexfixed& res) {return (res.I + res.F - 1);};
+    static wtype msb(const Flexfixed& val);
 
+    //static wtype lsb(const Flexfixed& val);
 
     /*! @brief Сложение Flexfixed
     *
@@ -92,8 +93,6 @@ public:
     */
     static void substraction(const Flexfixed& left,const Flexfixed& right, Flexfixed& res);
 
-    static void check_fxs(std::initializer_list<Flexfixed> list);
-
     std::string bits() const;
 
     std::string bits(const Itype width_I,const Ftype width_F) const;
@@ -106,14 +105,14 @@ public:
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfixed &num);
-
-    /// Проверяет корректность числа. Значение n должно быть меньше 2^(I+F)
-    bool is_valid() const;
-
     
     inline Itype get_I() const { return I; } 
 
     inline Ftype get_F() const { return F; }
+
+    inline std::string to_string_int() const { return std::bitset<sizeof(Itype)*8>(get_int()).to_string().substr(sizeof(Itype)*8 - I,I);}
+
+    inline std::string to_string_frac() const { return std::bitset<sizeof(Ftype)*8>(get_frac()).to_string().substr(sizeof(Ftype)*8 - F,F);}
 
     //! \return Возвращает первые I бит от n - целые биты числа.
     inline ntype get_int() const { return n >> F; }
@@ -126,7 +125,15 @@ public:
     //! \return Возвращает n
     inline ntype get_n() const{ return n; } 
 
+    inline std::pair<Itype,Ftype> get_params() const {return {I,F}};
+
+private:
+    static void check_fxs(std::initializer_list<Flexfixed> list);
+
     inline ntype get_max_n(Itype I_n,Ftype F_n) const { return ((static_cast<ntype>(1) << (I_n+F_n)) - 1);}
+
+    /// Проверяет корректность числа. Значение n должно быть меньше 2^(I+F)
+    bool is_valid() const;
 
 };
 
