@@ -435,7 +435,7 @@ std::string Flexfloat::bits(const Etype width_E,const Mtype width_M) const
 {
     std::stringstream ostream;
 
-    ostream << std::bitset<1>(s) << "|" << std::setw(width_E - E) << to_string_e() << "|" << to_string_m() << std::setw(width_M - M);
+    ostream << std::bitset<1>(s) << "|" << std::setw(width_E) << to_string_e() << "|" << to_string_m() << std::setw(width_M);
 
     return ostream.str();   
 }

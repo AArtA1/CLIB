@@ -215,7 +215,7 @@ std::string Flexfixed::bits(const Itype width_I,const Ftype width_F) const
 {
     std::stringstream ostream;
 
-    ostream << std::bitset<1>(s) << "|" << std::setw(width_I - I) << to_string_int() << "|" << to_string_frac() << std::setw(width_F - F);
+    ostream << std::bitset<1>(s) << "|" << std::setw(width_I) << to_string_int() << "|" << to_string_frac() << std::setw(width_F);
 
     return ostream.str();   
 }
