@@ -182,7 +182,7 @@ public:
     /// Выводит Flexfloat в битовом виде
     std::string bits() const;
 
-    std::string bits(const Etype width_E,const Mtype width_M) const;
+    std::string bits(const Flexfloat& ff) const;
 
     inline std::string to_string_e() const { 
         return std::bitset<sizeof(etype)*8>(get_e()).to_string().substr(sizeof(etype)*8 - E);

@@ -34,15 +34,14 @@ public:
     /// @brief Пустой конструктор удален, так как данное значение не имеет смысла.
     Flexfixed() = delete;
 
-    /*! @brief Создает Flexfloat
+    /*! @brief Создает Flexfixed
     *
     * \param[in] I_n Ширина целой части числа в битах
     * \param[in] F_n Ширина дробной части числа в битах. Количество бит указывает желаемую точность после запятой.
     */
     Flexfixed(Itype I_n,Ftype F_n);
-    
-    /// @brief Конструктор копирования для создания копий экземпляра
-    /// @param Ссылка на копируемый экземпляр
+
+
     Flexfixed(const Flexfixed&) = default;
 
 
@@ -113,7 +112,7 @@ public:
     /// @param width_I Максимальная ширина целочисленной части 
     /// @param width_F Максимальная ширина дробной части
     /// @return 
-    std::string bits(const Itype width_I,const Ftype width_F) const;
+    std::string bits(const Flexfixed& fx) const;
 
     /// @brief Сравнивает два Flexfixed значения 
     /// @param left Левый операнд
@@ -122,13 +121,13 @@ public:
     friend bool operator>(const Flexfixed& left,const Flexfixed& right);
 
     /// @brief Перегруженный оператор вывода << для представления экземпляра Flexfixed в виде строки
+    /// 
     /// @param oss Ссылка на выходной поток
     /// @param num Ссылка на выводимый экземпляр класса
+    ///
     /// @return Возвращает ссылку на выходной поток, с записанным в нем строковым значением
     friend std::ostream &operator<<(std::ostream &oss, const Flexfixed &num);
-    
-    /// @brief Getter для общего доступа к полю I - ширину целочисленной части
-    /// @return Возвращает поле I экземпляра 
+
     inline Itype get_I() const { return I; } 
 
     /// @brief Getter для общего доступа к полю F - ширину дробной части

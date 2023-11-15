@@ -431,11 +431,11 @@ std::string Flexfloat::bits() const
 }
 
 
-std::string Flexfloat::bits(const Etype width_E,const Mtype width_M) const
+std::string Flexfloat::bits(const Flexfloat& ff) const
 {
     std::stringstream ostream;
 
-    ostream << std::bitset<1>(s) << "|" << std::setw(width_E) << to_string_e() << "|" << to_string_m() << std::setw(width_M);
+    ostream << std::bitset<1>(s) << "|" << std::setw(ff.E) << to_string_e() << "|" << to_string_m() << std::setw(ff.M);
 
     return ostream.str();   
 }

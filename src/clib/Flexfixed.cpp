@@ -102,7 +102,8 @@ void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed
 
     CLOG(trace) << "DELTA_F: " << delta_F;
 
-    if(delta_F >= 0 ){
+    if (delta_F >= 0)
+    {
         res_n = res_n >> delta_F;
     }
     else{
@@ -211,11 +212,11 @@ std::string Flexfixed::bits() const
 }
 
 
-std::string Flexfixed::bits(const Itype width_I,const Ftype width_F) const
+std::string Flexfixed::bits(const Flexfixed& fx) const
 {
     std::stringstream ostream;
 
-    ostream << std::bitset<1>(s) << "|" << std::setw(width_I) << to_string_int() << "|" << to_string_frac() << std::setw(width_F);
+    ostream << std::bitset<1>(s) << "|" << std::setw(fx.I) << to_string_int() << "|" << to_string_frac() << std::setw(fx.F);
 
     return ostream.str();   
 }
