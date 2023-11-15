@@ -14,6 +14,13 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
     if (!is_valid())
     {
         CLOG(error) << "Can not create object. Invalid parameters";
+        CLOG(error) << "E = " << E;
+        CLOG(error) << "M = " << M;
+        CLOG(error) << "B = " << B;
+        CLOG(error) << "s = " << +s;
+        CLOG(error) << "e = " << +e;
+        CLOG(error) << "m = " << +m;
+        CLOG(error) << "Can not create object. Invalid parameters";
         throw std::runtime_error{"Can not create object. Invalid parameters"};
     }
 }
@@ -33,6 +40,12 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) :
     if (!is_valid())
     {
         CLOG(error) << "Can not create object. Invalid parameters";
+        CLOG(error) << "E = " << E;
+        CLOG(error) << "M = " << M;
+        CLOG(error) << "B = " << B;
+        CLOG(error) << "s = " << +s;
+        CLOG(error) << "e = " << +e;
+        CLOG(error) << "m = " << +m;
         throw std::runtime_error{"Can not create object. Invalid parameters"};
     }
 }
@@ -385,10 +398,9 @@ int Flexfloat::ceil() const
     CLOG(trace) << "ceil";
     check_ffs({*this});
     CLOG(trace) << "ff: " << *this;
-
-    // assert(e < std::numeric_limits<Btype>::max); TODO
 #endif
 
+    assert(e < std::numeric_limits<Btype>::max());
     Btype eps = static_cast<Btype>(e) - B;
     if (eps < 0)
         return 0;
@@ -396,14 +408,13 @@ int Flexfloat::ceil() const
         return s == 0 ? 1 : -1;
     else if (eps <= M)
     {
-        // TODO asserts
+        assert(m / (1 << (M-eps)) < std::numeric_limits<int>::max());
         int m0 = static_cast<int>(m / (1 << (M-eps)));
         int ceiled = (1 << eps) + m0;
         return s > 0 ? ceiled : -ceiled;
     }
     else
     {
-        // TODO asserts
         size_t shift = static_cast<size_t>(eps-M);
         int ceiled = static_cast<int>(1 << shift * ((1 << M) + m));
         return s > 0 ? ceiled : -ceiled;

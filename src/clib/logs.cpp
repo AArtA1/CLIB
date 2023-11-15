@@ -68,46 +68,46 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string)
 static void coloring_formatter(
     logging::record_view const& rec, logging::formatting_ostream& strm)
 {
-    auto sseverity = rec[severity];
-    if (sseverity)
-    {
-        // Set the color
-        switch (sseverity.get())
-        {
-        case trace:
-            strm << "\033[3" FMT_OUT_white FMT_OUT_faint "m";
-            break;
-        case debug:
-            strm << "\033[3" FMT_OUT_cyan FMT_OUT_bold "m";
-            break;
-        case info:
-            strm << "\033[3" FMT_OUT_green FMT_OUT_normal "m";
-            break;
-        case warning:
-            strm << "\033[3" FMT_OUT_yellow FMT_OUT_normal "m";
-            break;
-        case error:
-            strm << "\033[3" FMT_OUT_red FMT_OUT_normal "m";
-            break;
-        case fatal:
-            strm << "\033[3" FMT_OUT_red FMT_OUT_normal "m";
-            break;
-        default:
-            break;
-        }
-    }
+    // auto sseverity = rec[severity];
+    // if (sseverity)
+    // {
+    //     // Set the color
+    //     switch (sseverity.get())
+    //     {
+    //     case trace:
+    //         strm << "\033[3" FMT_OUT_white FMT_OUT_faint "m";
+    //         break;
+    //     case debug:
+    //         strm << "\033[3" FMT_OUT_cyan FMT_OUT_bold "m";
+    //         break;
+    //     case info:
+    //         strm << "\033[3" FMT_OUT_green FMT_OUT_normal "m";
+    //         break;
+    //     case warning:
+    //         strm << "\033[3" FMT_OUT_yellow FMT_OUT_normal "m";
+    //         break;
+    //     case error:
+    //         strm << "\033[3" FMT_OUT_red FMT_OUT_normal "m";
+    //         break;
+    //     case fatal:
+    //         strm << "\033[3" FMT_OUT_red FMT_OUT_normal "m";
+    //         break;
+    //     default:
+    //         break;
+    //     }
+    // }
 
-    strm << std::setw(6) << std::setfill('0') << rec[line_id] << std::setfill(' ')
-        << ": <" << rec[severity] << ">\t"
+    strm /*<< std::setw(6) << std::setfill('0') << rec[line_id] << std::setfill(' ')
+        << ":" */ << "<" << rec[severity] << ">\t"
         << expr::stream << "[" << rec[tag_attr] << "] "
         << rec[expr::smessage];
 
 
-    if (sseverity)
-    {
-        // Restore the default color
-        strm << "\033[0m";
-    }
+    // if (sseverity)
+    // {
+    //     // Restore the default color
+    //     strm << "\033[0m";
+    // }
 }
 
 void init_logs()
