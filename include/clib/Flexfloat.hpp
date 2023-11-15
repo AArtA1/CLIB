@@ -148,7 +148,7 @@ public:
     * \param[in] res Результат
     * 
     * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
-    * \see TODO
+    * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/src/flexfloat_nonlinear.ipynb
     */
     struct ext_ff 
     {
@@ -162,7 +162,7 @@ public:
     * \param[in] x целое число
     * \return FlexFloat
     * 
-    * \see TODO
+    * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/src/flexfloat_nonlinear.ipynb
     */
     static Flexfloat ff_from_int(Etype E, Mtype M, Btype B, int x);
 
@@ -170,7 +170,7 @@ public:
     *
     * \return ближайшее целое число меньшее FlexFloat
     * 
-    * \see TODO
+    * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/src/flexfloat_nonlinear.ipynb
     */
     int ceil() const;
 
