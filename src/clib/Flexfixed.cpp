@@ -67,7 +67,7 @@ void Flexfixed::multiplication(const Flexfixed& left,const Flexfixed& right, Fle
         CLOG(trace) << "IS_OVERFLOW: FALSE";
     }
 
-    res.n = res_n;
+    res.n = static_cast<ntype>(res_n);
 
     CLOG(trace) << "Result of flex multiplication: " << res;
 
@@ -119,7 +119,7 @@ void Flexfixed::addition(const Flexfixed& left,const Flexfixed& right, Flexfixed
         CLOG(trace) << "IS_OVERFLOW: FALSE"; 
     }
 
-    res.n = res_n;
+    res.n = static_cast<ntype>(res_n);
 
     CLOG(trace) << "Result of flex addition: " << res;
 }

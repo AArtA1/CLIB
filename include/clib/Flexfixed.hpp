@@ -41,7 +41,6 @@ public:
     */
     Flexfixed(Itype I_n,Ftype F_n);
     
-
     Flexfixed(const Flexfixed&) = default;
 
     Flexfixed(Itype I_n,Ftype F_n, nrestype value);
@@ -125,7 +124,7 @@ public:
     //! \return Возвращает n
     inline ntype get_n() const{ return n; } 
 
-    inline std::pair<Itype,Ftype> get_params() const {return {I,F}};
+    inline std::pair<Itype,Ftype> get_params() const {return {I,F};}
 
 private:
     static void check_fxs(std::initializer_list<Flexfixed> list);

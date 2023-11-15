@@ -39,6 +39,7 @@ T delta(T a, T b)
         return a-b;
 }
 
+
 // TOOD Переписать на constexpr
 template <typename T>
 std::string bits(T val)
