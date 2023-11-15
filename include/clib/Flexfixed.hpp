@@ -137,11 +137,11 @@ public:
     
     /// @brief Метод для получения строкового представления целочисленной части только нужных бит n 
     /// @return I бит значения n, начиная с last - f 
-    inline std::string to_string_int() const { return std::bitset<sizeof(Itype)*8>(get_int()).to_string().substr(sizeof(Itype)*8 - I,I);}
+    inline std::string to_string_int() const { return std::bitset<sizeof(ntype)*8>(get_int()).to_string().substr(sizeof(ntype)*8 - I,I);}
 
     /// @brief Метод для получения строкового представления дробной части только нужных бит n 
     /// @return Последние F бит значения n 
-    inline std::string to_string_frac() const { return std::bitset<sizeof(Ftype)*8>(get_frac()).to_string().substr(sizeof(Ftype)*8 - F,F);}
+    inline std::string to_string_frac() const { return std::bitset<sizeof(ntype)*8>(get_frac()).to_string().substr(sizeof(ntype)*8 - F,F);}
 
     //! \return Возвращает первые I бит от n - целые биты числа.
     inline ntype get_int() const { return n >> F; }
