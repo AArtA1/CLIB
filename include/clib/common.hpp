@@ -1,29 +1,27 @@
 #pragma once
-#include <cstdint>
-#include <iostream>
-#include <cmath>
 #include <bitset>
-#include <string>
 #include <cassert>
-#include <ostream>
+#include <cmath>
+#include <cstdint>
 #include <fstream>
-#include <sstream>
 #include <iomanip>
+#include <iostream>
+#include <ostream>
+#include <sstream>
+#include <string>
 #include <vector>
-
 
 namespace clib {
 
 //#define arg_t uint32_t
 
 using uint128_t = __uint128_t;
-using int128_t  = __int128_t;
+using int128_t = __int128_t;
 
 using llu_t = long long unsigned;
 
 template <typename T>
-T abs(T a)
-{
+T abs(T a) {
     if (a < 0)
         return -a;
     else
@@ -31,15 +29,16 @@ T abs(T a)
 }
 
 template <typename T>
-T delta(T a, T b)
-{
+T delta(T a, T b) {
     if (a < b)
-        return b-a;
+        return b - a;
     else
-        return a-b;
+        return a - b;
 }
 
+// OUTDATED
 
+/*
 // TOOD Переписать на constexpr
 template <typename T>
 std::string bits(T val)
@@ -51,45 +50,42 @@ std::string bits(T val)
     {
         using basetype = uint64_t;
         auto val_printable  = *reinterpret_cast<basetype*>(&val);
-        std::string val_bits = std::bitset<sizeof(basetype)*8>(val_printable).to_string();
-        auto one_pos = val_bits.find_first_of('1');
-        if (one_pos == std::string::npos)
-            return "0";
-            
+        std::string val_bits =
+std::bitset<sizeof(basetype)*8>(val_printable).to_string(); auto one_pos =
+val_bits.find_first_of('1'); if (one_pos == std::string::npos) return "0";
+
         return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
     }
     else if (sizeof(T) > sizeof(uint32_t))
     {
         using basetype = uint32_t;
         auto val_printable  = *reinterpret_cast<basetype*>(&val);
-        std::string val_bits = std::bitset<sizeof(basetype)*8>(val_printable).to_string();
-        auto one_pos = val_bits.find_first_of('1');
-        if (one_pos == std::string::npos)
-            return "0";
-            
+        std::string val_bits =
+std::bitset<sizeof(basetype)*8>(val_printable).to_string(); auto one_pos =
+val_bits.find_first_of('1'); if (one_pos == std::string::npos) return "0";
+
         return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
     }
     else if (sizeof(T) > sizeof(uint16_t))
     {
         using basetype = uint16_t;
         auto val_printable  = *reinterpret_cast<basetype*>(&val);
-        std::string val_bits = std::bitset<sizeof(basetype)*8>(val_printable).to_string();
-        auto one_pos = val_bits.find_first_of('1');
-        if (one_pos == std::string::npos)
-            return "0";
-            
+        std::string val_bits =
+std::bitset<sizeof(basetype)*8>(val_printable).to_string(); auto one_pos =
+val_bits.find_first_of('1'); if (one_pos == std::string::npos) return "0";
+
         return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
     }
 
     using basetype = uint8_t;
     auto val_printable  = *reinterpret_cast<basetype*>(&val);
-    std::string val_bits = std::bitset<sizeof(basetype)*8>(val_printable).to_string();
-    auto one_pos = val_bits.find_first_of('1');
-    if (one_pos == std::string::npos)
-        return "0";
-        
+    std::string val_bits =
+std::bitset<sizeof(basetype)*8>(val_printable).to_string(); auto one_pos =
+val_bits.find_first_of('1'); if (one_pos == std::string::npos) return "0";
+
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
+*/
 
 /*
 std::initializer_list<std::string> print(std::initializer_list<Flexfloat> list){
@@ -97,16 +93,15 @@ std::initializer_list<std::string> print(std::initializer_list<Flexfloat> list){
 }
 */
 
-
-
 /*
 class bitset {
 public:
-    bitset(arg_t value, const size_t n) : arr_(new bool[n]), n_(n), width_(n),to_left_side_(false){
-        make_bitset(value);
+    bitset(arg_t value, const size_t n) : arr_(new bool[n]), n_(n),
+width_(n),to_left_side_(false){ make_bitset(value);
     }
 
-    bitset(arg_t value,const size_t n, const size_t width, bool to_left_side) : arr_(new bool[n]), n_(n), width_(width),to_left_side_(to_left_side){
+    bitset(arg_t value,const size_t n, const size_t width, bool to_left_side) :
+arr_(new bool[n]), n_(n), width_(width),to_left_side_(to_left_side){
         make_bitset(value);
     }
 
@@ -169,5 +164,4 @@ private:
 };
 */
 
-
-}
+}  // namespace clib
