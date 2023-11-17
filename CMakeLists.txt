@@ -83,6 +83,8 @@ add_compile_options(
     -Winvalid-pch
     -Wunused-but-set-variable
     -Wunused-result
+
+    -ggdb3
 )
 
 ###################################################################################################

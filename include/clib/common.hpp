@@ -38,7 +38,7 @@ T delta(T a, T b) {
 
 // OUTDATED
 
-/*
+
 // TOOD Переписать на constexpr
 template <typename T>
 std::string bits(T val)
@@ -85,7 +85,7 @@ val_bits.find_first_of('1'); if (one_pos == std::string::npos) return "0";
 
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
-*/
+
 
 /*
 std::initializer_list<std::string> print(std::initializer_list<Flexfloat> list){

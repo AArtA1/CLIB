@@ -28,6 +28,10 @@ public:
     // type for storing sum of exp and bias
     using eexttype = int128_t;
 
+    const static Btype B_FLOAT = 127;
+    const static Etype E_FLOAT = 8;
+    const static Mtype M_FLOAT = 23;
+
 private:
     Btype B;             /// BIAS
     Etype E;             /// EXPONENT WIDTH
@@ -59,6 +63,14 @@ public:
     */
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
 
+    // /*! @brief Создает Flexfloat из double
+    // *
+    // * \param[in] E_n Количество бит в экспоненте
+    // * \param[in] M_n Количество бит в мантиссе
+    // * \param[in] B_n Bias
+    // * \param[in] flt число в формате float
+    // */
+    // Flexfloat(Etype E_n, Mtype M_n, Btype B_n, float flt);
 
     Flexfloat(const Flexfloat&) = default;
 
@@ -174,22 +186,45 @@ public:
     */
     int ceil() const;
 
+    /*! @brief Преобразует Flexfloat в float
+    *
+    * \return ближайшее float число
+    * 
+    */
+    float to_float() const;
 
+    /*! @brief Конвертация float числа в FlexFloat
+    *
+    * \param[in] flt float число
+    * \return FlexFloat
+    */
+    static Flexfloat from_float(Etype E, Mtype M, Btype B, float flt);
+
+
+
+    // /*! @brief Преобразует Flexfloat в double
+    // *
+    // * \return ближайшее double число
+    // * 
+    // */
+    // double to_double() const;  //TODO
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
 
     /// Выводит Flexfloat в битовом виде
     std::string bits() const;
-
     std::string bits(const Flexfloat& ff) const;
 
-    inline std::string to_string_e() const { 
-        return std::bitset<sizeof(etype)*8>(get_e()).to_string().substr(sizeof(etype)*8 - E);
-        }
+    inline std::string to_string_e() const 
+    { 
+    return std::bitset<sizeof(etype)*8>(get_e()).to_string().substr(sizeof(etype)*8 - E);
+    }
 
-    inline std::string to_string_m() const {
-        return std::bitset<sizeof(mtype)*8>(get_m()).to_string().substr(sizeof(mtype)*8 - M);}
+    inline std::string to_string_m() const 
+    {
+        return std::bitset<sizeof(mtype)*8>(get_m()).to_string().substr(sizeof(mtype)*8 - M);
+    }
 
     inline std::pair<Etype,Mtype> get_params() const {return {E,M};}
 

@@ -2,11 +2,13 @@
 
 #include "clib/logs.hpp"
 
+#include <ieee754.h>
+
 namespace clib {
 
-Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n,
-                     mtype m_n)
-    : B(B_n), E(E_n), M(M_n), s(s_n), e(e_n), m(m_n) {
+Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n)
+    : B(B_n), E(E_n), M(M_n), s(s_n), e(e_n), m(m_n)
+{
     if (!is_valid()) {
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
@@ -21,7 +23,8 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n,
 }
 
 Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value)
-    : B(B_n), E(E_n), M(M_n), s(0), e(0), m(0) {
+    : B(B_n), E(E_n), M(M_n), s(0), e(0), m(0)
+{
     m = static_cast<mtype>((value >> 0) & ((1u << M) - 1u));
     e = static_cast<etype>((value >> M) & ((1u << E) - 1u));
     s = static_cast<stype>((value >> (M + E)) & ((1u << S) - 1u));
@@ -213,10 +216,10 @@ void Flexfloat::sum(const Flexfloat &left, const Flexfloat &right,
 #ifndef NDEBUG
     CLOG(trace)
         << "=================== Values after casting ====================";
-    CLOG(trace) << "left_e:  " << std::bitset<sizeof(left_e) * 8>(left_e);
-    CLOG(trace) << "left_m:  " << std::bitset<sizeof(left_m) * 8>(left_m);
-    CLOG(trace) << "right_e: " << std::bitset<sizeof(right_e) * 8>(right_e);
-    CLOG(trace) << "right_m: " << std::bitset<sizeof(right_m) * 8>(right_m);
+    CLOG(trace) << "left_e:  " << clib::bits(left_e);
+    CLOG(trace) << "left_m:  " << clib::bits(left_m);
+    CLOG(trace) << "right_e: " << clib::bits(right_e);
+    CLOG(trace) << "right_m: " << clib::bits(right_m);
     CLOG(trace)
         << "=============================================================";
 #endif
@@ -262,9 +265,8 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm) {
     ext_mant = n << delta_N;
 
 #ifndef NDEBUG
-    CLOG(trace) << "Extended exp  = " << static_cast<int64_t>(ext_exp);
-    CLOG(trace) << "Extended mant = "
-                << std::bitset<sizeof(ext_mant) * 8>(ext_mant);
+    CLOG(trace) << "Extended exp  = " << clib::bits(ext_exp);
+    CLOG(trace) << "Extended mant = " << clib::bits(ext_mant);
 #endif
 
     return ext_ff{ext_exp, ext_mant};
@@ -296,7 +298,8 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res) {
     nmant <<= (LM - x.M);
 
     // (1-x)/(1+x) = 1 - x
-    if (precision == 0) {
+    if (precision == 0) 
+    {
         nexp = -nexp + (x.B + res.B - static_cast<eexttype>(1));
         nmant = static_cast<mexttype>(1 << LM) - nmant - 1;
 
@@ -316,7 +319,8 @@ Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n) {
     CLOG(trace) << "FlexFloat from int = " << n;
 #endif
 
-    if (n == 0) {
+    if (n == 0) 
+    {
         return Flexfloat(E, M, B, 0);
     }
 
@@ -364,7 +368,94 @@ int Flexfloat::ceil() const {
     }
 }
 
-std::string Flexfloat::bits() const {
+// double Flexfloat::to_double() const
+// {
+//     return 0;
+// } TODO
+
+
+float Flexfloat::to_float() const
+{
+#ifndef NDEBUG
+    CLOG(trace) << "FlexFloat to_float";
+    CLOG(trace) << *this;
+#endif
+
+    eexttype nexp = e;
+    mexttype nmant = m;
+    if (e == 0) 
+    {
+        ext_ff normal = get_normalized(*this);
+        nexp = normal.exp;
+        nmant = normal.mant;
+    }
+    // get extended mantissa
+    nmant += static_cast<mexttype>(1 << M);
+    
+    // CONVERAION
+    nexp = nexp - B + B_FLOAT;
+    if (M_FLOAT > M)
+        nmant = nmant * (1 << (M_FLOAT - M));
+    else
+        nmant = nmant / (1 << (M - M_FLOAT));
+
+#ifndef NDEBUG
+    CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
+    CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
+#endif
+    
+    Flexfloat ans = normalise(s, nexp, nmant, E_FLOAT, M_FLOAT, B_FLOAT);
+
+
+    ieee754_float fc;
+    assert(ans.e <= static_cast<etype>(1 << E_FLOAT));
+    assert(ans.s <= 1);
+    assert(ans.m <= static_cast<mtype>(1 << M_FLOAT));
+
+#pragma GCC diagnostic ignored "-Wconversion"
+    fc.ieee.negative = ans.s;
+    fc.ieee.exponent = ans.e;
+    fc.ieee.mantissa = ans.m;
+#pragma GCC diagnostic warning "-Wconversion"
+
+    return fc.f;
+}
+
+
+Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
+{
+#ifndef NDEBUG
+    CLOG(trace) << "FlexFloat from_float = " << flt;
+#endif
+
+    ieee754_float fc;
+    fc.f = flt;
+
+#pragma GCC diagnostic ignored "-Wconversion"
+    stype nsign    = fc.ieee.negative;
+    eexttype nexp  = fc.ieee.exponent;
+    mexttype nmant = fc.ieee.mantissa;
+#pragma GCC diagnostic warning "-Wconversion"
+    // get extended mantissa
+    nmant += static_cast<mexttype>(1 << M_FLOAT);
+
+    // CONVERAION
+    nexp = nexp - B_FLOAT + B;
+    if (M_FLOAT > M)
+        nmant = nmant / (1 << (M_FLOAT - M));
+    else
+        nmant = nmant * (1 << (M - M_FLOAT));
+
+#ifndef NDEBUG
+    CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
+    CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
+#endif
+
+    return normalise(nsign, nexp, nmant, E, M, B);
+}
+
+std::string Flexfloat::bits() const 
+{
     std::stringstream ostream;
 
     ostream << std::bitset<1>(s) << "|" << to_string_e() << "|"
@@ -373,7 +464,8 @@ std::string Flexfloat::bits() const {
     return ostream.str();
 }
 
-std::string Flexfloat::bits(const Flexfloat &ff) const {
+std::string Flexfloat::bits(const Flexfloat &ff) const 
+{
     std::stringstream ostream;
 
     ostream << std::bitset<1>(s) << "|" << std::setw(ff.E) << to_string_e()
@@ -391,8 +483,8 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
 #ifndef NDEBUG
     CLOG(trace)
         << "============== Values before normalisation ==================";
-    CLOG(trace) << "exp:  " << std::bitset<sizeof(cur_exp) * 8>(cur_exp);
-    CLOG(trace) << "mant: " << std::bitset<sizeof(cur_mant) * 8>(cur_mant);
+    CLOG(trace) << "exp:  " << clib::bits(cur_exp);
+    CLOG(trace) << "mant: " << clib::bits(cur_mant);
     CLOG(trace)
         << "=============================================================";
 #endif
@@ -489,14 +581,14 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
 #ifndef NDEBUG
     CLOG(trace)
         << "================ Values after normalisation =================";
-    CLOG(trace) << "exp:  " << std::bitset<sizeof(cur_exp) * 8>(cur_exp);
-    CLOG(trace) << "mant: " << std::bitset<sizeof(cur_mant) * 8>(cur_mant);
+    CLOG(trace) << "exp:  " << clib::bits(cur_exp);
+    CLOG(trace) << "mant: " << clib::bits(cur_mant);
     CLOG(trace)
         << "=============================================================";
     CLOG(trace)
         << "===================== Values after zip ======================";
-    CLOG(trace) << "exp:  " << std::bitset<sizeof(exp) * 8>(exp);
-    CLOG(trace) << "mant: " << std::bitset<sizeof(mant) * 8>(mant);
+    CLOG(trace) << "exp:  " << clib::bits(exp);
+    CLOG(trace) << "mant: " << clib::bits(mant);
     CLOG(trace)
         << "=============================================================";
 #endif
