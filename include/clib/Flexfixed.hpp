@@ -1,7 +1,9 @@
+
 #pragma once
 #include "common.hpp"
 
-namespace clib {
+namespace clib
+{
 
 /*!
  * \brief Число с фиксированной запятой.
@@ -10,17 +12,17 @@ namespace clib {
  * младшие F чисел которого считаются дробной частью. Есть поддержка overflow.
  * Нет поддержки NaN, а также +-inf .
  */
-class Flexfixed {
-   public:
-    using Itype = uint8_t;  // size of INT_WIDTH
-    using Ftype = uint8_t;  // size of FRAC_WIDTH
+class Flexfixed
+{
+  public:
+    using Itype = uint8_t; // size of INT_WIDTH
+    using Ftype = uint8_t; // size of FRAC_WIDTH
 
-    using stype = uint8_t;       // size of SIGN
-    using ntype = uint64_t;      // size of NUMERATOR
-    using nrestype = uint128_t;  // size for calculating operations with ntype
-    using wtype =
-        int16_t;  // size for calculating operations with itype and ftype
-   private:
+    using stype = uint8_t;      // size of SIGN
+    using ntype = uint64_t;     // size of NUMERATOR
+    using nrestype = uint128_t; // size for calculating operations with ntype
+    using wtype = int16_t;      // size for calculating operations with itype and ftype
+  private:
     /// INT_WIDTH
     Itype I;
     /// FRAC_WIDTH
@@ -30,7 +32,7 @@ class Flexfixed {
     /// numerator
     ntype n;
 
-   public:
+  public:
     /// @brief Пустой конструктор удален, так как данное значение не имеет
     /// смысла.
     Flexfixed() = delete;
@@ -73,8 +75,7 @@ class Flexfixed {
      * \param[in] right Правый операнд
      * \param[in] res Результат
      */
-    static void mult(const Flexfixed &left, const Flexfixed &right,
-                     Flexfixed &res);
+    static void mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
 
     /// @brief Взятие обратного элемента (1/x)
     /// @param value Операнд
@@ -95,8 +96,7 @@ class Flexfixed {
      * \param[in] right Правый операнд
      * \param[in] res Результат
      */
-    static void add(const Flexfixed &left, const Flexfixed &right,
-                    Flexfixed &res);
+    static void add(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
 
     /*! @brief Вычитание Flexfixed
      *
@@ -104,8 +104,7 @@ class Flexfixed {
      * \param[in] right Правый операнд
      * \param[in] res Результат
      */
-    static void substraction(const Flexfixed &left, const Flexfixed &right,
-                             Flexfixed &res);
+    static void substraction(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
 
     static nrestype check_ovf(nrestype n, Itype I, Ftype F);
 
@@ -140,51 +139,69 @@ class Flexfixed {
     /// строковым значением
     friend std::ostream &operator<<(std::ostream &oss, const Flexfixed &num);
 
-    inline Itype get_I() const { return I; }
+    inline Itype get_I() const
+    {
+        return I;
+    }
 
     /// @brief Getter для общего доступа к полю F - ширину дробной части
     /// @return Возвращает поле F экземпляра
-    inline Ftype get_F() const { return F; }
+    inline Ftype get_F() const
+    {
+        return F;
+    }
 
     /// @brief Метод для получения строкового представления целочисленной части
     /// только нужных бит n
     /// @return I бит значения n, начиная с last - f
-    inline std::string to_string_int() const {
-        return std::bitset<sizeof(ntype) * 8>(get_int()).to_string().substr(
-            sizeof(ntype) * 8 - I, I);
+    inline std::string to_string_int() const
+    {
+        return std::bitset<sizeof(ntype) * 8>(get_int()).to_string().substr(sizeof(ntype) * 8 - I, I);
     }
 
     /// @brief Метод для получения строкового представления дробной части только
     /// нужных бит n
     /// @return Последние F бит значения n
-    inline std::string to_string_frac() const {
-        return std::bitset<sizeof(ntype) * 8>(get_frac())
-            .to_string()
-            .substr(sizeof(ntype) * 8 - F, F);
+    inline std::string to_string_frac() const
+    {
+        return std::bitset<sizeof(ntype) * 8>(get_frac()).to_string().substr(sizeof(ntype) * 8 - F, F);
     }
 
     //! \return Возвращает первые I бит от n - целые биты числа.
-    inline ntype get_int() const { return n >> F; }
+    inline ntype get_int() const
+    {
+        return n >> F;
+    }
 
     //! \return Возвращает последние F бит от n - дробные биты числа.
-    inline ntype get_frac() const {
+    inline ntype get_frac() const
+    {
         return ((static_cast<ntype>(1) << F) - 1) & n;
     }
 
     /// @brief Getter для общего доступа к знаку экземпляра класса
     /// @return Возвращает поле s экземпляра класса
-    inline stype get_s() const { return s; }
+    inline stype get_s() const
+    {
+        return s;
+    }
 
     /// @brief Getter для общего доступа к n значению экземпляра класса
     /// @return Возвращает поле n экземпляра класса
-    inline ntype get_n() const { return n; }
+    inline ntype get_n() const
+    {
+        return n;
+    }
 
     /// @brief Getter для общего доступа к параметрам класса в виде
     /// std::pair<first,second>
     /// @return Возвращает пару I,F полей экземпляра класса
-    inline std::pair<Itype, Ftype> get_params() const { return {I, F}; }
+    inline std::pair<Itype, Ftype> get_params() const
+    {
+        return {I, F};
+    }
 
-   private:
+  private:
     /// @brief Принимает список значений Flexfixed, которые нужно проверить на
     /// корректность (is_valid())
     /// @param list Список Flexfixed
@@ -195,7 +212,8 @@ class Flexfixed {
     /// @param I_n Ширина целочисленной части
     /// @param F_n Ширина дробной части
     /// @return Возвращает максимально возможное значение n
-    static ntype get_max_n(Itype I_n, Ftype F_n) {
+    static ntype get_max_n(Itype I_n, Ftype F_n)
+    {
         return ((static_cast<ntype>(1) << (I_n + F_n)) - 1);
     }
 
@@ -205,4 +223,6 @@ class Flexfixed {
     bool is_valid() const;
 };
 
-}  // namespace clib
+} // namespace clib
+
+* /
