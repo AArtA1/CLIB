@@ -1,5 +1,6 @@
-# Format Style Options - Created with Clang Power Tools
----
-BasedOnStyle: Google
-IndentWidth: 4
+﻿---
+BasedOnStyle: Microsoft
+ColumnLimit: '120'
+TabWidth: '4'
+
 ...
