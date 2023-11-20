@@ -113,6 +113,8 @@ class Flexfixed
     /// @return Результат вывода
     std::string bits() const;
 
+    float to_float() const;
+
     /// @brief Метод для представления Flexfixed в виде строки
     /// (SIGN|(max_width_I
     /// - I)*' '+INTEGER|FRACTIONAL+(max_width_F - F)*' ') для более уднобного
@@ -224,5 +226,3 @@ class Flexfixed
 };
 
 } // namespace clib
-
-* /

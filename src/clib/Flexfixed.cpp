@@ -62,6 +62,8 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
     // overflow
     res_n = check_ovf(res_n, res.I, res.F);
 
+    assert(res_n <= std::numeric_limits<ntype>::max());
+
     res.n = static_cast<ntype>(res_n);
 
 #ifndef NDEBUG
@@ -115,6 +117,8 @@ void Flexfixed::add(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
     res_n = check_ovf(res_n, res.I, res.F);
 
     // todo : add assert to prevent unexcepted errors
+
+    assert(res_n <= std::numeric_limits<ntype>::max());
 
     res.n = static_cast<ntype>(res_n);
 
@@ -182,8 +186,7 @@ void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
     // overflow
     res_n = check_ovf(res_n, res.I, res.F);
 
-    // todo
-    // assert(res_n < )
+    assert(res_n <= std::numeric_limits<ntype>::max());
     res.n = static_cast<ntype>(res_n);
 
 #ifndef NDEBUG
@@ -220,6 +223,56 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
     return n;
 }
 
+<<<<<<< HEAD
+Flexfixed Flexfixed::from_float(Flexfixed::Itype I, Flexfixed::Ftype F, float flt)
+{
+#ifndef NDEBUG
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "Flexfixed from_float = " << flt;
+#endif
+
+    Flexfixed result(I, F);
+    result.s = flt > 0 ? 0 : 1;
+
+    nrestype res_n = static_cast<nrestype>(fabs(flt) * (static_cast<ntype>(1) << F));
+
+    res_n = check_ovf(res_n, I, F);
+
+    assert(res_n <= std::numeric_limits<ntype>::max());
+    result.n = static_cast<ntype>(res_n);
+
+#ifndef NDEBUG
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "Result = " << result;
+#endif
+
+    return result;
+}
+
+float Flexfixed::to_float() const
+{
+#ifndef NDEBUG
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "Flexfixed to_float";
+    CLOG(trace) << *this;
+#endif
+
+    float res = static_cast<float>(n) / (static_cast<ntype>(1) << F);
+
+    if (s == 1)
+    {
+        res = -res;
+    }
+
+#ifndef NDEBUG
+    CLOG(trace) << res;
+#endif
+
+    return res;
+}
+
+=======
+>>>>>>> origin/master
 bool operator>(const Flexfixed &left, const Flexfixed &right)
 {
     // todo for different signs
