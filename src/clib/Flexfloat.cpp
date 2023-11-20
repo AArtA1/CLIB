@@ -100,19 +100,25 @@ bool Flexfloat::is_zero(const Flexfloat &val) {
         return false;
 }
 
-Flexfloat &Flexfloat::operator=(const Flexfloat &other) {
-    assert(B == other.B);
-    assert(E == other.E);
+Flexfloat &Flexfloat::operator=(const Flexfloat &other) 
+{
+    // assert(B == other.B);
+    // assert(E == other.E);
 
-    if (other.M >= M) {
-        m = other.m >> (other.M - M);
-    }
-    if (other.M < M) {
-        m = other.m << (M - other.M);
-    }
+    // if (other.M >= M) {
+    //     m = other.m >> (other.M - M);
+    // }
+    // if (other.M < M) {
+    //     m = other.m << (M - other.M);
+    // }
 
     e = other.e;
     s = other.s;
+    m = other.m;
+
+    E = other.E;
+    M = other.M;
+    B = other.B;
 
     return *this;
 }
@@ -129,6 +135,7 @@ void Flexfloat::check_ffs(std::initializer_list<Flexfloat> list) {
 void Flexfloat::mult(const Flexfloat &left, const Flexfloat &right,
                      Flexfloat &res) {
 #ifndef NDEBUG
+    CLOG(trace) << std::endl;
     CLOG(trace) << "Multiplication of two numbers";
     check_ffs({left, right, res});
     CLOG(trace) << "Left  operand: " << left;
@@ -177,6 +184,7 @@ std::ostream &operator<<(std::ostream &oss, const Flexfloat &num) {
 void Flexfloat::sum(const Flexfloat &left, const Flexfloat &right,
                     Flexfloat &res) {
 #ifndef NDEBUG
+    CLOG(trace) << std::endl;
     CLOG(trace) << "Sum of two numbers";
     check_ffs({left, right, res});
     CLOG(trace) << "Left  operand: " << left;
@@ -275,6 +283,7 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm) {
 void Flexfloat::inv(const Flexfloat &x, Flexfloat &res) {
     size_t precision = 0;  // TODO
 #ifndef NDEBUG
+    CLOG(trace) << std::endl;
     CLOG(trace) << "Inv: 1/x";
     check_ffs({x, res});
     CLOG(trace) << "x: " << x;
@@ -377,6 +386,7 @@ int Flexfloat::ceil() const {
 float Flexfloat::to_float() const
 {
 #ifndef NDEBUG
+    CLOG(trace) << std::endl;
     CLOG(trace) << "FlexFloat to_float";
     CLOG(trace) << *this;
 #endif
@@ -425,6 +435,7 @@ float Flexfloat::to_float() const
 Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
 {
 #ifndef NDEBUG
+    CLOG(trace) << std::endl;
     CLOG(trace) << "FlexFloat from_float = " << flt;
 #endif
 
@@ -579,8 +590,7 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
     etype exp = static_cast<etype>(cur_exp);
 
 #ifndef NDEBUG
-    CLOG(trace)
-        << "================ Values after normalisation =================";
+    CLOG(trace) << "================ Values after normalisation =================";
     CLOG(trace) << "exp:  " << clib::bits(cur_exp);
     CLOG(trace) << "mant: " << clib::bits(cur_mant);
     CLOG(trace)
@@ -616,7 +626,8 @@ Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype M) {
 
 // if e > 0  -> normalized value   -> m' = 2^M + m
 // if e == 0 -> denormalized value -> m' = 2*m
-Flexfloat::mexttype Flexfloat::unzip(etype exp, mtype mant, Mtype M) {
+Flexfloat::mexttype Flexfloat::unzip(etype exp, mtype mant, Mtype M) 
+{
     if (exp == 0)
         return (2 * static_cast<mexttype>(mant));
     else
