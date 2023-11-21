@@ -6,10 +6,17 @@
 
 namespace clib {
 
+#ifndef NDEBUG
+    #define $(...) __VA_ARGS__
+#else
+    #define $(...) ;
+#endif
+
 Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n)
     : B(B_n), E(E_n), M(M_n), s(s_n), e(e_n), m(m_n)
 {
     if (!is_valid()) {
+#ifndef NDEBUG
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -18,6 +25,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
         CLOG(error) << "e = " << +e;
         CLOG(error) << "m = " << +m;
         CLOG(error) << "Can not create object. Invalid parameters";
+#endif
         throw std::runtime_error{"Can not create object. Invalid parameters"};
     }
 }
@@ -30,6 +38,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value)
     s = static_cast<stype>((value >> (M + E)) & ((1u << S) - 1u));
 
     if (!is_valid()) {
+#ifndef NDEBUG
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -37,6 +46,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value)
         CLOG(error) << "s = " << +s;
         CLOG(error) << "e = " << +e;
         CLOG(error) << "m = " << +m;
+#endif
         throw std::runtime_error{"Can not create object. Invalid parameters"};
     }
 }
@@ -126,7 +136,6 @@ Flexfloat &Flexfloat::operator=(const Flexfloat &other)
 void Flexfloat::check_ffs(std::initializer_list<Flexfloat> list) {
     for (auto &elem : list) {
         if (!elem.is_valid()) {
-            CLOG(error) << "Operand is invalid. Can not multiplicate";
             throw std::runtime_error{"Invalid operand"};
         }
     }
@@ -168,9 +177,9 @@ void Flexfloat::mult(const Flexfloat &left, const Flexfloat &right,
     Flexfloat norm_ans = normalise(nsign, nexp - LM, nmant, res.E, LM, res.B);
     res = norm_ans;
 
-#ifndef NDEBUG
-    CLOG(trace) << "Result: " << res;
-#endif
+
+    $(CLOG(trace) << "Result: " << res);
+
     return;
 }
 
@@ -249,7 +258,7 @@ void Flexfloat::sum(const Flexfloat &left, const Flexfloat &right,
     Flexfloat norm_ans = normalise(nsign, nexp, nmant, res.E, LM, res.B);
     res = norm_ans;
 
-    CLOG(trace) << "Result: " << res;
+    $(CLOG(trace) << "Result: " << res);
     return;
 }
 
@@ -324,9 +333,7 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res) {
 }
 
 Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n) {
-#ifndef NDEBUG
-    CLOG(trace) << "FlexFloat from int = " << n;
-#endif
+    $(CLOG(trace) << "FlexFloat from int = " << n);
 
     if (n == 0) 
     {
@@ -385,12 +392,6 @@ int Flexfloat::ceil() const {
 
 float Flexfloat::to_float() const
 {
-#ifndef NDEBUG
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "FlexFloat to_float";
-    CLOG(trace) << *this;
-#endif
-
     eexttype nexp = e;
     mexttype nmant = m;
     if (e == 0) 
@@ -410,6 +411,9 @@ float Flexfloat::to_float() const
         nmant = nmant / (1 << (M - M_FLOAT));
 
 #ifndef NDEBUG
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "FlexFloat to_float";
+    CLOG(trace) << *this;
     CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
     CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
 #endif
@@ -434,11 +438,6 @@ float Flexfloat::to_float() const
 
 Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
 {
-#ifndef NDEBUG
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "FlexFloat from_float = " << flt;
-#endif
-
     ieee754_float fc;
     fc.f = flt;
 
@@ -458,6 +457,8 @@ Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
         nmant = nmant * (1 << (M - M_FLOAT));
 
 #ifndef NDEBUG
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "FlexFloat from_float = " << flt;
     CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
     CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
 #endif
@@ -507,24 +508,24 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
 
     auto rshift = [&cur_exp, &cur_mant](int128_t n) {
         assert(n >= 0);
-        CLOG(trace) << "rshift on n = " << static_cast<uint64_t>(n);
+        $(CLOG(trace) << "rshift on n = " << static_cast<uint64_t>(n));
         cur_mant = cur_mant >> n;
         cur_exp = n + cur_exp;
     };
     auto lshift = [&cur_exp, &cur_mant](int128_t n) {
         assert(n >= 0);
-        CLOG(trace) << "lshift on n = " << static_cast<uint64_t>(n);
+        $(CLOG(trace) << "lshift on n = " << static_cast<uint64_t>(n));
         cur_mant = cur_mant << n;
         cur_exp = cur_exp - n;
     };
 
     auto ovf = [&cur_exp, &cur_mant, M, E]() {
-        CLOG(trace) << "overflow";
+        $(CLOG(trace) << "overflow");
         cur_mant = max_mant(M + 1);
         cur_exp = max_exp(E);
     };
     auto unf = [&cur_exp, &cur_mant, M, E]() {
-        CLOG(trace) << "underflow";
+        $(CLOG(trace) << "underflow");
         cur_mant = 0;
         cur_exp = 0;
     };
@@ -534,16 +535,16 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
 
     if (cur_exp <= 0) {
         // We must decrease mantissa, unless exponent != 0
-        CLOG(trace) << "cur_exp <= 0";
+        $(CLOG(trace) << "cur_exp <= 0");
 
         if (cur_mant == 0) {
-            CLOG(trace) << "cur_mant = 0";
+            $(CLOG(trace) << "cur_mant = 0");
             unf();
         } else if (msb(cur_mant) <= M) {
-            CLOG(trace) << "msb(cur_mant) <= M";
+            $(CLOG(trace) << "msb(cur_mant) <= M");
             rshift(-cur_exp);
         } else {
-            CLOG(trace) << "msb(cur_mant) > M";
+            $(CLOG(trace) << "msb(cur_mant) > M");
             if (delta_m > delta_e)
                 ovf();
             else
@@ -551,13 +552,13 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
         }
     } else if (cur_exp > 0 && cur_exp <= max_exp(E)) {
         // Exponent is normal. We must normalise mantissa
-        CLOG(trace) << "cur_exp > 0 && cur_exp <= max_exp(E)";
+        $(CLOG(trace) << "cur_exp > 0 && cur_exp <= max_exp(E)");
 
         if (msb(cur_mant) <= M) {
-            CLOG(trace) << "msb(cur_mant) <= M";
+            $(CLOG(trace) << "msb(cur_mant) <= M");
             lshift(std::min(cur_exp, delta_m));
         } else {
-            CLOG(trace) << "msb(cur_mant) > M";
+            $(CLOG(trace) << "msb(cur_mant) > M");
             if (delta_m > delta_e)
                 ovf();
             else
@@ -565,17 +566,17 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
         }
     } else {
         // Exponent is big. We must decrease it, unless exponent > max_exp
-        CLOG(trace) << "cur_exp > max_exp(E)";
+        $(CLOG(trace) << "cur_exp > max_exp(E)");
 
         if (msb(cur_mant) <= M) {
-            CLOG(trace) << "msb(cur_mant) <= M";
+            $(CLOG(trace) << "msb(cur_mant) <= M");
 
             if (delta_m < delta_e)
                 ovf();
             else
                 lshift(std::min(delta_m, cur_exp));
         } else {
-            CLOG(trace) << "msb(cur_mant) > M";
+            $(CLOG(trace) << "msb(cur_mant) > M");
             ovf();
         }
     }
@@ -610,12 +611,12 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
 // if e == 0 -> denormalized value -> m' = 2*m
 Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype M) {
     if (exp > 0) {
-        CLOG(trace) << "exp > 0: Value is normalized";
+        $(CLOG(trace) << "exp > 0: Value is normalized");
 
         assert(ext_mant >= max_mant(M));
         ext_mant -= max_mant(M) + 1;
     } else {
-        CLOG(trace) << "exp == 0: Value is denormalized";
+        $(CLOG(trace) << "exp == 0: Value is denormalized");
 
         ext_mant >>= 1;
     }
@@ -642,23 +643,23 @@ Flexfloat::mexttype Flexfloat::unzip(const Flexfloat &ff) {
 
 bool Flexfloat::is_valid() const {
     if (M > sizeof(m) * 8) {
-        CLOG(error) << "M > sizeof(m)*8";
+        $(CLOG(error) << "M > sizeof(m)*8");
         return false;
     }
     if (E > sizeof(e) * 8) {
-        CLOG(error) << "E > sizeof(e)*8";
+        $(CLOG(error) << "E > sizeof(e)*8");
         return false;
     }
     if (s > 1) {
-        CLOG(error) << "s > 1";
+        $(CLOG(error) << "s > 1");
         return false;
     }
     if (e > static_cast<etype>((1 << E) - 1)) {
-        CLOG(error) << "e > static_cast<etype>((1 << E) - 1)";
+        $(CLOG(error) << "e > static_cast<etype>((1 << E) - 1)");
         return false;
     }
     if (m > static_cast<mtype>((1 << M) - 1)) {
-        CLOG(error) << "m > static_cast<mtype>((1 << M) - 1)";
+        $(CLOG(error) << "m > static_cast<mtype>((1 << M) - 1)");
         return false;
     }
 
