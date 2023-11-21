@@ -1,10 +1,11 @@
 #pragma once
 
-#include <stdint.h>
 #include <iostream>
+#include <stdint.h>
 #include <vector>
 
-namespace clib {
+namespace clib
+{
 
 struct Pixel
 {
@@ -20,7 +21,6 @@ class Image
 
   public:
     Image() = default;
-    Image(const std::string &path);
 
     static Image read_JPEG(const std::string &path);
     static void write_JPEG(const Image &image, const std::string &path);

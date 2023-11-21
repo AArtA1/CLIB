@@ -13,7 +13,8 @@ extern "C"
 #include "../../include/clib/image.hpp"
 #include "../../include/clib/logs.hpp"
 
-namespace clib {
+namespace clib
+{
 
 Image read(const std::string &path)
 {
@@ -278,7 +279,7 @@ void Image::write_JPEG(const Image &image, const std::string &path)
 // # # # # # # # # # # # # //
 // ## # # # # # # # # # ## //
 
-Image &Image::read_PNG(const std::string &path)
+Image Image::read_PNG(const std::string &path)
 {
 #ifndef NDEBUG
     CLOG(trace) << "Reading PNG image";

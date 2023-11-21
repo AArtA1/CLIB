@@ -223,8 +223,7 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
     return n;
 }
 
-
-Flexfixed Flexfixed::from_float(Itype I, Ftype F, float flt)
+Flexfixed Flexfixed::from_float(Flexfixed::Itype I, Flexfixed::Ftype F, float flt)
 {
 #ifndef NDEBUG
     CLOG(trace) << std::endl;
