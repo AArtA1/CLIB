@@ -92,35 +92,6 @@ std::ostream &operator<<(std::ostream &os, const struct Pixel &p)
     return os << "(" << p.r << ", " << p.g << ", " << p.b << ")";
 }
 
-Image::Image(const std::string &path)
-{
-    auto check_ext = [](const std::string &s, const std::vector<std::string> exts) -> bool {
-        for (auto ext : exts)
-            if (s.substr(s.find_last_of(".") + 1) == ext)
-                return true;
-        return false;
-    };
-
-    if (check_ext(path, {
-                            "jpeg",
-                            "jpg",
-                        }))
-    {
-        (void)read_JPEG(path);
-    }
-    else if (check_ext(path, {
-                                 "png",
-                             }))
-    {
-        (void)read_PNG(path);
-    }
-    else
-    {
-        std::cout << "Unknown format: " << path.substr(path.find_last_of(".") + 1) << std::endl;
-        throw 1;
-    }
-}
-
 size_t Image::get_height() const
 {
     return data.size();
