@@ -1,14 +1,14 @@
-/*
 #pragma once
 
-#include <cstddef>
+#include <stdint.h>
 #include <iostream>
 #include <vector>
+
+namespace clib {
 
 struct Pixel
 {
     uint64_t r, g, b;
-
     uint64_t I(void) const;
 
     friend std::ostream &operator<<(std::ostream &os, const Pixel &p);
@@ -37,4 +37,4 @@ class Image
     Pixel &at(size_t i, size_t j);
 };
 
-*/
+} // namespace clib

@@ -132,6 +132,7 @@ add_library(clib_library
             src/clib/Flexfixed.cpp
             src/clib/logs.cpp
             src/clib/Uint32.cpp
+            src/clib/image.cpp
 )
 target_link_libraries(clib_library PUBLIC ${Boost_LIBRARIES} clib_headers)
 

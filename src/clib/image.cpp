@@ -1,5 +1,3 @@
-/*
-
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
@@ -14,6 +12,8 @@ extern "C"
 
 #include "../../include/clib/image.hpp"
 #include "../../include/clib/logs.hpp"
+
+namespace clib {
 
 Image read(const std::string &path)
 {
@@ -79,8 +79,6 @@ void write(const Image &image, const std::string &path)
 #endif
         throw "Unknown format. Please check again";
     }
-
-    return image;
 }
 
 uint64_t Pixel::I(void) const
@@ -113,7 +111,7 @@ Image::Image(const std::string &path)
                                  "png",
                              }))
     {
-        (void)readPNG(path);
+        (void)read_PNG(path);
     }
     else
     {
@@ -423,5 +421,4 @@ void Image::write_PNG(const Image &image, const std::string &path)
     png_destroy_write_struct(&png, &info);
 }
 
-
-*/
+} // namespace clib

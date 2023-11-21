@@ -223,8 +223,8 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
     return n;
 }
 
-<<<<<<< HEAD
-Flexfixed Flexfixed::from_float(Flexfixed::Itype I, Flexfixed::Ftype F, float flt)
+
+Flexfixed Flexfixed::from_float(Itype I, Ftype F, float flt)
 {
 #ifndef NDEBUG
     CLOG(trace) << std::endl;
@@ -271,8 +271,6 @@ float Flexfixed::to_float() const
     return res;
 }
 
-=======
->>>>>>> origin/master
 bool operator>(const Flexfixed &left, const Flexfixed &right)
 {
     // todo for different signs
