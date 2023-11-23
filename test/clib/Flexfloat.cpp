@@ -206,3 +206,25 @@ TEST_CASE("Test Flexfloat float")
     
     CHECK(1);
 }
+
+TEST_CASE("Test Flexfloat mean")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat mean");
+    LOG(debug) << std::fixed << std::setprecision(5);
+    using ff = clib::Flexfloat;
+
+    using std::vector;
+    const ff::Etype E = 5;
+    const ff::Mtype M = 10;
+    const ff::Btype B = 15;
+    const size_t SIZE = 1000;
+
+    vector<vector<ff>> img(SIZE, vector<ff>(SIZE, ff(E, M, B, 0)));
+    for (size_t i = 0; i < SIZE; ++i)
+        for (size_t j = 0; j < SIZE; ++j)
+            img[i][j] = ff::from_float(E, M, B, static_cast<float>(i * j)) ;
+    
+    LOG(debug) << "mean = " << clib::mean<ff>(img).to_float();
+
+    CHECK(1);
+}

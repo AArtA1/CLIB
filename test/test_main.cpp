@@ -10,8 +10,7 @@ boost::log::sources::severity_logger< clib::severity_level > slg;
 int main(int argc, char** argv) 
 {
     clib::init_logs();
-    //clib::sev_filter(clib::trace);
-    clib::tag_filter("Flexfloat float");
+    clib::tag_sev_filter("Flexfloat mean", clib::debug);
     
     doctest::Context context;
 
