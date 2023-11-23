@@ -223,19 +223,21 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
     return n;
 }
 
-Flexfixed Flexfixed::from_float(Flexfixed::Itype I, Flexfixed::Ftype F, float flt)
+
+
+Flexfixed Flexfixed::from_float(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, float flt)
 {
 #ifndef NDEBUG
     CLOG(trace) << std::endl;
     CLOG(trace) << "Flexfixed from_float = " << flt;
 #endif
 
-    Flexfixed result(I, F);
+    Flexfixed result(I_n, F_n);
     result.s = flt > 0 ? 0 : 1;
 
-    nrestype res_n = static_cast<nrestype>(fabs(flt) * (static_cast<ntype>(1) << F));
+    nrestype res_n = static_cast<nrestype>(fabs(flt) * (static_cast<ntype>(1) << F_n));
 
-    res_n = check_ovf(res_n, I, F);
+    res_n = check_ovf(res_n, I_n, F_n);
 
     assert(res_n <= std::numeric_limits<ntype>::max());
     result.n = static_cast<ntype>(res_n);

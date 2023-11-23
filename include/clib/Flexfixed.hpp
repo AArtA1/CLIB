@@ -203,7 +203,7 @@ class Flexfixed
         return {I, F};
     }
 
-    Flexfixed from_float(Itype I, Ftype F, float flt);
+    static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 
   private:
     /// @brief Принимает список значений Flexfixed, которые нужно проверить на
