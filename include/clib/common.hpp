@@ -132,4 +132,13 @@ template <typename T> T mean(const vector<vector<T>> &vv)
     return sum;
 }
 
+
+bool check_ext(const std::string & s, const std::vector<std::string>& exts){
+    for (auto ext : exts)
+            if (s.substr(s.find_last_of(".") + 1) == ext)
+                return true;
+        return false;
+}
+
+
 } // namespace clib
