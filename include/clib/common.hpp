@@ -133,7 +133,7 @@ template <typename T> T mean(const vector<vector<T>> &vv)
 }
 
 
-bool check_ext(const std::string & s, const std::vector<std::string>& exts){
+static bool check_ext(const std::string & s, const std::vector<std::string>& exts){
     for (auto ext : exts)
             if (s.substr(s.find_last_of(".") + 1) == ext)
                 return true;

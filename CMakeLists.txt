@@ -105,6 +105,19 @@ find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES})
 message(STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
 message(STATUS "Boost_LIBRARIES = ${Boost_LIBRARIES}")
 
+
+
+##################################################################################################
+##
+##      Cimg Library
+##
+##################################################################################################
+
+find_package(X11 REQUIRED)
+
+message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
+message(STATUS "X11 library = ${X11_LIBRARIES}")
+
 ###################################################################################################
 ##
 ##      Заголовочная библиотека
@@ -116,6 +129,7 @@ target_include_directories(clib_headers INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${Boost_INCLUDE_DIRS}
+    ${X11_INCLUDE_DIR}
 )
 target_compile_features(clib_headers INTERFACE cxx_std_17)
 
@@ -133,7 +147,7 @@ add_library(clib_library
             src/clib/logs.cpp
             src/clib/Uint32.cpp
 )
-target_link_libraries(clib_library PUBLIC ${Boost_LIBRARIES} clib_headers)
+target_link_libraries(clib_library PUBLIC ${Boost_LIBRARIES} ${X11_LIBRARIES} clib_headers)
 
 add_library(clib::library ALIAS clib_library)
 
