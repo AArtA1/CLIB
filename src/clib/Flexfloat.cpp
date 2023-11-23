@@ -91,7 +91,7 @@ Flexfloat::mtype Flexfloat::max_mant(Mtype M) {
     return (static_cast<mtype>(1) << M) - 1;
 }
 
-Flexfloat::Mtype Flexfloat::msb(uint128_t val) {
+Flexfloat::Mtype Flexfloat::msb(mexttype val) {
     if (val == 0) return 0;
 
     Mtype msb = 0;
@@ -163,7 +163,7 @@ void Flexfloat::mult(const Flexfloat &left, const Flexfloat &right,
 
     uint8_t nsign = left.s ^ right.s;
     eexttype nexp =
-        +static_cast<int128_t>(left.e) + right.e + res.B - left.B - right.B;
+        +static_cast<eexttype>(left.e) + right.e + res.B - left.B - right.B;
 
     // Largest M. All calculations will be with the largest mantissa
     Mtype LM = std::max({left.M, right.M, res.M});
@@ -346,7 +346,7 @@ Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n) {
         s = 1;
     }
 
-    Mtype N = msb(static_cast<uint128_t>(n));
+    Mtype N = msb(static_cast<mexttype>(n));
     mexttype mant = 0;
     mexttype delta_N = static_cast<mexttype>(n) - (1 << N);
     if (N > M)
@@ -506,13 +506,13 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
         cur_mant = 1;
     }
 
-    auto rshift = [&cur_exp, &cur_mant](int128_t n) {
+    auto rshift = [&cur_exp, &cur_mant](eexttype n) {
         assert(n >= 0);
         $(CLOG(trace) << "rshift on n = " << static_cast<uint64_t>(n));
         cur_mant = cur_mant >> n;
         cur_exp = n + cur_exp;
     };
-    auto lshift = [&cur_exp, &cur_mant](int128_t n) {
+    auto lshift = [&cur_exp, &cur_mant](eexttype n) {
         assert(n >= 0);
         $(CLOG(trace) << "lshift on n = " << static_cast<uint64_t>(n));
         cur_mant = cur_mant << n;
@@ -530,8 +530,8 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp,
         cur_exp = 0;
     };
 
-    int128_t delta_m = (cur_mant > 0) ? abs<int128_t>(msb(cur_mant) - M) : 0;
-    int128_t delta_e = abs<int128_t>(cur_exp - max_exp(E));
+    eexttype delta_m = (cur_mant > 0) ? abs<eexttype>(msb(cur_mant) - M) : 0;
+    eexttype delta_e = abs<eexttype>(cur_exp - max_exp(E));
 
     if (cur_exp <= 0) {
         // We must decrease mantissa, unless exponent != 0

@@ -18,15 +18,15 @@ public:
     using Mtype = uint8_t;
     using Btype = int;
     
-    using etype = uint64_t;
-    using mtype = uint64_t;
+    using etype = uint32_t;
+    using mtype = uint32_t;
     using stype = uint8_t;
 
     // type for storing multiplication of mantissa
-    using mexttype = uint128_t;
+    using mexttype = uint64_t;
 
     // type for storing sum of exp and bias
-    using eexttype = int128_t;
+    using eexttype = int64_t;
 
     const static Btype B_FLOAT = 127;
     const static Etype E_FLOAT = 8;
@@ -115,7 +115,7 @@ public:
     * Пример, для val = 0b000001 вернет 0.
     * Пример, для val = 0b000010 вернет 1.
     */
-    static Mtype msb(uint128_t val);
+    static Mtype msb(mexttype val);
 
     static bool is_zero(const Flexfloat& val);
 
