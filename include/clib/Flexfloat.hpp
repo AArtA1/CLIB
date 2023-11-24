@@ -44,6 +44,11 @@ class Flexfloat
     mtype m; /// Mantissa. Должна принадлежать [0, 2^M - 1]
 
   public:
+    /*! @brief Создает не валидный Flexfloat
+     *
+     */
+    Flexfloat();
+
     /*! @brief Создает Flexfloat
      *
      * \param[in] E_n Количество бит в экспоненте
@@ -217,6 +222,13 @@ class Flexfloat
      * \return FlexFloat
      */
     static Flexfloat from_float(Etype E, Mtype M, Btype B, float flt);
+
+    /*! @brief Конвертация float числа в FlexFloat
+     *
+     * \param[in] flt float число
+     * \return FlexFloat
+     */
+    static Flexfloat from_float(const Flexfloat &hypepparams, float flt);
 
     // /*! @brief Преобразует Flexfloat в double
     // *

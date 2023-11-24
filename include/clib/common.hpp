@@ -1,10 +1,12 @@
 #pragma once
 #include "logs.hpp"
+#include <algorithm>
 #include <bitset>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -12,7 +14,6 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include <algorithm>
 #include <vector>
 
 namespace clib
@@ -61,75 +62,159 @@ template <typename T> std::string bits(T val)
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
 
-static size_t determine_threads(size_t req_threads)
-{
-    size_t hard_conc = static_cast<size_t>(std::thread::hardware_concurrency());
-    return std::min(hard_conc != 0 ? hard_conc : 2, req_threads);
-}
-
 using std::vector;
-template <typename T,
-          typename It = typename std::remove_reference<decltype(begin(std::declval<vector<vector<T>>>()))>::type>
-void mean_impl(It frow, It lrow, T &res)
+template <typename T> class img final
 {
-    T sum = *(frow->begin());
+    vector<vector<T>> vv;
 
-    for (auto row_it = frow; row_it != lrow; ++row_it)
-        for (auto col_it = row_it->begin(), col_end = row_it->end(); col_it != col_end; ++col_it)
-            T::sum(*col_it, sum, sum);
+    size_t rows_ = 0;
+    size_t cols_ = 0;
 
-    res = sum;
-    return;
-}
+    T inv_rows_{};
+    T inv_cols_{};
 
-template <typename T> T mean(const vector<vector<T>> &vv)
-{
-    assert(vv.size() > 0);
-    assert(vv[0].size() > 0);
-
-    const size_t MIN_THREAD_WORK = 100000;
-
-    size_t rows = vv.size();
-    size_t cols = vv[0].size();
-
-    size_t rows_per_thread = std::max(MIN_THREAD_WORK / cols, 1ul);
-    size_t req_threads = std::max(rows / rows_per_thread, 1ul);
-
-    size_t nthreads = determine_threads(req_threads);
-    vector<std::thread> threads(nthreads);
-    vector<T> results(nthreads + 1, vv[0][0]);
-
-    size_t bsize = rows / nthreads;
-
-    /////////////////// SPAWN ///////////////////
-
-    size_t tidx = 0;
-    size_t last_row = 0;
-    for (; rows >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
+  public:
+    img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
     {
-        auto st = vv.begin() + static_cast<long int>(last_row);
-        auto en = vv.begin() + static_cast<long int>(last_row + bsize);
-        threads[tidx] = std::thread(mean_impl<T>, st, en, std::ref(results[tidx]));
-    }
-    auto remainder = rows - bsize * tidx;
+        const size_t MIN_THREAD_WORK = 10000000;
+        rows_ = rows;
+        cols_ = cols;
 
-    if (remainder > 0)
-    {
-        assert(tidx == nthreads);
-        auto st = vv.begin() + static_cast<long int>(last_row);
-        auto en = vv.end();
-        mean_impl<T>(st, en, std::ref(results[tidx]));
-        tidx++;
+        vv.reserve(rows_);
+        vv.resize(rows_);
+
+        size_t nthreads = req_threads;
+        if (req_threads == 0)
+            nthreads = determine_threads(MIN_THREAD_WORK);
+
+        auto threads = work(nthreads, &img::init_impl, std::ref(prototype));
+
+        for (auto &&t : threads)
+            t.join();
+
+        set_inv_rows();
+        set_inv_cols();
     }
 
-    for (auto &&t : threads)
-        t.join();
+    T mean(size_t req_threads = 0)
+    {
+        const size_t MIN_THREAD_WORK = 10000000;
 
-    T sum = vv[0][0];
-    for (size_t i = 0; i < tidx; ++i)
-        T::sum(results[i], sum, sum);
+        size_t nthreads = req_threads;
+        if (req_threads == 0)
+            nthreads = determine_threads(MIN_THREAD_WORK);
 
-    return sum;
-}
+        vector<T> results(vv.size(), vv[0][0]);
+
+        auto threads = work(nthreads, &img::mean_impl, std::ref(results));
+        for (auto &&t : threads)
+            t.join();
+
+        T ans = vv[0][0];
+        for (auto &&elem : results)
+            T::sum(elem, ans, ans);
+
+        T::mult(inv_rows(), ans, ans);
+        return ans;
+    }
+
+  private:
+    void init_impl(size_t st_row, size_t en_row, const T &prototype)
+    {
+        assert(cols_ != 0);
+        assert(en_row >= st_row);
+
+        for (auto i = st_row; i < en_row; ++i)
+        {
+            vv[i].reserve(cols_);
+            for (size_t j = 0; j < cols_; ++j)
+                vv[i].push_back(prototype);
+        }
+    }
+
+    void mean_impl(size_t st_row, size_t en_row, vector<T> &res)
+    {
+        assert(en_row >= st_row);
+
+        for (auto i = st_row; i < en_row; ++i)
+        {
+            T sum = T::from_float(vv[i][0], 0);
+            for (auto &&elem : vv[i])
+                T::sum(elem, sum, sum);
+
+            T::mult(inv_cols(), sum, sum);
+            res[i] = sum;
+        }
+    }
+
+    template <typename Func, typename... Args> vector<std::thread> work(size_t nthreads, Func func, Args... args)
+    {
+        size_t rows = vv.size();
+        assert(rows != 0);
+
+        vector<std::thread> threads(nthreads);
+        size_t bsize = rows / nthreads;
+
+        std::cout << "nthreads = " << nthreads << std::endl;
+        std::cout << "bsize = " << bsize << std::endl;
+
+        /////////////////// SPAWN ///////////////////
+
+        size_t tidx = 0;
+        size_t last_row = 0;
+        for (; rows >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
+        {
+            auto st = last_row;
+            auto en = last_row + bsize;
+            threads[tidx] = std::thread(func, this, st, en, args...);
+        }
+        auto remainder = rows - bsize * tidx;
+
+        if (remainder > 0)
+        {
+            assert(tidx == nthreads);
+            auto st = last_row;
+            auto en = rows;
+            std::invoke(func, this, st, en, args...);
+            tidx++;
+        }
+
+        return threads;
+    }
+
+    size_t determine_threads(size_t min_thread_work)
+    {
+        assert(rows_ != 0);
+        assert(cols_ != 0);
+
+        size_t rows_per_thread = std::max(min_thread_work / cols_, 1ul);
+        size_t det_threads = std::max(rows_ / rows_per_thread, 1ul);
+
+        size_t hard_conc = static_cast<size_t>(std::thread::hardware_concurrency());
+        return std::min(hard_conc != 0 ? hard_conc : 2, det_threads);
+    }
+
+    void set_inv_rows()
+    {
+        inv_rows_ = T::from_float(vv[0][0], rows_);
+        T::inv(inv_rows_, inv_rows_);
+    }
+
+    void set_inv_cols()
+    {
+        inv_cols_ = T::from_float(vv[0][0], cols_);
+        T::inv(inv_cols_, inv_cols_);
+    }
+
+    T inv_cols()
+    {
+        return inv_cols_;
+    }
+
+    T inv_rows()
+    {
+        return inv_rows_;
+    }
+};
 
 } // namespace clib

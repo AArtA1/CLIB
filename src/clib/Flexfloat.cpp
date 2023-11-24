@@ -13,6 +13,10 @@ namespace clib
 #define $(...) ;
 #endif
 
+Flexfloat::Flexfloat() : B(0), E(0), M(0), s(0), e(0), m(0)
+{
+}
+
 Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n)
     : B(B_n), E(E_n), M(M_n), s(s_n), e(e_n), m(m_n)
 {
@@ -427,6 +431,7 @@ int Flexfloat::ceil() const
 //     return 0;
 // } TODO
 
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
 float Flexfloat::to_float() const
 {
     eexttype nexp = e;
@@ -470,6 +475,7 @@ float Flexfloat::to_float() const
 
     return fc.f;
 }
+#pragma GCC diagnostic warning "-Wstrict-overflow"
 
 Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
 {
@@ -499,6 +505,11 @@ Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
 #endif
 
     return normalise(nsign, nexp, nmant, M, {E, M, B});
+}
+
+Flexfloat Flexfloat::from_float(const Flexfloat &hypepparams, float flt)
+{
+    return from_float(hypepparams.E, hypepparams.M, hypepparams.B, flt);
 }
 
 std::string Flexfloat::bits() const
