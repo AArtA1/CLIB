@@ -98,7 +98,7 @@ template <typename T> class img final
     img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
     {
         // Вычислен c помощью функции determine_work_number;
-        const size_t MIN_THREAD_WORK = 10000000;
+        const size_t MIN_THREAD_WORK = 12000;
         rows_ = rows;
         cols_ = cols;
 
@@ -123,7 +123,8 @@ template <typename T> class img final
      */
     T mean(size_t req_threads = 0)
     {
-        const size_t MIN_THREAD_WORK = 10000000;
+        // Вычислен c помощью функции determine_work_number;
+        const size_t MIN_THREAD_WORK = 7000;
 
         size_t nthreads = req_threads;
         if (req_threads == 0)
@@ -171,8 +172,8 @@ template <typename T> class img final
 
         const size_t tests_num = 33;
         const size_t means_num = 40;
-        const size_t rows = 500;
-        const size_t cols = 500;
+        const size_t rows = 1920;
+        const size_t cols = 1080;
 
         // Прогреваем кэши
         for (size_t i = 0; i < tests_num; i += 4)
@@ -224,7 +225,6 @@ template <typename T> class img final
     // res - массив промежуточных сумм
     void mean_impl(size_t st_row, size_t en_row, vector<T> &res)
     {
-        std::cout << "ENTER " << "st_row = " << st_row << " en_row = " << en_row << std::endl;
         assert(en_row >= st_row);
 
         for (auto i = st_row; i < en_row; ++i)
@@ -233,12 +233,9 @@ template <typename T> class img final
             for (auto &&elem : vv[i])
                 T::sum(elem, sum, sum);
             
-            //std::cout << "i = " << i << std::endl;
-            
             T::mult(inv_cols(), sum, sum);
             res[i] = sum;
         }
-        std::cout << "EXIT  " << "st_row = " << st_row << " en_row = " << en_row << std::endl;
         std::flush(std::cout);
     }
 
@@ -248,25 +245,18 @@ template <typename T> class img final
         assert(rows != 0);
 
         vector<std::thread> threads(nthreads);
-        size_t bsize = rows / nthreads;
-
-        std::cout << "nthreads = " << nthreads << std::endl;
-        std::cout << "bsize = " << bsize << std::endl;
+        size_t bsize = std::max(rows / nthreads, 1ul);
 
         /////////////////// Создаем потоки ///////////////////
         size_t tidx = 0;
         size_t last_row = 0;
-        for (; rows >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
+        for (; rows >= bsize * (tidx + 1) && tidx < nthreads; last_row += bsize, tidx += 1)
         {
             assert(tidx < nthreads);
             auto st = last_row;
             auto en = last_row + bsize;
-            std::cout << "st = " << st << std::endl;
-            std::cout << "en = " << en << std::endl;
             threads[tidx] = std::thread(func, this, st, en, args...);
         }
-
-        std::cout << "ERROR\n\n";
 
         // Обрабатываем остаток работ
         auto remainder = rows - bsize * tidx;
@@ -276,10 +266,9 @@ template <typename T> class img final
             auto st = last_row;
             auto en = rows;
             std::invoke(func, this, st, en, args...);
-            tidx++;
         }
-        for (auto &&t : threads)
-            t.join();
+        for (size_t th = 0; th < tidx; ++th)
+            threads[th].join();
 
         return;
     }
