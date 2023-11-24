@@ -62,6 +62,19 @@ template <typename T> std::string bits(T val)
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
 
+// static bool check_ext(const std::string &s, const std::vector<std::string> &exts)
+// {
+//     for (auto ext : exts)
+//         if (s.substr(s.find_last_of(".") + 1) == ext)
+//             return true;
+//     return false;
+// }
+
+/*!
+ * \brief Обёртка над Image
+ *
+ * \details Класс содержит в себе двумерный массив с числами типа T и реализует функции для работы с массивом
+ */
 using std::vector;
 template <typename T> class img final
 {
@@ -74,8 +87,17 @@ template <typename T> class img final
     T inv_cols_{};
 
   public:
+    /*! @brief Инициализации двумерного массива
+     *
+     * \param[in] prorotype Элемент, которым нужно заполнить массив
+     * \param[in] rows Количество строк
+     * \param[in] cols Количество столбцов
+     * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
+     *                        задан, инициализация будет разделена на отпимальное количество потоков
+     */
     img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
     {
+        // Вычислен c помощью функции determine_work_number;
         const size_t MIN_THREAD_WORK = 10000000;
         rows_ = rows;
         cols_ = cols;
@@ -87,15 +109,18 @@ template <typename T> class img final
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
 
-        auto threads = work(nthreads, &img::init_impl, std::ref(prototype));
-
-        for (auto &&t : threads)
-            t.join();
+        // разбиваем по потокам
+        work(nthreads, &img::init_impl, std::ref(prototype));
 
         set_inv_rows();
         set_inv_cols();
     }
 
+    /*! @brief Подсчет средного двумерного массива
+     *
+     * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
+     *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
+     */
     T mean(size_t req_threads = 0)
     {
         const size_t MIN_THREAD_WORK = 10000000;
@@ -106,19 +131,81 @@ template <typename T> class img final
 
         vector<T> results(vv.size(), vv[0][0]);
 
-        auto threads = work(nthreads, &img::mean_impl, std::ref(results));
-        for (auto &&t : threads)
-            t.join();
+        // Разбиваем по потокам
+        work(nthreads, &img::mean_impl, std::ref(results));
 
+        // Собираем промежуточные суммы с потоков
         T ans = vv[0][0];
         for (auto &&elem : results)
             T::sum(elem, ans, ans);
-
         T::mult(inv_rows(), ans, ans);
+
         return ans;
     }
 
+    static void determine_work_number(const T& prototype)
+    {
+        struct test_res
+        {
+            size_t t_init;
+            size_t t_calc;
+            float mean;
+        };
+        auto calc = [&prototype](size_t req_threads, size_t rows, size_t cols)
+        {
+            auto s_begin = std::chrono::steady_clock::now();
+
+            auto one = T::from_float(prototype, 1);
+            img im(one, rows, cols, req_threads);
+
+            auto s_init = std::chrono::steady_clock::now();
+            auto mean = im.mean(req_threads);
+            auto s_end = std::chrono::steady_clock::now();
+
+            size_t t_init = std::chrono::duration_cast<std::chrono::microseconds>(s_init - s_begin).count();
+            size_t t_calc = std::chrono::duration_cast<std::chrono::microseconds>(s_end - s_init).count();
+
+            test_res tr = {t_init, t_calc, mean.to_float()};
+            return tr;
+        };
+
+        const size_t tests_num = 33;
+        const size_t means_num = 40;
+        const size_t rows = 500;
+        const size_t cols = 500;
+
+        // Прогреваем кэши
+        for (size_t i = 0; i < tests_num; i += 4)
+            calc(i, rows, cols);
+
+        std::vector<test_res> results;
+        for (size_t i = 0; i < tests_num; ++i)
+        {
+            // усреднение
+            test_res cur_res = {0, 0, 0};
+            for (size_t j = 0; j < means_num; ++j)
+            {
+                test_res temp_res = calc(i, rows, cols);
+                cur_res.t_init += temp_res.t_init;
+                cur_res.t_calc += temp_res.t_calc;
+                cur_res.mean = temp_res.mean;
+            }
+            results.push_back({cur_res.t_init / means_num, cur_res.t_calc / means_num, cur_res.mean});
+        }
+
+
+        for (size_t i = 0; i < tests_num; ++i)
+        {
+            std::cout << "for i = " << std::setw(2) <<  i;
+            std::cout << " init = " << std::setw(5) << results[i].t_init;
+            std::cout << " calc = " << std::setw(5) << results[i].t_calc;
+            std::cout << " mean = " << results[i].mean << std::endl;
+        }
+    }
+
   private:
+    // Работа для одного потока
+    // [st_row, en_row] - диапазон работы
     void init_impl(size_t st_row, size_t en_row, const T &prototype)
     {
         assert(cols_ != 0);
@@ -132,8 +219,12 @@ template <typename T> class img final
         }
     }
 
+    // Работа для одного потока
+    // [st_row, en_row] - диапазон работы
+    // res - массив промежуточных сумм
     void mean_impl(size_t st_row, size_t en_row, vector<T> &res)
     {
+        std::cout << "ENTER " << "st_row = " << st_row << " en_row = " << en_row << std::endl;
         assert(en_row >= st_row);
 
         for (auto i = st_row; i < en_row; ++i)
@@ -141,13 +232,17 @@ template <typename T> class img final
             T sum = T::from_float(vv[i][0], 0);
             for (auto &&elem : vv[i])
                 T::sum(elem, sum, sum);
-
+            
+            //std::cout << "i = " << i << std::endl;
+            
             T::mult(inv_cols(), sum, sum);
             res[i] = sum;
         }
+        std::cout << "EXIT  " << "st_row = " << st_row << " en_row = " << en_row << std::endl;
+        std::flush(std::cout);
     }
 
-    template <typename Func, typename... Args> vector<std::thread> work(size_t nthreads, Func func, Args... args)
+    template <typename Func, typename... Args> void work(size_t nthreads, Func func, Args... args)
     {
         size_t rows = vv.size();
         assert(rows != 0);
@@ -158,18 +253,23 @@ template <typename T> class img final
         std::cout << "nthreads = " << nthreads << std::endl;
         std::cout << "bsize = " << bsize << std::endl;
 
-        /////////////////// SPAWN ///////////////////
-
+        /////////////////// Создаем потоки ///////////////////
         size_t tidx = 0;
         size_t last_row = 0;
         for (; rows >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
         {
+            assert(tidx < nthreads);
             auto st = last_row;
             auto en = last_row + bsize;
+            std::cout << "st = " << st << std::endl;
+            std::cout << "en = " << en << std::endl;
             threads[tidx] = std::thread(func, this, st, en, args...);
         }
-        auto remainder = rows - bsize * tidx;
 
+        std::cout << "ERROR\n\n";
+
+        // Обрабатываем остаток работ
+        auto remainder = rows - bsize * tidx;
         if (remainder > 0)
         {
             assert(tidx == nthreads);
@@ -178,10 +278,13 @@ template <typename T> class img final
             std::invoke(func, this, st, en, args...);
             tidx++;
         }
+        for (auto &&t : threads)
+            t.join();
 
-        return threads;
+        return;
     }
 
+    // Определение оптимального количество потоков исходя из количества работы и параметров системы
     size_t determine_threads(size_t min_thread_work)
     {
         assert(rows_ != 0);
@@ -216,14 +319,5 @@ template <typename T> class img final
         return inv_rows_;
     }
 };
-
-
-static bool check_ext(const std::string & s, const std::vector<std::string>& exts){
-    for (auto ext : exts)
-            if (s.substr(s.find_last_of(".") + 1) == ext)
-                return true;
-        return false;
-}
-
 
 } // namespace clib
