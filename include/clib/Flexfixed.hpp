@@ -205,6 +205,8 @@ class Flexfixed
 
     static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 
+    static Flexfixed from_float(const Flexfixed &hyperparams, float flt);
+
   private:
     /// @brief Принимает список значений Flexfixed, которые нужно проверить на
     /// корректность (is_valid())

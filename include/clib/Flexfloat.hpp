@@ -228,7 +228,7 @@ class Flexfloat
      * \param[in] flt float число
      * \return FlexFloat
      */
-    static Flexfloat from_float(const Flexfloat &hypepparams, float flt);
+    static Flexfloat from_float(const Flexfloat &hyperparams, float flt);
 
     // /*! @brief Преобразует Flexfloat в double
     // *

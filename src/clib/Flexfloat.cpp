@@ -507,9 +507,9 @@ Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
     return normalise(nsign, nexp, nmant, M, {E, M, B});
 }
 
-Flexfloat Flexfloat::from_float(const Flexfloat &hypepparams, float flt)
+Flexfloat Flexfloat::from_float(const Flexfloat &hyperparams, float flt)
 {
-    return from_float(hypepparams.E, hypepparams.M, hypepparams.B, flt);
+    return from_float(hyperparams.E, hyperparams.M, hyperparams.B, flt);
 }
 
 std::string Flexfloat::bits() const

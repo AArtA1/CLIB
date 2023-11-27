@@ -43,17 +43,25 @@ option(CLIB_TESTING "Включить модульное тестировани�
 option(CLIB_COVERAGE "Включить измерение покрытия кода тестами" OFF)
 option(CLIB_DOC "Включить документирование" ON)
 
+set(MY_SOURCES
+    src/clib/Flexfloat.cpp
+    src/clib/Flexfixed.cpp
+    src/clib/logs.cpp
+    src/clib/Uint32.cpp
+    src/clib/image.cpp
+    src/clib/converter.cpp
+)
+
 ###################################################################################################
 ##
 ##      Флаги
 ##
 ###################################################################################################
 
-add_compile_options(
+set(MY_FLAGS
     -Wall
     -Wextra
     -Wpedantic
-
     -Wcast-align
     -Wcast-qual
     -Wconversion
@@ -67,11 +75,10 @@ add_compile_options(
     -Wsign-conversion
     -Wsign-promo
     -fdiagnostics-show-option
-    -Wfloat-equal
     -Wlogical-op
     -Wundef
     -Wshadow
-    -Wstrict-overflow=5
+    -Wstrict-overflow=5s
     -Wwrite-strings
     -Wpointer-arith
     -Wformat=2
@@ -83,9 +90,13 @@ add_compile_options(
     -Winvalid-pch
     -Wunused-but-set-variable
     -Wunused-result
-
-    -ggdb3
 )
+
+# Установим флаги только для файлов тестов
+foreach(SRC IN LISTS MY_SOURCES)
+    message("Source from a SOURCES: ${SRC}")
+    set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${MY_FLAGS})
+endforeach()
 
 ###################################################################################################
 ##
@@ -128,6 +139,7 @@ add_library(clib_headers INTERFACE)
 target_include_directories(clib_headers INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cimg>
     ${Boost_INCLUDE_DIRS}
     ${X11_INCLUDE_DIR}
 )
@@ -141,12 +153,7 @@ add_library(clib::headers ALIAS clib_headers)
 ##
 ###################################################################################################
 
-add_library(clib_library 
-            src/clib/Flexfloat.cpp
-            src/clib/Flexfixed.cpp
-            src/clib/logs.cpp
-            src/clib/Uint32.cpp
-)
+add_library(clib_library ${MY_SOURCES})
 target_link_libraries(clib_library PUBLIC ${Boost_LIBRARIES} ${X11_LIBRARIES} clib_headers)
 
 add_library(clib::library ALIAS clib_library)
