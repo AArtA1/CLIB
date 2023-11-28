@@ -172,8 +172,8 @@ template <typename T> class img final
 
         const size_t tests_num = 33;
         const size_t means_num = 40;
-        const size_t rows = 1920;
-        const size_t cols = 1080;
+        const size_t rows = 500;
+        const size_t cols = 500;
 
         // Прогреваем кэши
         for (size_t i = 0; i < tests_num; i += 4)
@@ -250,8 +250,12 @@ template <typename T> class img final
         /////////////////// Создаем потоки ///////////////////
         size_t tidx = 0;
         size_t last_row = 0;
-        for (; rows >= bsize * (tidx + 1) && tidx < nthreads; last_row += bsize, tidx += 1)
+        for (; rows >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
         {
+            std::cout << "tidx = " << tidx << std::endl;
+            std::cout << "nthreads = " << nthreads << std::endl;
+            std::flush(std::cout);
+
             assert(tidx < nthreads);
             auto st = last_row;
             auto en = last_row + bsize;
