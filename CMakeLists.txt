@@ -48,7 +48,6 @@ set(MY_SOURCES
     src/clib/Flexfixed.cpp
     src/clib/logs.cpp
     src/clib/Uint32.cpp
-    src/clib/image.cpp
     src/clib/converter.cpp
 )
 
