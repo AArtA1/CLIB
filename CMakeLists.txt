@@ -100,7 +100,7 @@ endforeach()
 
 ###################################################################################################
 ##
-##      Boost
+##      Библиотеки
 ##
 ###################################################################################################
 
@@ -112,11 +112,8 @@ set(Boost_INCLUDE_LIBRARIES log log_setup)
 set(BOOST_ENABLE_CMAKE ON)
 
 find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES}) 
-
-message(STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
-message(STATUS "Boost_LIBRARIES = ${Boost_LIBRARIES}")
-
-
+find_package(PNG REQUIRED)
+find_package(JPEG REQUIRED)
 
 ##################################################################################################
 ##
@@ -142,6 +139,8 @@ target_include_directories(clib_headers INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cimg>
     ${Boost_INCLUDE_DIRS}
     ${X11_INCLUDE_DIR}
+    ${PNG_INCLUDE_DIR}
+    ${JPEG_INCLUDE_DIR}
 )
 target_compile_features(clib_headers INTERFACE cxx_std_17)
 
@@ -154,7 +153,13 @@ add_library(clib::headers ALIAS clib_headers)
 ###################################################################################################
 
 add_library(clib_library ${MY_SOURCES})
-target_link_libraries(clib_library PUBLIC ${Boost_LIBRARIES} ${X11_LIBRARIES} clib_headers)
+target_link_libraries(clib_library PUBLIC 
+    ${Boost_LIBRARIES} 
+    ${X11_LIBRARIES}
+    ${PNG_LIBRARY}
+    ${JPEG_LIBRARY} 
+    clib_headers
+)
 
 add_library(clib::library ALIAS clib_library)
 

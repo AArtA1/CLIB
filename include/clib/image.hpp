@@ -1,5 +1,7 @@
 #pragma once
 
+#define cimg_use_png
+#define cimg_use_jpeg
 #include "CImg.h"
 #include "X11/Xlib.h"
 #include "common.hpp"
