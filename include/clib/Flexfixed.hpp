@@ -1,6 +1,7 @@
 
 #pragma once
 #include "common.hpp"
+#include "Flexfloat.hpp"
 
 namespace clib
 {
@@ -203,6 +204,8 @@ class Flexfixed
         return {I, F};
     }
 
+    static void convert_ff_to_fx(const Flexfloat& value, Flexfixed& res);
+
     static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 
     static Flexfixed from_float(const Flexfixed &hyperparams, float flt);
@@ -227,6 +230,7 @@ class Flexfixed
     /// 2^(I+F), а знак s <= 1
     /// @return Возвращает флаг корректности значения
     bool is_valid() const;
+
 };
 
 } // namespace clib
