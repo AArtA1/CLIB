@@ -1,4 +1,3 @@
-#pragma once
 #include "clib/logs.hpp"
 #include "clib/Flexfixed.hpp"
 #include "clib/Flexfloat.hpp"

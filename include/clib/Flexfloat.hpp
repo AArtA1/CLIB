@@ -1,9 +1,11 @@
 #pragma once
 #include "common.hpp"
-#include "Flexfixed.hpp"
 
 namespace clib
 {
+
+
+class Flexfixed;
 
 /*!
  * \brief Число с плавующей запятой с настриваемой мантиссой и экспонентой.

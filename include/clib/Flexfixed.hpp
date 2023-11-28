@@ -1,10 +1,10 @@
-
 #pragma once
 #include "common.hpp"
-#include "Flexfloat.hpp"
-
+ 
 namespace clib
 {
+
+class Flexfloat;
 
 /*!
  * \brief Число с фиксированной запятой.
