@@ -1,26 +1,25 @@
 #include "clib/image.hpp"
 
-
-
-static bool check_ext(const std::string & s, const std::vector<std::string>& exts){
+static bool check_ext(const std::string &s, const std::vector<std::string> &exts)
+{
     for (auto ext : exts)
-            if (s.substr(s.find_last_of(".") + 1) == ext)
-                return true;
-        return false;
+        if (s.substr(s.find_last_of(".") + 1) == ext)
+            return true;
+    return false;
 }
 
+namespace clib
+{
 
-namespace clib{
-
-template<typename T>
-CImg<T> read(const std::string& path){
+template <typename T> CImg<T> read(const std::string &path)
+{
     CImg<T> image;
     if (check_ext(path, {
                             "jpeg",
                             "jpg",
                         }))
     {
-        
+
         image = CImg<T>::get_load_jpeg(path.c_str());
     }
     else if (check_ext(path, {
@@ -39,8 +38,8 @@ CImg<T> read(const std::string& path){
     return image;
 }
 
-template<typename T>
-void write(const CImg<T>& image,const std::string& path){
+template <typename T> void write(const CImg<T> &image, const std::string &path)
+{
     if (check_ext(path, {
                             "jpeg",
                             "jpg",
@@ -63,15 +62,12 @@ void write(const CImg<T>& image,const std::string& path){
     }
 }
 
-template CImg<unsigned int> read(const std::string& path);
+template CImg<unsigned int> read(const std::string &path);
 
-template CImg<float> read(const std::string& path);
+template CImg<float> read(const std::string &path);
 
+template void write<unsigned int>(const CImg<unsigned int> &image, const std::string &path);
 
-template void write<unsigned int>(const CImg<unsigned int>& image, const std::string& path);
-
-template void write<float>(const CImg<float>& image, const std::string& path);
-
-
+template void write<float>(const CImg<float> &image, const std::string &path);
 
 } // namespace clib
