@@ -78,8 +78,6 @@ using std::vector;
 using IMG_T = float;
 template <typename T> class img final
 {
-    vector<vector<T>> vv_;
-
     size_t rows_ = 0;
     size_t cols_ = 0;
 
@@ -87,6 +85,8 @@ template <typename T> class img final
     T inv_cols_{};
 
   public:
+    vector<vector<T>> vv_;
+
     /*! @brief Инициализации двумерного массива одинаковыми значениями
      *
      * \param[in] prorotype Элемент, которым нужно заполнить массив
@@ -113,7 +113,7 @@ template <typename T> class img final
             nthreads = determine_threads(MIN_THREAD_WORK);
 
         // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row){
+        work(nthreads, [&](size_t st_row, size_t en_row) {
             for (auto i = st_row; i < en_row; ++i)
             {
                 vv_[i].reserve(cols_);
@@ -151,7 +151,7 @@ template <typename T> class img final
             nthreads = determine_threads(MIN_THREAD_WORK);
 
         // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row){
+        work(nthreads, [&](size_t st_row, size_t en_row) {
             for (auto i = st_row; i < en_row; ++i)
             {
                 vv_[i].reserve(cols_);
@@ -190,7 +190,7 @@ template <typename T> class img final
             nthreads = determine_threads(MIN_THREAD_WORK);
 
         // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row){
+        work(nthreads, [&](size_t st_row, size_t en_row) {
             for (auto i = st_row; i < en_row; ++i)
             {
                 vv_[i].reserve(cols_);
@@ -218,7 +218,7 @@ template <typename T> class img final
         clib::write_img(img_flt, out_path);
     }
 
-    /*! @brief Подсчет средного двумерного массива
+    /*! @brief Подсчет суммы двумерного массива
      *
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
@@ -243,7 +243,7 @@ template <typename T> class img final
      * sum = part_sums[0] + part_sums[1] + part_sums[2]
      *
      */
-    T mean(size_t req_threads = 0)
+    T sum(size_t req_threads = 0) const
     {
         vector<T> results(rows_, vv_[0][0]);
         const size_t modulus = 3;
@@ -266,7 +266,7 @@ template <typename T> class img final
                 T ans = part_sums[0];
                 for (size_t j = 1; j < modulus; ++j)
                     T::sum(part_sums[j], ans, ans);
-                
+
                 results[i] = ans;
             }
         });
@@ -275,9 +275,40 @@ template <typename T> class img final
         T ans = results[0];
         for (size_t i = 1; i < rows_; ++i)
             T::sum(results[i], ans, ans);
-        T::mult(ans, T::from_float(ans, 1.0 / (rows_ * cols_)), ans);
 
         return ans;
+    }
+
+    /*! @brief Подсчет среднего двумерного массива
+     *
+     * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
+     *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
+    */
+    T mean(size_t req_threads = 0) const
+    {
+        T summ = sum();
+        T::mult(summ, T::from_float(summ, 1.0 / (rows_ * cols_)), summ);
+
+        return summ;
+    }
+
+    /*! @brief Обрезает все числа в двумерном массиве между minn и maxx
+     *
+     * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
+     *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
+    */
+    img clip(size_t minn = 0, size_t maxx = 255, size_t req_threads = 0) const
+    {
+        img res(*this);
+        for_each(rows_, cols_, [&](size_t i, size_t j) {
+            if (vv_[i][j].to_float() < minn)
+                res.vv_[i][j] = T::from_float(vv_[i][j], minn);
+            else if (vv_[i][j].to_float() > maxx)
+                res.vv_[i][j] = T::from_float(vv_[i][j], maxx);
+            else res.vv_[i][j] = vv_[i][j];
+        });
+
+        return res;
     }
 
     const vector<vector<T>> vv() const
@@ -375,9 +406,9 @@ template <typename T> class img final
         return res;
     }
 
-    template <typename U> friend img<U> operator+(const U &lhs, const img<U>& rhs);
-    template <typename U> friend img<U> operator*(const U &lhs, const img<U>& rhs);
-    template <typename U> friend img<U> operator-(const U &lhs, const img<U>& rhs);
+    template <typename U> friend img<U> operator+(const U &lhs, const img<U> &rhs);
+    template <typename U> friend img<U> operator*(const U &lhs, const img<U> &rhs);
+    template <typename U> friend img<U> operator-(const U &lhs, const img<U> &rhs);
 
     img operator+(const img &rhs) const
     {
@@ -411,10 +442,10 @@ template <typename T> class img final
     }
 
   private:
-
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
-    template <typename Func, typename... Args> static void for_each(size_t rows, size_t cols, Func func, Args... args)
+    template <typename Func, typename... Args> 
+    static void for_each(size_t rows, size_t cols, Func func, Args... args)
     {
         assert(nthreads > 0);
         assert(rows != 0);
@@ -457,7 +488,7 @@ template <typename T> class img final
 
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
-    template <typename Func, typename... Args> void work(size_t nthreads, Func func, Args... args)
+    template <typename Func, typename... Args> void work(size_t nthreads, Func func, Args... args) const
     {
         assert(nthreads > 0);
         assert(rows_ != 0);
@@ -514,7 +545,7 @@ template <typename T> class img final
         size_t hard_conc = static_cast<size_t>(std::thread::hardware_concurrency());
         return std::min(hard_conc != 0 ? hard_conc : 2, det_threads);
     }
-    size_t determine_threads(size_t min_thread_work)
+    size_t determine_threads(size_t min_thread_work) const
     {
         return determine_threads(rows_, cols_, min_thread_work);
     }
@@ -542,8 +573,7 @@ template <typename T> class img final
     }
 };
 
-template <typename T>
-img<T> operator+(const T &lhs, const img<T>& rhs)
+template <typename T> img<T> operator+(const T &lhs, const img<T> &rhs)
 {
     img<T> res(rhs);
     img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::sum(lhs, res.vv_[i][j], res.vv_[i][j]); });
@@ -551,8 +581,7 @@ img<T> operator+(const T &lhs, const img<T>& rhs)
     return res;
 }
 
-template <typename T>
-img<T> operator*(const T &lhs, const img<T>& rhs)
+template <typename T> img<T> operator*(const T &lhs, const img<T> &rhs)
 {
     img<T> res(rhs);
     img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::mult(lhs, res.vv_[i][j], res.vv_[i][j]); });
@@ -560,8 +589,7 @@ img<T> operator*(const T &lhs, const img<T>& rhs)
     return res;
 }
 
-template <typename T>
-img<T> operator-(const T &lhs, const img<T>& rhs)
+template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
 {
     img<T> res(rhs);
     img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::sub(lhs, res.vv_[i][j], res.vv_[i][j]); });
