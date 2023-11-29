@@ -57,6 +57,31 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) : B(B_n), E(E
     }
 }
 
+Flexfloat::Flexfloat(const Flexfloat &hyperparams, mtype value)  : B(0), E(0), M(0), s(0), e(0), m(0)
+{
+    B = hyperparams.get_B();
+    E = hyperparams.get_E();
+    M = hyperparams.get_M();
+
+    m = static_cast<mtype>((value >> 0) & ((1u << M) - 1u));
+    e = static_cast<etype>((value >> M) & ((1u << E) - 1u));
+    s = static_cast<stype>((value >> (M + E)) & ((1u << S) - 1u));
+
+    if (!is_valid())
+    {
+#ifndef NDEBUG
+        CLOG(error) << "Can not create object. Invalid parameters";
+        CLOG(error) << "E = " << E;
+        CLOG(error) << "M = " << M;
+        CLOG(error) << "B = " << B;
+        CLOG(error) << "s = " << +s;
+        CLOG(error) << "e = " << +e;
+        CLOG(error) << "m = " << +m;
+#endif
+        throw std::runtime_error{"Can not create object. Invalid parameters"};
+    }
+}
+
 Flexfloat Flexfloat::ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
 {
     return Flexfloat(E_n, M_n, B_n, s_n, max_exp(E_n), max_mant(M_n));
@@ -289,6 +314,11 @@ void Flexfloat::sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &re
 
     $(CLOG(trace) << "Result: " << res);
     return;
+}
+
+void Flexfloat::sub(const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
+{
+    sum(left, Flexfloat(right.E, right.M, right.B, !right.s, right.e, right.m), res);
 }
 
 Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)

@@ -69,6 +69,13 @@ class Flexfloat
      */
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
 
+    /*! @brief Создает Flexfloat из аналогичного битового представления
+     *
+     * \param[in] hyperparams Число содержит E, M, B для нового Flexfloat
+     * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
+     */
+    Flexfloat(const Flexfloat &hyperparams, mtype value);
+
     // /*! @brief Создает Flexfloat из double
     // *
     // * \param[in] E_n Количество бит в экспоненте
@@ -167,6 +174,16 @@ class Flexfloat
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
     static void sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
+
+    /*! @brief Вычитание Flexfloat
+     *
+     * \param[in] left Левый операнд
+     * \param[in] right Правый операнд
+     * \param[in] res Результат
+     *
+     * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
+     */
+    static void sub(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Получение 1/x
      *
