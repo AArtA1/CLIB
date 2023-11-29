@@ -1,10 +1,37 @@
+## clib
+
+cmake_minimum_required(VERSION 3.14)
+
+
+##################################################################################################
+##
+##      Проверка системы
+##
+##################################################################################################
+
+
+message("-- CMAKE_SYSTEM_INFO_FILE: ${CMAKE_SYSTEM_INFO_FILE}")
+message("-- CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}")
+message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+message("-- CMAKE_SYSTEM:           ${CMAKE_SYSTEM}")
+
+
+# Check if ubuntu
+find_program(LSB_RELEASE_EXEC lsb_release)
+execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
+    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+message(STATUS "Текущая операционная система: ${LSB_RELEASE_ID_SHORT}")
+
+
 ###################################################################################################
 ##
 ##      Информация о проекте
 ##
 ###################################################################################################
 
-cmake_minimum_required(VERSION 3.14)
 
 # Работает только с g++-12
 find_program(CMAKE_COMPILER NAMES "g++-12")
@@ -22,6 +49,9 @@ message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 project(clib VERSION 1.0 LANGUAGES CXX)
 get_directory_property(IS_SUBPROJECT PARENT_DIRECTORY)
+
+
+
 
 ###################################################################################################
 ##
@@ -121,9 +151,18 @@ find_package(JPEG REQUIRED)
 ##################################################################################################
 
 find_package(X11 REQUIRED)
+if (NOT X11_FOUND)
+    message(FATAL_ERROR "X11 was not found. Try to install by running command below:")
+    if(LSB_RELEASE_ID_SHORT EQUAL "Ubuntu")
+        message(FATAL_ERROR "Your system: ")
+        message(FATAL_ERROR "sudo apt install libx11-dev")
+    endif()
+else()
+    message(STATUS "X11 Library was found")
+    message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
+    message(STATUS "X11 library = ${X11_LIBRARIES}")
+endif()
 
-message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
-message(STATUS "X11 library = ${X11_LIBRARIES}")
 
 ###################################################################################################
 ##

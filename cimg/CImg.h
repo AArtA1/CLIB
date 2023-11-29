@@ -428,6 +428,7 @@ enum {FALSE_WIN = 0};
 #define cimg_appname "CImg"
 #endif
 
+
 // Configure OpenCV support.
 // (http://opencv.willowgarage.com/wiki/)
 //
