@@ -4,6 +4,9 @@
 namespace clib
 {
 
+
+class Flexfixed;
+
 /*!
  * \brief Число с плавующей запятой с настриваемой мантиссой и экспонентой.
  *
@@ -218,6 +221,7 @@ class Flexfloat
      */
     static Flexfloat ff_from_int(Etype E, Mtype M, Btype B, int x);
 
+
     /*! @brief Округление FlexFloat до ближайшего целого числа вниз
      *
      * \return ближайшее целое число меньшее FlexFloat
@@ -257,6 +261,9 @@ class Flexfloat
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
 
+    static void convert_fx_to_ff(const Flexfixed& value, Flexfloat& res);
+
+
     /// Выводит Flexfloat в битовом виде
     std::string bits() const;
     std::string bits(const Flexfloat &ff) const;
@@ -275,6 +282,8 @@ class Flexfloat
     {
         return {E, M};
     }
+
+
 
   private:
     // Обрезает мантиссу и экспоненту числа до необходимых значений
@@ -298,6 +307,7 @@ class Flexfloat
     // Преобразует число с расширенной мантиссой в число с обычной мантиссой
     static mtype zip(eexttype exp, mexttype ext_mant, Mtype M);
     static mtype zip(eexttype exp, mexttype ext_mant, Mtype curM, Mtype reqM);
+
 
     // Преобразует число с обычной мантиссой в число с расширенной мантиссой
     static mexttype unzip(etype exp, mtype mant, Mtype M);
