@@ -76,10 +76,9 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
  */
 using std::vector;
 using IMG_T = float;
-template <typename T> 
-class img final
+template <typename T> class img final
 {
-    vector<vector<T>> vv;
+    vector<vector<T>> vv_;
 
     size_t rows_ = 0;
     size_t cols_ = 0;
@@ -98,20 +97,30 @@ class img final
      */
     img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
     {
+        assert(cols_ != 0);
+        assert(rows_ != 0);
+
         // Вычислен c помощью функции determine_work_number;
         const size_t MIN_THREAD_WORK = 12000;
         rows_ = rows;
         cols_ = cols;
 
-        vv.reserve(rows_);
-        vv.resize(rows_);
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
 
         size_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
 
         // разбиваем по потокам
-        work(nthreads, &img::init_impl, std::ref(prototype));
+        work(nthreads, [&](size_t st_row, size_t en_row){
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (size_t j = 0; j < cols_; ++j)
+                    vv_[i].push_back(prototype);
+            }
+        });
 
         set_inv_rows();
         set_inv_cols();
@@ -134,15 +143,22 @@ class img final
         rows_ = img_flt.height();
         cols_ = img_flt.width();
 
-        vv.reserve(rows_);
-        vv.resize(rows_);
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
 
         size_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
 
         // разбиваем по потокам
-        work(nthreads, &img::init_from_img_impl, std::ref(prototype), std::ref(img_flt));
+        work(nthreads, [&](size_t st_row, size_t en_row){
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (size_t j = 0; j < cols_; ++j)
+                    vv_[i].push_back(T::from_float(prototype, img_flt(j, i)));
+            }
+        });
 
         set_inv_rows();
         set_inv_cols();
@@ -166,15 +182,22 @@ class img final
         rows_ = base.size();
         cols_ = base[0].size();
 
-        vv.reserve(rows_);
-        vv.resize(rows_);
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
 
         size_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
 
         // разбиваем по потокам
-        work(nthreads, &img::init_from_vv_impl, std::ref(base));
+        work(nthreads, [&](size_t st_row, size_t en_row){
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (size_t j = 0; j < cols_; ++j)
+                    vv_[i].push_back(base[i][j]);
+            }
+        });
 
         set_inv_rows();
         set_inv_cols();
@@ -190,7 +213,7 @@ class img final
 
         for (size_t i = 0; i < rows_; ++i)
             for (size_t j = 0; j < cols_; ++j)
-                img_flt(j, i) = vv[i][j].to_float();
+                img_flt(j, i) = vv_[i][j].to_float();
 
         clib::write_img(img_flt, out_path);
     }
@@ -199,28 +222,77 @@ class img final
      *
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
+     *
+     * Суммирование - операция НЕ ассоциативная, поэтому необходимо определиться в порядке суммирования. Чтобы в clib и
+     * vlib получился одинаковый результат. В общем случае суммировани одной строки происходит не последовательно, то
+     * есть не нулевой пиксель + первый пиксель + второй пиксель + и т.д. Суммирование происходит последовательно для
+     * одинаковых остатков по модулю modulus. Далее все промежуточные суммы складываются последовательно. Ниже приведен
+     * пример для сложения строки длиною 9 символов, modulus = 3
+     *
+     *  0   1   2   3   4   5   6   7   8
+     *  |           |           |
+     *  |           |           |
+     * (0     +     3)    +     6 ------------> part_sums[0]
+     *      |           |           |
+     *      |           |           |
+     *     (1     +     4)    +     7 --------> part_sums[1]
+     *           |          |           |
+     *           |          |           |
+     *          (2    +     5)    +     8 ----> part_sums[2]
+     *
+     * sum = part_sums[0] + part_sums[1] + part_sums[2]
+     *
      */
     T mean(size_t req_threads = 0)
     {
-        // Вычислен c помощью функции determine_work_number;
-        const size_t MIN_THREAD_WORK = 7000;
+        vector<T> results(rows_, vv_[0][0]);
+        const size_t modulus = 3;
 
+        // Вычислен c помощью функции determine_work_number;
+        const size_t MIN_THREAD_WORK = 12000;
         size_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
 
-        vector<T> results(vv.size(), vv[0][0]);
+        work(nthreads, [&](size_t st_row, size_t en_row) {
+            for (size_t i = st_row; i < en_row; ++i)
+            {
+                // Сумма по строке
+                vector<T> part_sums(vv_[i].begin(), vv_[i].begin() + modulus);
+                for (size_t j = modulus; j < cols_; ++j)
+                    T::sum(vv_[i][j], part_sums[j % modulus], part_sums[j % modulus]);
 
-        // Разбиваем по потокам
-        work(nthreads, &img::mean_impl, std::ref(results));
+                // Собираем промежуточные суммы для разных остатков по модулю
+                T ans = part_sums[0];
+                for (size_t j = 1; j < modulus; ++j)
+                    T::sum(part_sums[j], ans, ans);
+                
+                results[i] = ans;
+            }
+        });
 
         // Собираем промежуточные суммы с потоков
-        T ans = vv[0][0];
-        for (auto &&elem : results)
-            T::sum(elem, ans, ans);
-        T::mult(inv_rows(), ans, ans);
+        T ans = results[0];
+        for (size_t i = 1; i < rows_; ++i)
+            T::sum(results[i], ans, ans);
+        T::mult(ans, T::from_float(ans, 1.0 / (rows_ * cols_)), ans);
 
         return ans;
+    }
+
+    const vector<vector<T>> vv() const
+    {
+        return vv_;
+    }
+
+    const size_t rows() const
+    {
+        return rows_;
+    }
+
+    const size_t cols() const
+    {
+        return cols_;
     }
 
     static void determine_work_number(const T &prototype)
@@ -281,121 +353,148 @@ class img final
         }
     }
 
-    const vector<vector<T>> get_vv() const
+    img operator+(const T &rhs) const
     {
-        return vv;
+        img res(*this);
+        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sum(res.vv_[i][j], rhs, res.vv_[i][j]); });
+
+        return res;
+    }
+    img operator*(const T &rhs) const
+    {
+        img res(*this);
+        for_each(rows_, cols_, [&](size_t i, size_t j) { T::mult(res.vv_[i][j], rhs, res.vv_[i][j]); });
+
+        return res;
+    }
+    img operator-(const T &rhs) const
+    {
+        img res(*this);
+        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sub(res.vv_[i][j], rhs, res.vv_[i][j]); });
+
+        return res;
     }
 
-    const size_t rows() const
-    {
-        return rows_;
-    }
+    template <typename U> friend img<U> operator+(const U &lhs, const img<U>& rhs);
+    template <typename U> friend img<U> operator*(const U &lhs, const img<U>& rhs);
+    template <typename U> friend img<U> operator-(const U &lhs, const img<U>& rhs);
 
-    const size_t cols() const
+    img operator+(const img &rhs) const
     {
-        return cols_;
+        assert(cols_ == rhs.cols_);
+        assert(rows_ == rhs.rows_);
+
+        img res(*this);
+        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sum(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
+
+        return res;
+    }
+    img operator*(const img &rhs) const
+    {
+        assert(cols_ == rhs.cols_);
+        assert(rows_ == rhs.rows_);
+
+        img res(*this);
+        for_each(rows_, cols_, [&](size_t i, size_t j) { T::mult(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
+
+        return res;
+    }
+    img operator-(const img &rhs) const
+    {
+        assert(cols_ == rhs.cols_);
+        assert(rows_ == rhs.rows_);
+
+        img res(*this);
+        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sub(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
+
+        return res;
     }
 
   private:
-    // Работа для одного потока
-    // [st_row, en_row] - диапазон работы
-    void init_impl(size_t st_row, size_t en_row, const T &prototype)
+
+    // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
+    // Пример использования в operator+
+    template <typename Func, typename... Args> static void for_each(size_t rows, size_t cols, Func func, Args... args)
     {
-        assert(cols_ != 0);
-        assert(en_row >= st_row);
-
-        for (auto i = st_row; i < en_row; ++i)
-        {
-            vv[i].reserve(cols_);
-            for (size_t j = 0; j < cols_; ++j)
-                vv[i].push_back(prototype);
-        }
-    }
-
-    void init_from_img_impl(size_t st_row, size_t en_row, const T &prototype, const cimg_library::CImg<IMG_T> &img_flt)
-    {
-        assert(cols_ != 0);
-        assert(en_row >= st_row);
-
-        for (auto i = st_row; i < en_row; ++i)
-        {
-            vv[i].reserve(cols_);
-            for (size_t j = 0; j < cols_; ++j)
-                vv[i].push_back(T::from_float(prototype, img_flt(j, i)));
-        }
-    }
-
-    void init_from_vv_impl(size_t st_row, size_t en_row, const vector<vector<T>> &base)
-    {
-        assert(cols_ != 0);
-        assert(en_row >= st_row);
-
-        for (auto i = st_row; i < en_row; ++i)
-        {
-            vv[i].reserve(cols_);
-            for (size_t j = 0; j < cols_; ++j)
-                vv[i].push_back(base[i][j]);
-        }
-    }
-
-    void mean_impl(size_t st_row, size_t en_row, vector<T> &res)
-    {
-        assert(en_row >= st_row);
-
-        for (auto i = st_row; i < en_row; ++i)
-        {
-            T sum_even = T::from_float(vv[i][0], 0);
-            T sum_odd = T::from_float(vv[i][0], 0);
-            for (size_t j = 0; j < cols_; j += 2)
-            {
-                T::sum(vv[i][j], sum_even, sum_even);
-                if (j + 1 < cols_)
-                    T::sum(vv[i][j + 1], sum_odd, sum_odd);
-            }
-            T::sum(sum_even, sum_even, sum_odd);
-            T::mult(inv_cols(), sum_even, sum_even);
-            res[i] = sum_even;
-        }
-        std::flush(std::cout);
-    }
-
-    template <typename Func, typename... Args> void work(size_t nthreads, Func func, Args... args)
-    {
-        size_t rows = vv.size();
+        assert(nthreads > 0);
         assert(rows != 0);
+        assert(cols != 0);
 
+        auto do_func = [&](size_t st, size_t en) {
+            for (size_t i = st; i < en; ++i)
+                for (size_t j = 0; j < cols; ++j)
+                    func(i, j, args...);
+        };
+
+        const size_t MIN_THREAD_WORK = 10000;
+        size_t nthreads = determine_threads(rows, cols, MIN_THREAD_WORK);
         if (nthreads == 1)
         {
-            std::invoke(func, this, 0, rows, args...);
+            do_func(0, rows);
             return;
         }
 
-        vector<std::thread> threads(nthreads);
+        vector<std::thread> threads{nthreads};
         size_t bsize = std::max(rows / nthreads, 1ul);
 
-        /////////////////// Создаем потоки ///////////////////
+        // Создаем потоки
         size_t tidx = 0;
         size_t last_row = 0;
-        for (; rows >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
-        {
-            std::cout << "tidx = " << tidx << std::endl;
-            std::cout << "nthreads = " << nthreads << std::endl;
-            std::flush(std::cout);
-
-            assert(tidx < nthreads);
-            auto st = last_row;
-            auto en = last_row + bsize;
-            threads[tidx] = std::thread(func, this, st, en, args...);
-        }
+        for (; rows >= bsize * (tidx + 1) && tidx < nthreads; last_row += bsize, tidx += 1)
+            threads[tidx] = std::thread(do_func, last_row, last_row + bsize);
 
         // Обрабатываем остаток работ
         auto remainder = rows - bsize * tidx;
         if (remainder > 0)
+            do_func(last_row, rows);
+
+        // Ждем потоки
+        for (size_t th = 0; th < tidx; ++th)
+            threads[th].join();
+
+        return;
+    }
+
+    // Выполняет func над this, разделяя работу на nthreads потоков
+    // Пример использования в mean
+    template <typename Func, typename... Args> void work(size_t nthreads, Func func, Args... args)
+    {
+        assert(nthreads > 0);
+        assert(rows_ != 0);
+        assert(cols_ != 0);
+
+        if (nthreads == 1)
+        {
+            std::invoke(func, 0, rows_, args...);
+            return;
+        }
+
+        vector<std::thread> threads(nthreads);
+        size_t bsize = std::max(rows_ / nthreads, 1ul);
+
+        /////////////////// Создаем потоки ///////////////////
+        size_t tidx = 0;
+        size_t last_row = 0;
+        for (; rows_ >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
+        {
+            // std::cout << "tidx = " << tidx << std::endl;
+            // std::cout << "nthreads = " << nthreads << std::endl;
+            // std::flush(std::cout);
+
+            assert(tidx < nthreads);
+            auto st = last_row;
+            auto en = last_row + bsize;
+            threads[tidx] = std::thread(func, st, en, args...);
+        }
+
+        // Обрабатываем остаток работ
+        auto remainder = rows_ - bsize * tidx;
+        if (remainder > 0)
         {
             assert(tidx == nthreads);
             auto st = last_row;
-            auto en = rows;
-            std::invoke(func, this, st, en, args...);
+            auto en = rows_;
+            std::invoke(func, st, en, args...);
         }
         for (size_t th = 0; th < tidx; ++th)
             threads[th].join();
@@ -404,27 +503,31 @@ class img final
     }
 
     // Определение оптимального количество потоков исходя из количества работы и параметров системы
-    size_t determine_threads(size_t min_thread_work)
+    static size_t determine_threads(size_t rows, size_t cols, size_t min_thread_work)
     {
-        assert(rows_ != 0);
-        assert(cols_ != 0);
+        assert(rows != 0);
+        assert(cols != 0);
 
-        size_t rows_per_thread = std::max(min_thread_work / cols_, 1ul);
-        size_t det_threads = std::max(rows_ / rows_per_thread, 1ul);
+        size_t rows_per_thread = std::max(min_thread_work / cols, 1ul);
+        size_t det_threads = std::max(rows / rows_per_thread, 1ul);
 
         size_t hard_conc = static_cast<size_t>(std::thread::hardware_concurrency());
         return std::min(hard_conc != 0 ? hard_conc : 2, det_threads);
     }
+    size_t determine_threads(size_t min_thread_work)
+    {
+        return determine_threads(rows_, cols_, min_thread_work);
+    }
 
     void set_inv_rows()
     {
-        inv_rows_ = T::from_float(vv[0][0], rows_);
+        inv_rows_ = T::from_float(vv_[0][0], rows_);
         T::inv(inv_rows_, inv_rows_);
     }
 
     void set_inv_cols()
     {
-        inv_cols_ = T::from_float(vv[0][0], cols_);
+        inv_cols_ = T::from_float(vv_[0][0], cols_);
         T::inv(inv_cols_, inv_cols_);
     }
 
@@ -438,5 +541,32 @@ class img final
         return inv_rows_;
     }
 };
+
+template <typename T>
+img<T> operator+(const T &lhs, const img<T>& rhs)
+{
+    img<T> res(rhs);
+    img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::sum(lhs, res.vv_[i][j], res.vv_[i][j]); });
+
+    return res;
+}
+
+template <typename T>
+img<T> operator*(const T &lhs, const img<T>& rhs)
+{
+    img<T> res(rhs);
+    img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::mult(lhs, res.vv_[i][j], res.vv_[i][j]); });
+
+    return res;
+}
+
+template <typename T>
+img<T> operator-(const T &lhs, const img<T>& rhs)
+{
+    img<T> res(rhs);
+    img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::sub(lhs, res.vv_[i][j], res.vv_[i][j]); });
+
+    return res;
+}
 
 } // namespace clib
