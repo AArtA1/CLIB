@@ -582,7 +582,10 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
     auto rshift = [&cur_exp, &cur_mant](eexttype n) {
         assert(n >= 0);
         $(CLOG(trace) << "rshift on n = " << static_cast<uint64_t>(n));
-        cur_mant = cur_mant >> n;
+        if (n > msb(cur_mant))
+            cur_mant = 0;
+        else
+            cur_mant = cur_mant >> n;
         cur_exp = n + cur_exp;
     };
     auto lshift = [&cur_exp, &cur_mant](eexttype n) {
