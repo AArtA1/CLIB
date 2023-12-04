@@ -649,69 +649,140 @@ template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
 
 #define threads_quantity 0 
 
+#define R 0
+#define G 1
+#define B 2
+
 // 
 template<typename T> class img_rgb
 {
-    const size_t depth = 1;
-    std::vector<img<T>> spectrum; // for example r,g,b stored in vector of size 3
+    const size_t depth = 1; // depth
+    img<T> r,g,b; // spectrum 
   public:
 
-    img_rgb(const T &prototype, const std::string& img_path, size_t req_threads = 0){
-        cimg_library::CImg<IMG_T> img_flt = read_img<IMG_T>(img_path);
-        spectrum.resize(img_flt.spectrum());
-        for(size_t i = 0; i < img_flt.spectrum();++i){
-            spectrum[i] = img<T>(prototype,img_flt,threads_quantity,get_depth()-1,i);
-        }
+    img_rgb() = default;
+
+    img_rgb(const T &prototype, const std::string &img_path, size_t req_threads = 0)
+    { 
+        cimg_library::CImg img_flt = read_img<IMG_T>(img_path);
+
+        assert(img_flt.spectrum() == 3);
+        assert(img_flt.depth() == 1);
+
+        r = img(prototype,img_flt,req_threads,depth - 1,R);
+        g = img(prototype,img_flt,req_threads,depth - 1,G);
+        b = img(prototype,img_flt,req_threads,depth - 1,B);
+    }
+
+    img_rgb(const img_rgb<T>& other) = default;
+
+    void write(const std::string &out_path)
+    {
+        cimg_library::CImg<IMG_T> img_flt(r.cols(), r.rows(),1,3);
+
+        r.write(img_flt,depth - 1,R);
+        g.write(img_flt,depth - 1,G);
+        b.write(img_flt,depth - 1,B);
+
+        clib::write_img(img_flt, out_path);
+    }
+
+    // rows - height of image
+    const size_t rows() const
+    {
+        return r.rows();
+    }
+
+    // cols - width of image
+    const size_t cols() const
+    {
+        return r.cols();
     }
     
-    cimg_library::CImg<IMG_T> write(const std::string &out_path)
+    img_rgb operator+(const T &rhs) const
     {
-        cimg_library::CImg<IMG_T> img_flt(get_width(), get_height(),get_depth(),get_spectrum());
+        img_rgb<T> res;
 
-
-        for(size_t i = 0; i < get_spectrum();++i){
-            spectrum[i].write(img_flt,get_depth()-1,i);
-        }
-
-        return img_flt;
-
-        //r.write(img_flt,0,0);
-        //g.write(img_flt,0,1);
-        //b.write(img_flt,0,2);
-
-
-        //write_img<IMG_T>(img_flt,out_path);
+        res.r = r + rhs;
+        res.g = g + rhs;
+        res.b = b + rhs;
+        
+        return res;
     }
 
-    // height of image
-    const size_t get_height() const
+
+    img_rgb operator*(const T &rhs) const
     {
-        return spectrum[0].rows();
+        img_rgb<T> res;
+
+        res.r = r * rhs;
+        res.g = g * rhs;
+        res.b = b * rhs;
+        
+        return res;
     }
 
-    // width of image
-    const size_t get_width() const
+    img_rgb operator-(const T &rhs) const
     {
-        return spectrum[0].cols();
+        img_rgb<T> res;
+
+        res.r = r - rhs;
+        res.g = g - rhs;
+        res.b = b - rhs;
+        
+        return res;
     }
 
-    // for image depth is always 1
-    const size_t get_depth() const 
-    {
-        return depth;
-    } 
+    template <typename U> friend img_rgb<U> operator+(const U &lhs, const img_rgb<U> &rhs);
+    template <typename U> friend img_rgb<U> operator*(const U &lhs, const img_rgb<U> &rhs);
+    template <typename U> friend img_rgb<U> operator-(const U &lhs, const img_rgb<U> &rhs);
 
-    // channels quantity
-    const size_t get_spectrum() const 
+    img_rgb operator+(const img_rgb &rhs) const
     {
-        return spectrum.size();
+        assert(cols() == rhs.cols());
+        assert(rows() == rhs.rows());
+
+        img_rgb res;
+
+        res.r = r + rhs.r;
+        res.g = g + rhs.g;
+        res.b = b + rhs.b;
+
+        return res;
     }
+    img_rgb operator*(const img_rgb &rhs) const
+    {
+        assert(cols() == rhs.cols());
+        assert(rows() == rhs.rows());
 
+        img_rgb res;
+
+        res.r = r * rhs.r;
+        res.g = g * rhs.g;
+        res.b = b * rhs.b;
+        
+        return res;
+    }
+    img_rgb operator-(const img_rgb &rhs) const
+    {
+        assert(cols() == rhs.cols());
+        assert(rows() == rhs.rows());
+
+        img_rgb res;
+
+        res.r = r * rhs.r;
+        res.g = g * rhs.g;
+        res.b = b * rhs.b;
+        
+        return res;
+    }
+    
 };
 
 
-
-
+#undef R
+#undef G 
+#undef B
 
 #undef threads_quantity
 
