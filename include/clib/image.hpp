@@ -5,6 +5,7 @@
 #include "CImg.h"
 #include "X11/Xlib.h"
 #include "common.hpp"
+#include "pybind11/numpy.h"
 #include <iostream>
 
 namespace clib
@@ -74,8 +75,9 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
  *
  * \details Класс содержит в себе двумерный массив с числами типа T и реализует функции для работы с массивом
  */
+namespace py = pybind11;
 using std::vector;
-using IMG_T = float;
+using IMG_T = int;
 template <typename T> class img final
 {
     size_t rows_ = 0;
@@ -203,6 +205,47 @@ template <typename T> class img final
         set_inv_cols();
     }
 
+    img(const py::array &base)
+    {
+        // std::cout << base.ndim() << std::endl;
+        // std::cout << base.shape(0) << std::endl;
+        // std::cout << base.shape(1) << std::endl;
+        // std::cout << base.dtype().num() << std::endl;
+        
+        assert(base.ndim() == 2);
+        assert(base.shape(0) > 0);
+        assert(base.shape(1) > 0);
+        assert(base.dtype().num() == 7); // int
+
+        // Вычислен c помощью функции determine_work_number TODO
+        const size_t MIN_THREAD_WORK = 12000;
+
+        rows_ = base.shape(0);
+        cols_ = base.shape(1);
+
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
+
+        size_t nthreads = determine_threads(MIN_THREAD_WORK);
+
+        // разбиваем по потокам
+        work(nthreads, [&](size_t st_row, size_t en_row) {
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (size_t j = 0; j < cols_; ++j)
+                {
+                    float val = static_cast<float>(*(reinterpret_cast<const int *>(base.data(i, j))));
+                    vv_[i].push_back(T::from_float(8, 23, 127, val));
+                }
+                    
+            }
+        });
+
+        set_inv_rows();
+        set_inv_cols();
+    }
+
     /*! @brief Записывает чёрно-белое изображение в файл
      *
      * \param[in] out_path  Выходной файл
@@ -283,7 +326,7 @@ template <typename T> class img final
      *
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
-    */
+     */
     T mean(size_t req_threads = 0) const
     {
         T summ = sum();
@@ -296,7 +339,7 @@ template <typename T> class img final
      *
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
-    */
+     */
     img clip(size_t minn = 0, size_t maxx = 255, size_t req_threads = 0) const
     {
         img res(*this);
@@ -305,7 +348,8 @@ template <typename T> class img final
                 res.vv_[i][j] = T::from_float(vv_[i][j], minn);
             else if (vv_[i][j].to_float() > maxx)
                 res.vv_[i][j] = T::from_float(vv_[i][j], maxx);
-            else res.vv_[i][j] = vv_[i][j];
+            else
+                res.vv_[i][j] = vv_[i][j];
         });
 
         return res;
@@ -444,8 +488,7 @@ template <typename T> class img final
   private:
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
-    template <typename Func, typename... Args> 
-    static void for_each(size_t rows, size_t cols, Func func, Args... args)
+    template <typename Func, typename... Args> static void for_each(size_t rows, size_t cols, Func func, Args... args)
     {
         assert(rows != 0);
         assert(cols != 0);
