@@ -6,3 +6,4 @@
 #include "common.hpp"
 #include "logs.hpp"
 #include "Uint32.hpp"
+#include "video.hpp"

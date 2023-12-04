@@ -151,18 +151,22 @@ find_package(JPEG REQUIRED)
 ##################################################################################################
 
 find_package(X11 REQUIRED)
-if (NOT X11_FOUND)
-    message(FATAL_ERROR "X11 was not found. Try to install by running command below:")
-    if(LSB_RELEASE_ID_SHORT EQUAL "Ubuntu")
-        message(FATAL_ERROR "Your system: ")
-        message(FATAL_ERROR "sudo apt install libx11-dev")
-    endif()
-else()
-    message(STATUS "X11 Library was found")
-    message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
-    message(STATUS "X11 library = ${X11_LIBRARIES}")
-endif()
+# if (NOT X11_FOUND)
+#     message(FATAL_ERROR "X11 was not found. Try to install by running command below:")
+#     if(LSB_RELEASE_ID_SHORT EQUAL "Ubuntu")
+#         message(FATAL_ERROR "Your system: ")
+#         message(FATAL_ERROR "sudo apt install libx11-dev")
+#     endif()
+# else()
+#     message(STATUS "X11 Library was found")
+#     message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
+#     message(STATUS "X11 library = ${X11_LIBRARIES}")
+# endif()
 
+
+message(STATUS "X11 Library was found")
+message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
+message(STATUS "X11 library = ${X11_LIBRARIES}")
 
 ###################################################################################################
 ##

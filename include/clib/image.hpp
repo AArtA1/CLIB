@@ -69,6 +69,9 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
     }
 }
 
+
+
+
 /*!
  * \brief Обёртка над Image
  *
@@ -78,14 +81,18 @@ using std::vector;
 using IMG_T = float;
 template <typename T> class img final
 {
-    size_t rows_ = 0;
-    size_t cols_ = 0;
+    size_t rows_ = 0;  // rows - height of image
+    size_t cols_ = 0;  // cols - width of image
+    // CImg stores data as [width,height]. Therefore, the data in cimg are transposed.
 
     T inv_rows_{};
     T inv_cols_{};
 
   public:
     vector<vector<T>> vv_;
+
+
+    img() = default;
 
     /*! @brief Инициализации двумерного массива одинаковыми значениями
      *
@@ -95,6 +102,8 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
+
+
     img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
     {
         assert(cols_ != 0);
@@ -134,7 +143,7 @@ template <typename T> class img final
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
     img(const T &prototype, const std::string &img_path, size_t req_threads = 0)
-    {
+    { 
         // Вычислен c помощью функции determine_work_number TODO
         const size_t MIN_THREAD_WORK = 12000;
 
@@ -163,6 +172,37 @@ template <typename T> class img final
         set_inv_rows();
         set_inv_cols();
     }
+
+
+    img(const T &prototype, const cimg_library::CImg<IMG_T>& img_flt, size_t req_threads = 0,size_t depth = 0, size_t dim = 0)
+    { 
+        // Вычислен c помощью функции determine_work_number TODO
+        const size_t MIN_THREAD_WORK = 12000;
+
+        rows_ = img_flt.height();
+        cols_ = img_flt.width();
+
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
+
+        size_t nthreads = req_threads;
+        if (req_threads == 0)
+            nthreads = determine_threads(MIN_THREAD_WORK);
+
+        // разбиваем по потокам
+        work(nthreads, [&](size_t st_row, size_t en_row) {
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (size_t j = 0; j < cols_; ++j)
+                    vv_[i].push_back(T::from_float(prototype, img_flt(j, i,depth,dim)));
+            }
+        });
+
+        set_inv_rows();
+        set_inv_cols();
+    }
+
 
     /*! @brief Инициализации двумерного массива другим массивом
      *
@@ -217,6 +257,16 @@ template <typename T> class img final
 
         clib::write_img(img_flt, out_path);
     }
+
+
+    void write(cimg_library::CImg<IMG_T>& img_flt,size_t depth = 0,size_t dim = 0)
+    {
+        for (size_t i = 0; i < rows_; ++i)
+            for (size_t j = 0; j < cols_; ++j)
+                img_flt(j, i, depth, dim) = vv_[i][j].to_float();
+
+    }
+
 
     /*! @brief Подсчет суммы двумерного массива
      *
@@ -447,7 +497,7 @@ template <typename T> class img final
     template <typename Func, typename... Args> 
     static void for_each(size_t rows, size_t cols, Func func, Args... args)
     {
-        assert(nthreads > 0);
+        //assert(nthreads > 0);
         assert(rows != 0);
         assert(cols != 0);
 
@@ -596,5 +646,77 @@ template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
 
     return res;
 }
+
+
+#define threads_quantity 0 
+
+// 
+template<typename T> class img_rgb
+{
+    const size_t depth = 1;
+    std::vector<img<T>> spectrum; // for example r,g,b stored in vector of size 3
+  public:
+
+    img_rgb(const T &prototype, const std::string& img_path, size_t req_threads = 0){
+        cimg_library::CImg<IMG_T> img_flt = read_img<IMG_T>(img_path);
+        spectrum.resize(img_flt.spectrum());
+        for(size_t i = 0; i < img_flt.spectrum();++i){
+            spectrum[i] = img<T>(prototype,img_flt,threads_quantity,get_depth()-1,i);
+        }
+    }
+    
+    cimg_library::CImg<IMG_T> write(const std::string &out_path)
+    {
+        cimg_library::CImg<IMG_T> img_flt(get_width(), get_height(),get_depth(),get_spectrum());
+
+
+        for(size_t i = 0; i < get_spectrum();++i){
+            spectrum[i].write(img_flt,get_depth()-1,i);
+        }
+
+        return img_flt;
+
+        //r.write(img_flt,0,0);
+        //g.write(img_flt,0,1);
+        //b.write(img_flt,0,2);
+
+
+        //write_img<IMG_T>(img_flt,out_path);
+    }
+
+    // height of image
+    const size_t get_height() const
+    {
+        return spectrum[0].rows();
+    }
+
+    // width of image
+    const size_t get_width() const
+    {
+        return spectrum[0].cols();
+    }
+
+    // for image depth is always 1
+    const size_t get_depth() const 
+    {
+        return depth;
+    } 
+
+    // channels quantity
+    const size_t get_spectrum() const 
+    {
+        return spectrum.size();
+    }
+
+};
+
+
+
+
+
+#undef threads_quantity
+
+
+
 
 } // namespace clib
