@@ -2,6 +2,7 @@
 
 #define cimg_use_png
 #define cimg_use_jpeg
+
 #include "CImg.h"
 #include "X11/Xlib.h"
 #include "common.hpp"
@@ -80,14 +81,17 @@ using std::vector;
 using IMG_T = int;
 template <typename T> class img final
 {
-    size_t rows_ = 0;
-    size_t cols_ = 0;
+    size_t rows_ = 0; // rows - height of image
+    size_t cols_ = 0; // cols - width of image
+    // CImg stores data as [width,height]. Therefore, the data in cimg are transposed.
 
     T inv_rows_{};
     T inv_cols_{};
 
   public:
     vector<vector<T>> vv_;
+
+    img() = default;
 
     /*! @brief Инициализации двумерного массива одинаковыми значениями
      *
@@ -97,10 +101,11 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
+
     img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
     {
-        assert(cols_ != 0);
-        assert(rows_ != 0);
+        //assert(cols_ != 0);
+        //assert(rows_ != 0);
 
         // Вычислен c помощью функции determine_work_number;
         const size_t MIN_THREAD_WORK = 12000;
@@ -159,6 +164,36 @@ template <typename T> class img final
                 vv_[i].reserve(cols_);
                 for (size_t j = 0; j < cols_; ++j)
                     vv_[i].push_back(T::from_float(prototype, img_flt(j, i)));
+            }
+        });
+
+        set_inv_rows();
+        set_inv_cols();
+    }
+
+    img(const T &prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t req_threads = 0, size_t depth = 0,
+        size_t dim = 0)
+    {
+        // Вычислен c помощью функции determine_work_number TODO
+        const size_t MIN_THREAD_WORK = 12000;
+
+        rows_ = img_flt.height();
+        cols_ = img_flt.width();
+
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
+
+        size_t nthreads = req_threads;
+        if (req_threads == 0)
+            nthreads = determine_threads(MIN_THREAD_WORK);
+
+        // разбиваем по потокам
+        work(nthreads, [&](size_t st_row, size_t en_row) {
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (size_t j = 0; j < cols_; ++j)
+                    vv_[i].push_back(T::from_float(prototype, img_flt(j, i, depth, dim)));
             }
         });
 
@@ -259,6 +294,13 @@ template <typename T> class img final
                 img_flt(j, i) = vv_[i][j].to_float();
 
         clib::write_img(img_flt, out_path);
+    }
+
+    void write(cimg_library::CImg<IMG_T> &img_flt, size_t depth = 0, size_t dim = 0)
+    {
+        for (size_t i = 0; i < rows_; ++i)
+            for (size_t j = 0; j < cols_; ++j)
+                img_flt(j, i, depth, dim) = vv_[i][j].to_float();
     }
 
     /*! @brief Подсчет суммы двумерного массива
@@ -635,6 +677,189 @@ template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
 {
     img<T> res(rhs);
     img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::sub(lhs, res.vv_[i][j], res.vv_[i][j]); });
+
+    return res;
+}
+
+const int threads_quantity = 1;
+
+//
+template <typename T> class img_rgb
+{
+    const size_t depth = 1; // depth
+    img<T> r, g, b;         // spectrum
+  public:
+    enum spectrum
+    {
+        R,
+        G,
+        B
+    };
+
+    img_rgb() = default;
+
+    img_rgb(img<T> r_, img<T> g_, img<T> b_) : r(r_), g(g_), b(b_){
+    }
+
+    img_rgb(const T &prototype, const std::string &img_path, size_t req_threads = 0)
+    {
+        cimg_library::CImg img_flt = read_img<IMG_T>(img_path);
+
+        assert(img_flt.spectrum() == 3);
+        assert(img_flt.depth() == 1);
+
+        r = img(prototype, img_flt, req_threads, depth - 1, R);
+        g = img(prototype, img_flt, req_threads, depth - 1, G);
+        b = img(prototype, img_flt, req_threads, depth - 1, B);
+    }
+
+    img_rgb(const img_rgb<T> &other) = default;
+
+    void write(const std::string &out_path)
+    {
+        cimg_library::CImg<IMG_T> img_flt(r.cols(), r.rows(), 1, 3);
+
+        r.write(img_flt, depth - 1, R);
+        g.write(img_flt, depth - 1, G);
+        b.write(img_flt, depth - 1, B);
+
+        clib::write_img(img_flt, out_path);
+    }
+
+    // rows - height of image
+    const size_t rows() const
+    {
+        return r.rows();
+    }
+
+    // cols - width of image
+    const size_t cols() const
+    {
+        return r.cols();
+    }
+
+
+    const img<T>& get_r() const {
+        return r;
+    }
+
+    const img<T>& get_g() const {
+        return g;
+    }
+
+    const img<T>& get_b() const {
+        return b;
+    }
+
+    img_rgb operator+(const T &rhs) const
+    {
+        img_rgb<T> res;
+
+        res.r = r + rhs;
+        res.g = g + rhs;
+        res.b = b + rhs;
+
+        return res;
+    }
+
+    img_rgb operator*(const T &rhs) const
+    {
+        img_rgb<T> res;
+
+        res.r = r * rhs;
+        res.g = g * rhs;
+        res.b = b * rhs;
+
+        return res;
+    }
+
+    img_rgb operator-(const T &rhs) const
+    {
+        img_rgb<T> res;
+
+        res.r = r - rhs;
+        res.g = g - rhs;
+        res.b = b - rhs;
+
+        return res;
+    }
+
+    template <typename U> friend img_rgb<U> operator+(const U &lhs, const img_rgb<U> &rhs);
+    template <typename U> friend img_rgb<U> operator*(const U &lhs, const img_rgb<U> &rhs);
+    template <typename U> friend img_rgb<U> operator-(const U &lhs, const img_rgb<U> &rhs);
+
+    img_rgb operator+(const img_rgb &rhs) const
+    {
+        assert(cols() == rhs.cols());
+        assert(rows() == rhs.rows());
+
+        img_rgb res;
+
+        res.r = r + rhs.r;
+        res.g = g + rhs.g;
+        res.b = b + rhs.b;
+
+        return res;
+    }
+    img_rgb operator*(const img_rgb &rhs) const
+    {
+        assert(cols() == rhs.cols());
+        assert(rows() == rhs.rows());
+
+        img_rgb res;
+
+        res.r = r * rhs.r;
+        res.g = g * rhs.g;
+        res.b = b * rhs.b;
+
+        return res;
+    }
+    img_rgb operator-(const img_rgb &rhs) const
+    {
+        assert(cols() == rhs.cols());
+        assert(rows() == rhs.rows());
+
+        img_rgb res;
+
+        res.r = r - rhs.r;
+        res.g = g - rhs.g;
+        res.b = b - rhs.b;
+
+        return res;
+    }
+
+
+};
+
+template <typename T> img_rgb<T> operator+(const T &lhs, const img_rgb<T> &rhs)
+{
+    img_rgb<T> res;
+
+    res.r = lhs + rhs.r;
+    res.g = lhs + rhs.g;
+    res.b = lhs + rhs.b;
+
+    return res;
+}
+
+template <typename T> img_rgb<T> operator*(const T &lhs, const img_rgb<T> &rhs)
+{
+    img_rgb<T> res;
+
+    res.r = lhs * rhs.r;
+    res.g = lhs * rhs.g;
+    res.b = lhs * rhs.b;
+
+    return res;
+}
+
+template <typename T> img_rgb<T> operator-(const T &lhs, const img_rgb<T> &rhs)
+{
+    img_rgb<T> res;
+
+    res.r = lhs - rhs.r;
+    res.g = lhs - rhs.g;
+    res.b = lhs - rhs.b;
 
     return res;
 }
