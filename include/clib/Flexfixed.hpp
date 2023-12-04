@@ -34,9 +34,8 @@ class Flexfixed
     ntype n;
 
   public:
-    /// @brief Пустой конструктор удален, так как данное значение не имеет
-    /// смысла.
-    Flexfixed() = delete;
+    
+    Flexfixed() = default;
 
     /*! @brief Создает Flexfixed
      *
@@ -97,7 +96,7 @@ class Flexfixed
      * \param[in] right Правый операнд
      * \param[in] res Результат
      */
-    static void add(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
 
     /*! @brief Вычитание Flexfixed
      *
@@ -105,7 +104,7 @@ class Flexfixed
      * \param[in] right Правый операнд
      * \param[in] res Результат
      */
-    static void substraction(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void sub(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
 
     static nrestype check_ovf(nrestype n, Itype I, Ftype F);
 

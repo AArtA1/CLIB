@@ -71,7 +71,7 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
 #endif
 }
 
-void Flexfixed::add(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
+void Flexfixed::sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
 {
 #ifndef NDEBUG
     CLOG(trace) << "Addition of two numbers";
@@ -127,7 +127,7 @@ void Flexfixed::add(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
 #endif
 }
 
-void Flexfixed::substraction(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
+void Flexfixed::sub(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
 {
     Flexfixed right_temp = right;
 
@@ -143,7 +143,7 @@ void Flexfixed::substraction(const Flexfixed &left, const Flexfixed &right, Flex
         }
     }
 
-    Flexfixed::add(left, right_temp, res);
+    Flexfixed::sum(left, right_temp, res);
 }
 
 void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
