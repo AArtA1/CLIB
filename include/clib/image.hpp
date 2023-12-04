@@ -497,7 +497,6 @@ template <typename T> class img final
     template <typename Func, typename... Args> 
     static void for_each(size_t rows, size_t cols, Func func, Args... args)
     {
-        //assert(nthreads > 0);
         assert(rows != 0);
         assert(cols != 0);
 
@@ -515,7 +514,7 @@ template <typename T> class img final
             return;
         }
 
-        vector<std::thread> threads{nthreads};
+        vector<std::thread> threads(nthreads);
         size_t bsize = std::max(rows / nthreads, 1ul);
 
         // Создаем потоки
