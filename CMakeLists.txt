@@ -79,6 +79,7 @@ set(MY_SOURCES
     src/clib/logs.cpp
     src/clib/Uint32.cpp
     src/clib/converter.cpp
+    src/clib/image.cpp
 )
 
 ###################################################################################################
@@ -87,6 +88,9 @@ set(MY_SOURCES
 ##
 ###################################################################################################
 
+add_compile_options(
+    -fPIC
+)
 set(MY_FLAGS
     -Wall
     -Wextra

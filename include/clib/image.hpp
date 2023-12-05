@@ -6,6 +6,8 @@
 #include "CImg.h"
 #include "X11/Xlib.h"
 #include "common.hpp"
+#include "header.hpp"
+#include "pybind11/numpy.h"
 #include <iostream>
 
 namespace clib
@@ -75,8 +77,9 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
  *
  * \details Класс содержит в себе двумерный массив с числами типа T и реализует функции для работы с массивом
  */
+namespace py = pybind11;
 using std::vector;
-using IMG_T = float;
+using IMG_T = int;
 template <typename T> class img final
 {
     size_t rows_ = 0; // rows - height of image
@@ -238,6 +241,47 @@ template <typename T> class img final
         set_inv_cols();
     }
 
+    img(const py::array &base)
+    {
+        // std::cout << base.ndim() << std::endl;
+        // std::cout << base.shape(0) << std::endl;
+        // std::cout << base.shape(1) << std::endl;
+        // std::cout << base.dtype().num() << std::endl;
+        
+        assert(base.ndim() == 2);
+        assert(base.shape(0) > 0);
+        assert(base.shape(1) > 0);
+        assert(base.dtype().num() == 7); // int
+
+        // Вычислен c помощью функции determine_work_number TODO
+        const size_t MIN_THREAD_WORK = 12000;
+
+        rows_ = base.shape(0);
+        cols_ = base.shape(1);
+
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
+
+        size_t nthreads = determine_threads(MIN_THREAD_WORK);
+
+        // разбиваем по потокам
+        work(nthreads, [&](size_t st_row, size_t en_row) {
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (size_t j = 0; j < cols_; ++j)
+                {
+                    float val = static_cast<float>(*(reinterpret_cast<const int *>(base.data(i, j))));
+                    vv_[i].push_back(T::from_float(8, 23, 127, val));
+                }
+                    
+            }
+        });
+
+        set_inv_rows();
+        set_inv_cols();
+    }
+
     /*! @brief Записывает чёрно-белое изображение в файл
      *
      * \param[in] out_path  Выходной файл
@@ -287,38 +331,48 @@ template <typename T> class img final
      */
     T sum(size_t req_threads = 0) const
     {
-        vector<T> results(rows_, vv_[0][0]);
         const size_t modulus = 3;
+        auto modulus_sum = [modulus](const vector<T> &line) {
+            vector<T> part_sums(line.begin(), line.begin() + modulus);
+            for (size_t j = 0; j < modulus; ++j)
+                std::cout << "part_sums[" << j << "] " << part_sums[j] << " = " << part_sums[j].to_float() << std::endl;
+            
+            
+            
+            for (size_t j = modulus; j < line.size(); ++j)
+            {
+                T::sum(line[j], part_sums[j % modulus], part_sums[j % modulus]);
+                std::cout << "part_sums[" << j % modulus << "] " << part_sums[j % modulus] << " = " << part_sums[j % modulus].to_float() << std::endl;
+            }
+
+            std::cout << "part_sums done" << std::endl;
+
+            // Собираем промежуточные суммы для разных остатков по модулю
+            auto st_indx = (line.size() - modulus) % modulus;
+            T ans = part_sums[st_indx];
+            for (size_t j = 1; j < modulus; ++j)
+                T::sum(part_sums[ (st_indx + j) % modulus ], ans, ans);            
+
+            return ans;
+        };
 
         // Вычислен c помощью функции determine_work_number;
         const size_t MIN_THREAD_WORK = 12000;
         size_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
-
+        
+        vector<T> results(rows_, vv_[0][0]);
         work(nthreads, [&](size_t st_row, size_t en_row) {
             for (size_t i = st_row; i < en_row; ++i)
             {
-                // Сумма по строке
-                vector<T> part_sums(vv_[i].begin(), vv_[i].begin() + modulus);
-                for (size_t j = modulus; j < cols_; ++j)
-                    T::sum(vv_[i][j], part_sums[j % modulus], part_sums[j % modulus]);
-
-                // Собираем промежуточные суммы для разных остатков по модулю
-                T ans = part_sums[0];
-                for (size_t j = 1; j < modulus; ++j)
-                    T::sum(part_sums[j], ans, ans);
-
-                results[i] = ans;
+                results[i] = modulus_sum(vv_[i]);
+                std::cout << "line[" << i << "]  " << results[i]  << " = " << results[i].to_float() << std::endl;
             }
         });
 
         // Собираем промежуточные суммы с потоков
-        T ans = results[0];
-        for (size_t i = 1; i < rows_; ++i)
-            T::sum(results[i], ans, ans);
-
-        return ans;
+        return modulus_sum(results);
     }
 
     /*! @brief Подсчет среднего двумерного массива
@@ -329,6 +383,9 @@ template <typename T> class img final
     T mean(size_t req_threads = 0) const
     {
         T summ = sum();
+
+        std::cout << "SUMM = " << summ << std::endl;
+
         T::mult(summ, T::from_float(summ, 1.0 / (rows_ * cols_)), summ);
 
         return summ;
@@ -638,6 +695,7 @@ template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
     return res;
 }
 
+extern template class img<Flexfloat>;
 const int threads_quantity = 1;
 
 //

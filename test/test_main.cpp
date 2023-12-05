@@ -5,13 +5,17 @@
 
 #include <string>
 
+#ifndef NDEBUG
 boost::log::sources::severity_logger< clib::severity_level > slg;
+#endif
 
 int main(int argc, char** argv) 
 {
+#ifndef NDEBUG
     clib::init_logs();
     clib::tag_sev_filter("Flexfloat mean", clib::debug);
-    
+#endif
+
     doctest::Context context;
 
     // !!! THIS IS JUST AN EXAMPLE SHOWING HOW DEFAULTS/OVERRIDES ARE SET !!!

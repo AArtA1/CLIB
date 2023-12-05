@@ -17,7 +17,9 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/expressions.hpp>
 
+#ifndef NDEBUG
 extern boost::log::sources::severity_logger< clib::severity_level > slg;
+#endif
 
 template <typename T>
 bool check_bitwise_eq(T a, T b)
