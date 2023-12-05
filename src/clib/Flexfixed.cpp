@@ -45,9 +45,9 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
     res.s = left.s ^ right.s;
 
     wtype delta_f = static_cast<wtype>(left.F + right.F - res.F);
-
+#ifndef NDEBUG
     CLOG(trace) << "DELTA_F:" << delta_f;
-
+#endif
     nrestype res_n = left.n * right.n;
 
     if (delta_f >= 0)
@@ -100,7 +100,9 @@ void Flexfixed::sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
 
     wtype delta_F = static_cast<wtype>(max_F) - res.F;
 
-    CLOG(trace) << "DELTA_F: " << delta_F;
+#ifndef NDEBUG
+CLOG(trace) << "DELTA_F: " << delta_F;
+#endif
 
     if (delta_F >= 0)
     {
@@ -253,30 +255,7 @@ Flexfixed Flexfixed::from_float(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, floa
 
 Flexfixed Flexfixed::from_float(const Flexfixed& hyperparams, float flt)
 {
-#ifndef NDEBUG
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "Flexfixed from_float = " << flt;
-#endif
-
-    Flexfixed::Itype I_n = hyperparams.I;
-    Flexfixed::Ftype F_n = hyperparams.F;
-
-    Flexfixed result(I_n, F_n);
-    result.s = flt > 0 ? 0 : 1;
-
-    nrestype res_n = static_cast<nrestype>(fabs(flt) * (static_cast<ntype>(1) << F_n));
-
-    res_n = check_ovf(res_n, I_n, F_n);
-
-    assert(res_n <= std::numeric_limits<ntype>::max());
-    result.n = static_cast<ntype>(res_n);
-
-#ifndef NDEBUG
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "Result = " << result;
-#endif
-
-    return result;
+    return from_float(hyperparams.I,hyperparams.F,flt);
 }
 
 float Flexfixed::to_float() const
