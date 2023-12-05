@@ -5,6 +5,7 @@
 #include "CImg.h"
 #include "X11/Xlib.h"
 #include "common.hpp"
+#include "header.hpp"
 #include <iostream>
 
 namespace clib
@@ -76,6 +77,7 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
  */
 using std::vector;
 using IMG_T = float;
+
 template <typename T> class img final
 {
     size_t rows_ = 0;
@@ -245,48 +247,61 @@ template <typename T> class img final
      */
     T sum(size_t req_threads = 0) const
     {
-        vector<T> results(rows_, vv_[0][0]);
         const size_t modulus = 3;
+        auto modulus_sum = [modulus](const vector<T> &line) {
+            vector<T> part_sums(line.begin(), line.begin() + modulus);
+            for (size_t j = 0; j < modulus; ++j)
+                std::cout << "part_sums[" << j << "] " << part_sums[j] << " = " << part_sums[j].to_float() << std::endl;
+            
+            
+            
+            for (size_t j = modulus; j < line.size(); ++j)
+            {
+                T::sum(line[j], part_sums[j % modulus], part_sums[j % modulus]);
+                std::cout << "part_sums[" << j % modulus << "] " << part_sums[j % modulus] << " = " << part_sums[j % modulus].to_float() << std::endl;
+            }
+
+            std::cout << "part_sums done" << std::endl;
+
+            // Собираем промежуточные суммы для разных остатков по модулю
+            auto st_indx = (line.size() - modulus) % modulus;
+            T ans = part_sums[st_indx];
+            for (size_t j = 1; j < modulus; ++j)
+                T::sum(part_sums[ (st_indx + j) % modulus ], ans, ans);            
+
+            return ans;
+        };
 
         // Вычислен c помощью функции determine_work_number;
         const size_t MIN_THREAD_WORK = 12000;
         size_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
-
+        
+        vector<T> results(rows_, vv_[0][0]);
         work(nthreads, [&](size_t st_row, size_t en_row) {
             for (size_t i = st_row; i < en_row; ++i)
             {
-                // Сумма по строке
-                vector<T> part_sums(vv_[i].begin(), vv_[i].begin() + modulus);
-                for (size_t j = modulus; j < cols_; ++j)
-                    T::sum(vv_[i][j], part_sums[j % modulus], part_sums[j % modulus]);
-
-                // Собираем промежуточные суммы для разных остатков по модулю
-                T ans = part_sums[0];
-                for (size_t j = 1; j < modulus; ++j)
-                    T::sum(part_sums[j], ans, ans);
-
-                results[i] = ans;
+                results[i] = modulus_sum(vv_[i]);
+                std::cout << "line[" << i << "]  " << results[i]  << " = " << results[i].to_float() << std::endl;
             }
         });
 
         // Собираем промежуточные суммы с потоков
-        T ans = results[0];
-        for (size_t i = 1; i < rows_; ++i)
-            T::sum(results[i], ans, ans);
-
-        return ans;
+        return modulus_sum(results);
     }
 
     /*! @brief Подсчет среднего двумерного массива
      *
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
-    */
+     */
     T mean(size_t req_threads = 0) const
     {
         T summ = sum();
+
+        std::cout << "SUMM = " << summ << std::endl;
+
         T::mult(summ, T::from_float(summ, 1.0 / (rows_ * cols_)), summ);
 
         return summ;
@@ -296,7 +311,7 @@ template <typename T> class img final
      *
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
-    */
+     */
     img clip(size_t minn = 0, size_t maxx = 255, size_t req_threads = 0) const
     {
         img res(*this);
@@ -305,7 +320,8 @@ template <typename T> class img final
                 res.vv_[i][j] = T::from_float(vv_[i][j], minn);
             else if (vv_[i][j].to_float() > maxx)
                 res.vv_[i][j] = T::from_float(vv_[i][j], maxx);
-            else res.vv_[i][j] = vv_[i][j];
+            else
+                res.vv_[i][j] = vv_[i][j];
         });
 
         return res;
@@ -444,8 +460,7 @@ template <typename T> class img final
   private:
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
-    template <typename Func, typename... Args> 
-    static void for_each(size_t rows, size_t cols, Func func, Args... args)
+    template <typename Func, typename... Args> static void for_each(size_t rows, size_t cols, Func func, Args... args)
     {
         assert(rows != 0);
         assert(cols != 0);
@@ -595,5 +610,7 @@ template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
 
     return res;
 }
+
+extern template class img<Flexfloat>;
 
 } // namespace clib
