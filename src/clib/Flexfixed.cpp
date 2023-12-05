@@ -5,6 +5,12 @@
 namespace clib
 {
 
+#ifndef NDEBUG
+#define $(...) __VA_ARGS__
+#else
+#define $(...) ;
+#endif
+
 //#define LSB
 
 Flexfixed::Flexfixed(Itype I_n, Ftype F_n) : I(I_n), F(F_n), s(0), n(0)
@@ -18,7 +24,7 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, nrestype value) : I(I_n), F(F_n), s(0
 
     if (!is_valid())
     {
-        CLOG(error) << "Can not create object. Invalid parameters";
+        $(CLOG(error) << "Can not create object. Invalid parameters");
         throw std::string{"Can not create object. Invalid parameters"};
     }
 }
@@ -27,7 +33,7 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : I(I_n), F(F_n
 {
     if (!is_valid())
     {
-        CLOG(error) << "Can not create object. Invalid parameters";
+        $(CLOG(error) << "Can not create object. Invalid parameters");
         throw std::string{"Can not create object. Invalid parameters"};
     }
 }
@@ -46,7 +52,7 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
 
     wtype delta_f = static_cast<wtype>(left.F + right.F - res.F);
 
-    CLOG(trace) << "DELTA_F:" << delta_f;
+    $(CLOG(trace) << "DELTA_F:" << delta_f);
 
     nrestype res_n = left.n * right.n;
 
@@ -66,12 +72,10 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
 
     res.n = static_cast<ntype>(res_n);
 
-#ifndef NDEBUG
-    CLOG(trace) << "Result of flex mult: " << res << std::endl;
-#endif
+    $(CLOG(trace) << "Result of flex mult: " << res << std::endl);
 }
 
-void Flexfixed::add(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
+void Flexfixed::sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
 {
 #ifndef NDEBUG
     CLOG(trace) << "Addition of two numbers";
@@ -100,7 +104,7 @@ void Flexfixed::add(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
 
     wtype delta_F = static_cast<wtype>(max_F) - res.F;
 
-    CLOG(trace) << "DELTA_F: " << delta_F;
+    $(CLOG(trace) << "DELTA_F: " << delta_F);
 
     if (delta_F >= 0)
     {
@@ -122,12 +126,10 @@ void Flexfixed::add(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
 
     res.n = static_cast<ntype>(res_n);
 
-#ifndef NDEBUG
-    CLOG(trace) << "Result of flex add: " << res << std::endl;
-#endif
+    $(CLOG(trace) << "Result of flex add: " << res << std::endl);
 }
 
-void Flexfixed::substraction(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
+void Flexfixed::sub(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
 {
     Flexfixed right_temp = right;
 
@@ -143,7 +145,7 @@ void Flexfixed::substraction(const Flexfixed &left, const Flexfixed &right, Flex
         }
     }
 
-    Flexfixed::add(left, right_temp, res);
+    Flexfixed::sum(left, right_temp, res);
 }
 
 void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
@@ -189,9 +191,8 @@ void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
     assert(res_n <= std::numeric_limits<ntype>::max());
     res.n = static_cast<ntype>(res_n);
 
-#ifndef NDEBUG
-    CLOG(trace) << "Result of value inv: " << res << std::endl;
-#endif
+
+    $(CLOG(trace) << "Result of value inv: " << res << std::endl);
 }
 
 Flexfixed::wtype Flexfixed::msb(const Flexfixed &val)
@@ -209,16 +210,12 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
 {
     if (n >= static_cast<ntype>(1) << (I + F))
     {
-#ifndef NDEBUG
-        CLOG(trace) << "IS_OVERFLOW: TRUE";
-#endif
+        $(CLOG(trace) << "IS_OVERFLOW: TRUE");
         n = (static_cast<ntype>(1) << (I + F)) - 1;
     }
     else
     {
-#ifndef NDEBUG
-        CLOG(trace) << "IS_OVERFLOW: FALSE";
-#endif
+        $(CLOG(trace) << "IS_OVERFLOW: FALSE");
     }
     return n;
 }
@@ -294,9 +291,7 @@ float Flexfixed::to_float() const
         res = -res;
     }
 
-#ifndef NDEBUG
-    CLOG(trace) << res;
-#endif
+    $(CLOG(trace) << res);
 
     return res;
 }
@@ -340,7 +335,7 @@ void Flexfixed::check_fxs(std::initializer_list<Flexfixed> list)
     {
         if (!elem.is_valid())
         {
-            CLOG(error) << "Operand is invalid. Please check parameter correctness";
+            $(CLOG(error) << "Operand is invalid. Please check parameter correctness");
             throw std::runtime_error{"Invalid operand"};
         }
     }
@@ -350,18 +345,18 @@ bool Flexfixed::is_valid() const
 {
     if (!(I + F <= sizeof(n) * 8))
     {
-        CLOG(error) << "!(W=(I+F) <= sizeof(n)*8)";
+        $(CLOG(error) << "!(W=(I+F) <= sizeof(n)*8)");
         return false;
     }
 
     if (!(s <= 1))
     {
-        CLOG(error) << "!(s <= 1)";
+        $(CLOG(error) << "!(s <= 1)");
         return false;
     }
     if (!(n <= get_max_n(I, F)))
     {
-        CLOG(error) << "!(n <= static_cast<ntype>((1 << (I+F)) - 1))";
+        $(CLOG(error) << "!(n <= static_cast<ntype>((1 << (I+F)) - 1))");
         return false;
     }
     return true;

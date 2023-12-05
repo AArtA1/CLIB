@@ -15,7 +15,9 @@
 
 namespace clib {
 
+#ifndef NDEBUG
 boost::log::sources::severity_logger< severity_level > slg;
+#endif
 
 std::ostream& operator<< (std::ostream& strm, severity_level level)
 {
