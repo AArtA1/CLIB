@@ -7,8 +7,13 @@
 #include "X11/Xlib.h"
 #include "common.hpp"
 #include "header.hpp"
-#include "pybind11/numpy.h"
+
 #include <iostream>
+
+#ifdef PYBIND
+namespace py = pybind11;
+#include "pybind11/numpy.h"
+#endif
 
 namespace clib
 {
@@ -77,7 +82,6 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
  *
  * \details Класс содержит в себе двумерный массив с числами типа T и реализует функции для работы с массивом
  */
-namespace py = pybind11;
 using std::vector;
 using IMG_T = int;
 template <typename T> class img final
@@ -105,8 +109,8 @@ template <typename T> class img final
 
     img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
     {
-        //assert(cols_ != 0);
-        //assert(rows_ != 0);
+        assert(cols_ != 0);
+        assert(rows_ != 0);
 
         // Вычислен c помощью функции determine_work_number;
         const size_t MIN_THREAD_WORK = 12000;
@@ -241,6 +245,7 @@ template <typename T> class img final
         set_inv_cols();
     }
 
+#ifdef PYBIND
     img(const py::array &base)
     {
         // std::cout << base.ndim() << std::endl;
@@ -281,6 +286,7 @@ template <typename T> class img final
         set_inv_rows();
         set_inv_cols();
     }
+#endif
 
     /*! @brief Записывает чёрно-белое изображение в файл
      *
@@ -334,18 +340,16 @@ template <typename T> class img final
         const size_t modulus = 3;
         auto modulus_sum = [modulus](const vector<T> &line) {
             vector<T> part_sums(line.begin(), line.begin() + modulus);
-            for (size_t j = 0; j < modulus; ++j)
-                std::cout << "part_sums[" << j << "] " << part_sums[j] << " = " << part_sums[j].to_float() << std::endl;
-            
-            
+            // for (size_t j = 0; j < modulus; ++j)
+            //     std::cout << "part_sums[" << j << "] " << part_sums[j] << " = " << part_sums[j].to_float() << std::endl;
             
             for (size_t j = modulus; j < line.size(); ++j)
             {
                 T::sum(line[j], part_sums[j % modulus], part_sums[j % modulus]);
-                std::cout << "part_sums[" << j % modulus << "] " << part_sums[j % modulus] << " = " << part_sums[j % modulus].to_float() << std::endl;
+                //std::cout << "part_sums[" << j % modulus << "] " << part_sums[j % modulus] << " = " << part_sums[j % modulus].to_float() << std::endl;
             }
 
-            std::cout << "part_sums done" << std::endl;
+            //std::cout << "part_sums done" << std::endl;
 
             // Собираем промежуточные суммы для разных остатков по модулю
             auto st_indx = (line.size() - modulus) % modulus;
@@ -367,7 +371,7 @@ template <typename T> class img final
             for (size_t i = st_row; i < en_row; ++i)
             {
                 results[i] = modulus_sum(vv_[i]);
-                std::cout << "line[" << i << "]  " << results[i]  << " = " << results[i].to_float() << std::endl;
+                //std::cout << "line[" << i << "]  " << results[i]  << " = " << results[i].to_float() << std::endl;
             }
         });
 
@@ -384,7 +388,7 @@ template <typename T> class img final
     {
         T summ = sum();
 
-        std::cout << "SUMM = " << summ << std::endl;
+        //std::cout << "SUMM = " << summ << std::endl;
 
         T::mult(summ, T::from_float(summ, 1.0 / (rows_ * cols_)), summ);
 
@@ -475,13 +479,13 @@ template <typename T> class img final
             results.push_back({cur_res.t_init / means_num, cur_res.t_calc / means_num, cur_res.mean});
         }
 
-        for (size_t i = 0; i < tests_num; ++i)
-        {
-            std::cout << "for i = " << std::setw(2) << i;
-            std::cout << " init = " << std::setw(5) << results[i].t_init;
-            std::cout << " calc = " << std::setw(5) << results[i].t_calc;
-            std::cout << " mean = " << results[i].mean << std::endl;
-        }
+        // for (size_t i = 0; i < tests_num; ++i)
+        // {
+        //     std::cout << "for i = " << std::setw(2) << i;
+        //     std::cout << " init = " << std::setw(5) << results[i].t_init;
+        //     std::cout << " calc = " << std::setw(5) << results[i].t_calc;
+        //     std::cout << " mean = " << results[i].mean << std::endl;
+        // }
     }
 
     img operator+(const T &rhs) const
@@ -542,6 +546,9 @@ template <typename T> class img final
     }
 
   private:
+
+
+
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
     template <typename Func, typename... Args> static void for_each(size_t rows, size_t cols, Func func, Args... args)
