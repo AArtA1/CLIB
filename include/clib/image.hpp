@@ -48,7 +48,7 @@ template <typename T> cimg_library::CImg<T> read_img(const std::string &path)
 #ifndef NDEBUG
         CLOG(error) << "Unknown format: " << path.substr(path.find_last_of(".") + 1) << std::endl;
 #endif
-        throw "Unknown format. Please check again";
+        throw std::invalid_argument("Unknown format. Please check again");
     }
     return image;
 }
@@ -73,7 +73,7 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
 #ifndef NDEBUG
         CLOG(error) << "Unknown format: " << path.substr(path.find_last_of(".") + 1) << std::endl;
 #endif
-        throw "Unknown format. Please check again";
+        throw std::invalid_argument("Unknown format. Please check again");
     }
 }
 
@@ -735,17 +735,33 @@ template <typename T> class img_rgb
         b = img(prototype, img_flt, req_threads, depth - 1, B);
     }
 
+    img_rgb(const T & prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t frame, size_t req_threads = 0){
+        assert(img_flt.spectrum() == 3);
+
+        r = img(prototype, img_flt, req_threads, frame, R);
+        g = img(prototype, img_flt, req_threads, frame, G);
+        b = img(prototype, img_flt, req_threads, frame, B);
+    }
+
     img_rgb(const img_rgb<T> &other) = default;
 
     void write(const std::string &out_path)
     {
-        cimg_library::CImg<IMG_T> img_flt(r.cols(), r.rows(), 1, 3);
+        cimg_library::CImg<IMG_T> img_flt(r.cols(), r.rows(), depth, 3);
 
         r.write(img_flt, depth - 1, R);
         g.write(img_flt, depth - 1, G);
         b.write(img_flt, depth - 1, B);
 
         clib::write_img(img_flt, out_path);
+    }
+
+
+    void write(cimg_library::CImg<IMG_T> &img_flt, size_t frame)
+    {
+        r.write(img_flt, frame, R);
+        g.write(img_flt, frame, G);
+        b.write(img_flt, frame, B);
     }
 
     // rows - height of image

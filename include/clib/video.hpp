@@ -11,7 +11,7 @@ template <typename T> cimg_library::CImg<T> read_video(const std::string &path)
 {
     cimg_library::CImg<T> video;
     if (check_ext(path, {
-                            "mk4",
+                            "mp4",
                             "mkv"
                         }))
     {
@@ -23,7 +23,7 @@ template <typename T> cimg_library::CImg<T> read_video(const std::string &path)
 #ifndef NDEBUG
         CLOG(error) << "Unknown format: " << path.substr(path.find_last_of(".") + 1) << std::endl;
 #endif
-        throw "Unknown format. Please check again";
+        throw std::invalid_argument("Unknown format. Please check again");
     }
     return video;
 }
@@ -31,7 +31,7 @@ template <typename T> cimg_library::CImg<T> read_video(const std::string &path)
 template <typename T> void write_video(const cimg_library::CImg<T> &video, const std::string &path)
 {
     if (check_ext(path, {
-                            "mk4",
+                            "mp4",
                             "mkv",
                         }))
     {
@@ -42,7 +42,7 @@ template <typename T> void write_video(const cimg_library::CImg<T> &video, const
 #ifndef NDEBUG
         CLOG(error) << "Unknown format: " << path.substr(path.find_last_of(".") + 1) << std::endl;
 #endif
-        throw "Unknown format. Please check again";
+        throw std::invalid_argument("Unknown format. Please check again");
     }
 }
 
@@ -50,51 +50,47 @@ template <typename T> void write_video(const cimg_library::CImg<T> &video, const
 // -----------------------------------------------------------------------
 
 
+template<typename T> class video
+{
+    std::vector<img_rgb<T>> frames;
 
+  public:
 
-// template<typename T> class video
-// {
-//     std::vector<img_rgb<T>> frames;
+    video(const T& prototype, const std::string & video_path , size_t req_threads = 0){
+        cimg_library::CImg img_flt = read_video<IMG_T>(video_path);
+        frames.reserve(img_flt.depth());
+        for(size_t i = 0; i < img_flt.depth();++i){
+            frames.push_back(img_rgb(prototype,img_flt,i,req_threads));
+        }
+    }
 
-//   public:
-//     // img_rgb(const T &prototype, const std::string &img_path, size_t req_threads = 0)
-//     // {
-//     //     cimg_library::CImg img_flt = read_video<IMG_T>(img_path);
+    void write(const std::string& video_path){
+        cimg_library::CImg<IMG_T> img_flt(cols(), rows(), frames.size(), 3);
 
-//     //     assert(img_flt.spectrum() == 3);
+        for(size_t i = 0; i < depth();++i){
+            frames[i].write(img_flt,i);
+        }
 
-//     //     frames.resize(img_flt.depth());
-        
-//     //     for(size_t i = 0; i < frames.size();++i){
-//     //         frames[i] = img_flt()
-//     //     }
+        write_video(img_flt,video_path);
+    }
 
-//     // }
+    // rows - height of image
+    const size_t rows() const
+    {
+        return frames[0].rows();
+    }
 
-
-//     // void write(const std::string &out_path)
-//     // {
-//     //     cimg_library::CImg<IMG_T> img_flt(r.cols(), r.rows(), 1, 3);
-
-//     //     r.write(img_flt, depth - 1, R);
-//     //     g.write(img_flt, depth - 1, G);
-//     //     b.write(img_flt, depth - 1, B);
-
-//     //     clib::write_img(img_flt, out_path);
-//     // }
-
-//     // rows - height of image
-//     const size_t rows() const
-//     {
-//         return depth[0].rows();
-//     }
-
-//     // cols - width of image
-//     const size_t cols() const
-//     {
-//         return depth[0].cols();
-//     }
-// };
+    // cols - width of image
+    const size_t cols() const
+    {
+        return frames[0].cols();
+    }
+    
+    const size_t depth() const
+    {
+        return frames.size();
+    }
+};
 
 
 
