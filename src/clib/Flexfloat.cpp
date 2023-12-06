@@ -560,6 +560,29 @@ std::string Flexfloat::bits(const Flexfloat &ff) const
     return ostream.str();
 }
 
+bool operator>(const Flexfloat& left, const Flexfloat& right){
+    assert(left.E == right.E && left.B == right.B && left.M == right.M);
+    // if(left.s == right.s){
+    //     // negative
+    //     if(left.s == 1){
+    //         return left.E < right.E?true:left.M < right.M;
+    //     }
+    //     else{
+    //         return left.E > right.E?true:left.M > right.M;
+    //     }
+    // }
+    // else{
+    //     return left.s == 0;
+    // }
+
+    return left.to_float() > right.to_float();
+}
+
+
+bool operator<(const Flexfloat& left, const Flexfloat& right){
+    return left.to_float() < right.to_float(); 
+}
+
 //
 // See
 // gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf

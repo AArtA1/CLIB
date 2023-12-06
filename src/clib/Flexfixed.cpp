@@ -275,8 +275,24 @@ float Flexfixed::to_float() const
 
 bool operator>(const Flexfixed &left, const Flexfixed &right)
 {
-    // todo for different signs
-    return left.get_int() != right.get_int() ? left.get_int() > right.get_int() : left.get_frac() > right.get_frac();
+    assert(left.I == right.I && left.F == right.F);
+    // if(left.s == right.s){
+    //     if(left.s == 1){
+    //         return left.get_int() != right.get_int() ? left.get_int() < right.get_int() : left.get_frac() < right.get_frac();
+    //     }
+    //     else{
+    //         return left.get_int() != right.get_int() ? left.get_int() > right.get_int() : left.get_frac() > right.get_frac();
+    //     }
+    // }
+    // else{
+    //     return left.s == 0;
+    // }
+    return left.to_float() > right.to_float();
+}
+
+
+bool operator<(const Flexfixed & left, const Flexfixed & right){
+    return left.to_float() < right.to_float();
 }
 
 std::string Flexfixed::bits() const
