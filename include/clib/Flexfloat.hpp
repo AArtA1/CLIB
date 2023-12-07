@@ -169,6 +169,8 @@ class Flexfloat
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
      */
     /// synthesizer_func Flexfloat::Mult
+    /// synthesizer_in left,right
+    /// synthesizer_out res
     static void mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Сложение Flexfloat
