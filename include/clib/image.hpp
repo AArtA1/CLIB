@@ -6,7 +6,7 @@
 #include "CImg.h"
 #include "X11/Xlib.h"
 #include "common.hpp"
-#include "header.hpp"
+#include "Flexfloat.hpp"
 
 #include <iostream>
 

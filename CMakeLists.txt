@@ -56,8 +56,6 @@ project(clib VERSION 1.0 LANGUAGES CXX)
 get_directory_property(IS_SUBPROJECT PARENT_DIRECTORY)
 
 
-
-
 ###################################################################################################
 ##
 ##      Опции проекта
@@ -93,10 +91,13 @@ set(MY_SOURCES
 ##
 ###################################################################################################
 
-add_compile_options(
-    -fPIC
-)
+# add_compile_options(
+#     -fPIC
+# )
 set(MY_FLAGS
+
+    -fPIC
+
     -Wall
     -Wextra
     -Wpedantic
@@ -116,7 +117,7 @@ set(MY_FLAGS
     -Wlogical-op
     -Wundef
     -Wshadow
-    -Wstrict-overflow=5s
+    -Wstrict-overflow=5
     -Wwrite-strings
     -Wpointer-arith
     -Wformat=2
@@ -130,11 +131,9 @@ set(MY_FLAGS
     -Wunused-result
 )
 
-# Установим флаги только для файлов тестов
-foreach(SRC IN LISTS MY_SOURCES)
-    message("Source from a SOURCES: ${SRC}")
-    set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${MY_FLAGS})
-endforeach()
+if(NOT CMAKE_CXX_EXTENSIONS)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
 
 ###################################################################################################
 ##
@@ -152,30 +151,7 @@ set(BOOST_ENABLE_CMAKE ON)
 find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES}) 
 find_package(PNG REQUIRED)
 find_package(JPEG REQUIRED)
-
-##################################################################################################
-##
-##      Cimg Library
-##
-##################################################################################################
-
 find_package(X11 REQUIRED)
-# if (NOT X11_FOUND)
-#     message(FATAL_ERROR "X11 was not found. Try to install by running command below:")
-#     if(LSB_RELEASE_ID_SHORT EQUAL "Ubuntu")
-#         message(FATAL_ERROR "Your system: ")
-#         message(FATAL_ERROR "sudo apt install libx11-dev")
-#     endif()
-# else()
-#     message(STATUS "X11 Library was found")
-#     message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
-#     message(STATUS "X11 library = ${X11_LIBRARIES}")
-# endif()
-
-
-message(STATUS "X11 Library was found")
-message(STATUS "X11 directory = ${X11_INCLUDE_DIR}")
-message(STATUS "X11 library = ${X11_LIBRARIES}")
 
 ###################################################################################################
 ##
@@ -185,8 +161,10 @@ message(STATUS "X11 library = ${X11_LIBRARIES}")
 
 add_library(clib_headers INTERFACE)
 target_include_directories(clib_headers INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+target_include_directories(clib_headers SYSTEM INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cimg>
     ${Boost_INCLUDE_DIRS}
     ${X11_INCLUDE_DIR}
@@ -204,11 +182,15 @@ add_library(clib::headers ALIAS clib_headers)
 ###################################################################################################
 
 add_library(clib_library ${MY_SOURCES})
-target_link_libraries(clib_library PUBLIC 
-    ${Boost_LIBRARIES} 
+target_compile_options(clib_library PRIVATE ${MY_FLAGS})
+
+target_link_libraries(clib_library 
+  PRIVATE 
     ${X11_LIBRARIES}
     ${PNG_LIBRARY}
-    ${JPEG_LIBRARY} 
+    ${JPEG_LIBRARY}
+  PUBLIC
+    ${Boost_LIBRARIES}
     clib_headers
 )
 
