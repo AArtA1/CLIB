@@ -4,9 +4,9 @@
 #define cimg_use_jpeg
 
 #include "CImg.h"
+#include "Flexfloat.hpp"
 #include "X11/Xlib.h"
 #include "common.hpp"
-#include "Flexfloat.hpp"
 
 #include <iostream>
 
@@ -83,10 +83,10 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
  * \details Класс содержит в себе двумерный массив с числами типа T и реализует функции для работы с массивом
  */
 using std::vector;
-using IMG_T = int;
+using IMG_T = float;
 template <typename T> class img final
 {
-    size_t rows_ = 0; // rows - height of image
+    size_t rows_ = 0; // ows - height of image
     size_t cols_ = 0; // cols - width of image
     // CImg stores data as [width,height]. Therefore, the data in cimg are transposed.
 
@@ -107,10 +107,10 @@ template <typename T> class img final
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
 
-    img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0)
+    img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0) : vv_()
     {
-        assert(cols_ != 0);
-        assert(rows_ != 0);
+        assert(cols > 0);
+        assert(rows > 0);
 
         // Вычислен c помощью функции determine_work_number;
         const size_t MIN_THREAD_WORK = 12000;
@@ -145,15 +145,17 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
-    img(const T &prototype, const std::string &img_path, size_t req_threads = 0)
+    img(const T &prototype, const std::string &img_path, size_t req_threads = 0) : vv_()
     {
         // Вычислен c помощью функции determine_work_number TODO
         const size_t MIN_THREAD_WORK = 12000;
 
         cimg_library::CImg img_flt = read_img<IMG_T>(img_path);
 
-        rows_ = img_flt.height();
-        cols_ = img_flt.width();
+        assert(img_flt.height() > 0);
+        assert(img_flt.width() > 0);
+        rows_ = static_cast<size_t>(img_flt.height());
+        cols_ = static_cast<size_t>(img_flt.width());
 
         vv_.reserve(rows_);
         vv_.resize(rows_);
@@ -164,7 +166,7 @@ template <typename T> class img final
 
         // разбиваем по потокам
         work(nthreads, [&](size_t st_row, size_t en_row) {
-            for (auto i = st_row; i < en_row; ++i)
+            for (size_t i = st_row; i < en_row; ++i)
             {
                 vv_[i].reserve(cols_);
                 for (size_t j = 0; j < cols_; ++j)
@@ -176,15 +178,16 @@ template <typename T> class img final
         set_inv_cols();
     }
 
-
     img(const T &prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t req_threads = 0, size_t depth = 0,
-        size_t dim = 0)
+        size_t dim = 0) : vv_()
     {
         // Вычислен c помощью функции determine_work_number TODO
         const size_t MIN_THREAD_WORK = 12000;
 
-        rows_ = img_flt.height();
-        cols_ = img_flt.width();
+        assert(img_flt.height() > 0);
+        assert(img_flt.width() > 0);
+        rows_ = static_cast<size_t>(img_flt.height());
+        cols_ = static_cast<size_t>(img_flt.width());
 
         vv_.reserve(rows_);
         vv_.resize(rows_);
@@ -214,7 +217,7 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
-    img(const vector<vector<T>> &base, size_t req_threads = 0)
+    img(const vector<vector<T>> &base, size_t req_threads = 0) : vv_()
     {
         assert(base.size() > 0);
         assert(base[0].size() > 0);
@@ -247,13 +250,13 @@ template <typename T> class img final
     }
 
 #ifdef PYBIND
-    img(const py::array &base)
+    img(const py::array &base) : vv_()
     {
         // std::cout << base.ndim() << std::endl;
         // std::cout << base.shape(0) << std::endl;
         // std::cout << base.shape(1) << std::endl;
         // std::cout << base.dtype().num() << std::endl;
-        
+
         assert(base.ndim() == 2);
         assert(base.shape(0) > 0);
         assert(base.shape(1) > 0);
@@ -280,7 +283,6 @@ template <typename T> class img final
                     float val = static_cast<float>(*(reinterpret_cast<const int *>(base.data(i, j))));
                     vv_[i].push_back(T::from_float(8, 23, 127, val));
                 }
-                    
             }
         });
 
@@ -342,21 +344,23 @@ template <typename T> class img final
         auto modulus_sum = [modulus](const vector<T> &line) {
             vector<T> part_sums(line.begin(), line.begin() + modulus);
             // for (size_t j = 0; j < modulus; ++j)
-            //     std::cout << "part_sums[" << j << "] " << part_sums[j] << " = " << part_sums[j].to_float() << std::endl;
-            
+            //     std::cout << "part_sums[" << j << "] " << part_sums[j] << " = " << part_sums[j].to_float() <<
+            //     std::endl;
+
             for (size_t j = modulus; j < line.size(); ++j)
             {
                 T::sum(line[j], part_sums[j % modulus], part_sums[j % modulus]);
-                //std::cout << "part_sums[" << j % modulus << "] " << part_sums[j % modulus] << " = " << part_sums[j % modulus].to_float() << std::endl;
+                // std::cout << "part_sums[" << j % modulus << "] " << part_sums[j % modulus] << " = " << part_sums[j %
+                // modulus].to_float() << std::endl;
             }
 
-            //std::cout << "part_sums done" << std::endl;
+            // std::cout << "part_sums done" << std::endl;
 
             // Собираем промежуточные суммы для разных остатков по модулю
             auto st_indx = (line.size() - modulus) % modulus;
             T ans = part_sums[st_indx];
             for (size_t j = 1; j < modulus; ++j)
-                T::sum(part_sums[ (st_indx + j) % modulus ], ans, ans);            
+                T::sum(part_sums[(st_indx + j) % modulus], ans, ans);
 
             return ans;
         };
@@ -366,13 +370,13 @@ template <typename T> class img final
         size_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
-        
+
         vector<T> results(rows_, vv_[0][0]);
         work(nthreads, [&](size_t st_row, size_t en_row) {
             for (size_t i = st_row; i < en_row; ++i)
             {
                 results[i] = modulus_sum(vv_[i]);
-                //std::cout << "line[" << i << "]  " << results[i]  << " = " << results[i].to_float() << std::endl;
+                // std::cout << "line[" << i << "]  " << results[i]  << " = " << results[i].to_float() << std::endl;
             }
         });
 
@@ -385,13 +389,29 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
      */
-    T mean(size_t req_threads = 0) const
+    T mean() const
     {
         T summ = sum();
 
-        //std::cout << "SUMM = " << summ << std::endl;
+        #ifndef NDEBUG
+        CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float() << std::endl << " Volume:" << (rows_ * cols_) << std::endl;
+        #endif
 
-        T::mult(summ, T::from_float(summ, 1.0 / (rows_ * cols_)), summ);
+        T volume = T::from_float(summ,static_cast<float>(rows_ * cols_));
+
+        #ifndef NDEBUG
+        CLOG(debug) << "Volume value: " << volume << std::endl;
+        #endif
+
+        T inv_volume = T::from_float(summ,0);
+
+        T::inv(volume, inv_volume);
+
+        #ifndef NDEBUG
+        CLOG(debug) << "Volume inv_value: " << inv_volume << std::endl;
+        #endif
+
+        T::mult(summ, inv_volume, summ);
 
         return summ;
     }
@@ -401,14 +421,14 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
      */
-    img clip(size_t minn = 0, size_t maxx = 255, size_t req_threads = 0) const
+    img clip(size_t minn = 0, size_t maxx = 255) const
     {
         img res(*this);
         for_each(rows_, cols_, [&](size_t i, size_t j) {
-            if (vv_[i][j].to_float() < minn)
-                res.vv_[i][j] = T::from_float(vv_[i][j], minn);
-            else if (vv_[i][j].to_float() > maxx)
-                res.vv_[i][j] = T::from_float(vv_[i][j], maxx);
+            if (vv_[i][j].to_float() < static_cast<float>(minn))
+                res.vv_[i][j] = T::from_float(vv_[i][j], static_cast<float>(minn));
+            else if (vv_[i][j].to_float() > static_cast<float>(maxx))
+                res.vv_[i][j] = T::from_float(vv_[i][j], static_cast<float>(maxx));
             else
                 res.vv_[i][j] = vv_[i][j];
         });
@@ -421,14 +441,14 @@ template <typename T> class img final
         return vv_;
     }
 
-    const size_t rows() const
+    size_t rows() const
     {
-        return rows_;
+        return vv_.size();
     }
 
-    const size_t cols() const
+    size_t cols() const
     {
-        return cols_;
+        return vv_.empty()?0:vv_[0].size();
     }
 
     static void determine_work_number(const T &prototype)
@@ -446,11 +466,11 @@ template <typename T> class img final
             img im(one, rows, cols, req_threads);
 
             auto s_init = std::chrono::steady_clock::now();
-            auto mean = im.mean(req_threads);
+            auto mean = im.mean();
             auto s_end = std::chrono::steady_clock::now();
 
-            size_t t_init = std::chrono::duration_cast<std::chrono::microseconds>(s_init - s_begin).count();
-            size_t t_calc = std::chrono::duration_cast<std::chrono::microseconds>(s_end - s_init).count();
+            auto t_init = std::chrono::duration_cast<std::chrono::microseconds>(s_init - s_begin).count();
+            auto t_calc = std::chrono::duration_cast<std::chrono::microseconds>(s_end - s_init).count();
 
             test_res tr = {t_init, t_calc, mean.to_float()};
             return tr;
@@ -510,10 +530,19 @@ template <typename T> class img final
 
         return res;
     }
+    img operator/(const T &rhs) const
+    {
+        img res(*this);
+        T inv_rhs(rhs);
+        T::inv(rhs, inv_rhs);
+        for_each(rows_, cols_, [&](size_t i, size_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
+        return res;
+    }
 
     template <typename U> friend img<U> operator+(const U &lhs, const img<U> &rhs);
     template <typename U> friend img<U> operator*(const U &lhs, const img<U> &rhs);
     template <typename U> friend img<U> operator-(const U &lhs, const img<U> &rhs);
+    // template <typename U> friend img<U> operator/(const U &lhs, const img<U> &rhs);
 
     img operator+(const img &rhs) const
     {
@@ -546,32 +575,49 @@ template <typename T> class img final
         return res;
     }
 
+    img operator/(const img &rhs) const
+    {
+        assert(cols_ == rhs.cols_);
+        assert(rows_ == rhs.rows_);
 
-    T& operator()(const size_t& i,const size_t& j) {
-        assert(i >= 0 && i < vv_.size() && j >= 0 && j < vv_[0].size());
+        img res(*this);
+        T inverted(res.vv_[0][0]);
+        for_each(rows_, cols_, [&](size_t i, size_t j) {
+            T::inv(rhs.vv_[i][j], inverted);
+            T::mult(res.vv_[i][j], inverted, res.vv_[i][j]);
+        });
+
+        return res;
+    }
+
+    T &operator()(const size_t &i, const size_t &j)
+    {
+        assert(i < vv_.size() && j < vv_[0].size());
         return vv_[i][j];
     }
 
-    const T& operator()(const size_t& i,const size_t& j) const {
-        assert(i >= 0 && i < vv_.size() && j >= 0 && j < vv_[0].size());
+    const T &operator()(const size_t &i, const size_t &j) const
+    {
+        assert(i < vv_.size() && j < vv_[0].size());
         return vv_[i][j];
     }
 
     // template <typename... IMGS>
     // static img& max(const img& first, const img& second, const IMGS & ... imgs)
     // {
-    //     if (sizeof...(imgs) == 0) 
+    //     if (sizeof...(imgs) == 0)
     //         return max_impl(first, second);
 
     //     auto cur_max = max_impl(first, second);
     //     return max(cur_max, imgs...);
     // }
 
-    template <typename... IMGS>
-    static img maxxxx(const img& first, const IMGS & ... imgs)
+    template <typename... IMGS> static img maxxxx(const img &first, const IMGS &...imgs)
     {
         img res(first);
-        for_each(first.rows(), first.cols(), [&](size_t i, size_t j) { res(i,j) = std::max({first(i,j), imgs(i, j)...});});
+        for_each(first.rows(), first.cols(), [&](size_t i, size_t j) {
+            res(i, j) = std::max({first(i, j), imgs(i, j)...});
+        });
 
         return res;
 
@@ -585,10 +631,10 @@ template <typename T> class img final
     //     assert(list.size() != 0);
 
     //     size_t rows = list[0].rows(), cols = list[0].cols();
-        
+
     //     img res_img(prototype,rows,cols);
 
-    //     for_each(rows, cols, [&](size_t i, size_t j) { 
+    //     for_each(rows, cols, [&](size_t i, size_t j) {
     //         auto el = std::max_element(list.begin(),list.end(),[&](const img& left, const img& right)
     //         {
     //             return right(i,j) > left(i,h);
@@ -599,7 +645,6 @@ template <typename T> class img final
     // }
 
   private:
-
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
     template <typename Func, typename... Args> static void for_each(size_t rows, size_t cols, Func func, Args... args)
@@ -689,7 +734,6 @@ template <typename T> class img final
         return;
     }
 
-
     // Определение оптимального количество потоков исходя из количества работы и параметров системы
     static size_t determine_threads(size_t rows, size_t cols, size_t min_thread_work)
     {
@@ -709,13 +753,13 @@ template <typename T> class img final
 
     void set_inv_rows()
     {
-        inv_rows_ = T::from_float(vv_[0][0], rows_);
+        inv_rows_ = T::from_float(vv_[0][0], static_cast<float>(rows_));
         T::inv(inv_rows_, inv_rows_);
     }
 
     void set_inv_cols()
     {
-        inv_cols_ = T::from_float(vv_[0][0], cols_);
+        inv_cols_ = T::from_float(vv_[0][0],  static_cast<float>(cols_));
         T::inv(inv_cols_, inv_cols_);
     }
 
@@ -772,7 +816,8 @@ template <typename T> class img_rgb
 
     img_rgb() = default;
 
-    img_rgb(img<T> r_, img<T> g_, img<T> b_) : r(r_), g(g_), b(b_){
+    img_rgb(img<T> r_, img<T> g_, img<T> b_) : r(r_.clip()), g(g_.clip()), b(b_.clip())
+    {
     }
 
     img_rgb(const T &prototype, const std::string &img_path, size_t req_threads = 0)
@@ -787,7 +832,8 @@ template <typename T> class img_rgb
         b = img(prototype, img_flt, req_threads, depth - 1, B);
     }
 
-    img_rgb(const T & prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t frame, size_t req_threads = 0){
+    img_rgb(const T &prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t frame, size_t req_threads = 0)
+    {
         assert(img_flt.spectrum() == 3);
 
         r = img(prototype, img_flt, req_threads, frame, R);
@@ -808,7 +854,6 @@ template <typename T> class img_rgb
         clib::write_img(img_flt, out_path);
     }
 
-
     void write(cimg_library::CImg<IMG_T> &img_flt, size_t frame)
     {
         r.write(img_flt, frame, R);
@@ -817,27 +862,29 @@ template <typename T> class img_rgb
     }
 
     // rows - height of image
-    const size_t rows() const
+    size_t rows() const
     {
         return r.rows();
     }
 
     // cols - width of image
-    const size_t cols() const
+    size_t cols() const
     {
         return r.cols();
     }
 
-
-    const img<T>& get_r() const {
+    const img<T> &get_r() const
+    {
         return r;
     }
 
-    const img<T>& get_g() const {
+    const img<T> &get_g() const
+    {
         return g;
     }
 
-    const img<T>& get_b() const {
+    const img<T> &get_b() const
+    {
         return b;
     }
 

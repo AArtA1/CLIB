@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 {
 #ifndef NDEBUG
     clib::init_logs();
-    clib::tag_sev_filter("Flexfloat mean", clib::debug);
+    //clib::tag_sev_filter("Flexfloat mean", clib::debug);
 #endif
 
     doctest::Context context;
