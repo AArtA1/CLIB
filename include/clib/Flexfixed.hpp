@@ -131,6 +131,9 @@ class Flexfixed
     /// false.
     friend bool operator>(const Flexfixed &left, const Flexfixed &right);
 
+    
+    friend bool operator<(const Flexfixed &left, const Flexfixed &right);
+
     /// @brief Перегруженный оператор вывода << для представления экземпляра
     /// Flexfixed в виде строки
     ///

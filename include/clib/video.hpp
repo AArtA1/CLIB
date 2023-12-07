@@ -56,12 +56,18 @@ template<typename T> class video
 
   public:
 
+
+    video() = default;
+
     video(const T& prototype, const std::string & video_path , size_t req_threads = 0){
         cimg_library::CImg img_flt = read_video<IMG_T>(video_path);
         frames.reserve(img_flt.depth());
         for(size_t i = 0; i < img_flt.depth();++i){
             frames.push_back(img_rgb(prototype,img_flt,i,req_threads));
         }
+    }
+
+    video(std::vector<img_rgb<T>> frames_) : frames(frames_){
     }
 
     void write(const std::string& video_path){
@@ -90,6 +96,14 @@ template<typename T> class video
     {
         return frames.size();
     }
+
+    const img_rgb<T>& operator()(const size_t i) const{
+        assert(i >= 0 && i < frames.size());
+
+        return frames[i];
+    }
+
+
 };
 
 

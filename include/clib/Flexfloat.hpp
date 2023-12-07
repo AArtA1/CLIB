@@ -205,6 +205,10 @@ class Flexfloat
     /// synthesizer_func Flexfloat::Inv
     static void inv(const Flexfloat &x, Flexfloat &res);
 
+    friend bool operator>(const Flexfloat &left, const Flexfloat &right);
+
+    friend bool operator<(const Flexfloat &left, const Flexfloat &right);
+
     /*! @brief Получение нормализованного числа из денормализованного
      *
      * \param[in] x Число для инвертирования

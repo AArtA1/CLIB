@@ -176,6 +176,7 @@ template <typename T> class img final
         set_inv_cols();
     }
 
+
     img(const T &prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t req_threads = 0, size_t depth = 0,
         size_t dim = 0)
     {
@@ -545,9 +546,59 @@ template <typename T> class img final
         return res;
     }
 
+
+    T& operator()(const size_t& i,const size_t& j) {
+        assert(i >= 0 && i < vv_.size() && j >= 0 && j < vv_[0].size());
+        return vv_[i][j];
+    }
+
+    const T& operator()(const size_t& i,const size_t& j) const {
+        assert(i >= 0 && i < vv_.size() && j >= 0 && j < vv_[0].size());
+        return vv_[i][j];
+    }
+
+    // template <typename... IMGS>
+    // static img& max(const img& first, const img& second, const IMGS & ... imgs)
+    // {
+    //     if (sizeof...(imgs) == 0) 
+    //         return max_impl(first, second);
+
+    //     auto cur_max = max_impl(first, second);
+    //     return max(cur_max, imgs...);
+    // }
+
+    template <typename... IMGS>
+    static img maxxxx(const img& first, const IMGS & ... imgs)
+    {
+        img res(first);
+        for_each(first.rows(), first.cols(), [&](size_t i, size_t j) { res(i,j) = std::max({first(i,j), imgs(i, j)...});});
+
+        return res;
+
+        // for (size_t i; i < first.rows(); ++ i)
+        //     for (size_t j; j < first.rows(); ++ j)
+        //         res[i][j] = std::max({imgs(i, j)...});
+    }
+
+    // template <typename... IMGS>
+    // static img max(const T& prototype, std::vector<img>& list, IMGS... imgs){
+    //     assert(list.size() != 0);
+
+    //     size_t rows = list[0].rows(), cols = list[0].cols();
+        
+    //     img res_img(prototype,rows,cols);
+
+    //     for_each(rows, cols, [&](size_t i, size_t j) { 
+    //         auto el = std::max_element(list.begin(),list.end(),[&](const img& left, const img& right)
+    //         {
+    //             return right(i,j) > left(i,h);
+    //         })
+    //         res_img(i,j) = el ;
+    //     });
+    //     return res_img;
+    // }
+
   private:
-
-
 
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
@@ -637,6 +688,7 @@ template <typename T> class img final
 
         return;
     }
+
 
     // Определение оптимального количество потоков исходя из количества работы и параметров системы
     static size_t determine_threads(size_t rows, size_t cols, size_t min_thread_work)
@@ -865,8 +917,6 @@ template <typename T> class img_rgb
 
         return res;
     }
-
-
 };
 
 template <typename T> img_rgb<T> operator+(const T &lhs, const img_rgb<T> &rhs)
