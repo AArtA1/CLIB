@@ -1,4 +1,6 @@
-#include "common.hpp"
+#include <doctest.h>
+#include <clib/Flexfloat.hpp>
+#include "clib/logs.hpp"
 
 TEST_CASE("Test Flexfloat helpful functions")
 {

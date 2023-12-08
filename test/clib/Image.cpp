@@ -1,4 +1,6 @@
-#include "common.hpp"
+#include <clib/image.hpp>
+#include <clib/Flexfloat.hpp>
+#include "clib/logs.hpp"
 
 using ff = clib::Flexfloat;
 using img = clib::img<ff>;

@@ -1,12 +1,7 @@
 #pragma once
 
-#include <clib/Flexfloat.hpp>
-#include <clib/image.hpp>
-#include <clib/video.hpp>
-#include <clib/Uint32.hpp>
 #include "clib/logs.hpp"
 
-#include <../doctest.h>
 #include <string>
 #include <cstring>
 #include <cassert>

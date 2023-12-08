@@ -7,6 +7,7 @@
 #include "Flexfloat.hpp"
 #include "X11/Xlib.h"
 #include "common.hpp"
+#include "logs.hpp"
 
 #include <iostream>
 
@@ -83,11 +84,12 @@ template <typename T> void write_img(const cimg_library::CImg<T> &image, const s
  * \details Класс содержит в себе двумерный массив с числами типа T и реализует функции для работы с массивом
  */
 using std::vector;
-using IMG_T = float;
+using img_t = float;
+using idx_t = unsigned;
 template <typename T> class img final
 {
-    size_t rows_ = 0; // ows - height of image
-    size_t cols_ = 0; // cols - width of image
+    idx_t rows_ = 0; // height of image
+    idx_t cols_ = 0; // width of image
     // CImg stores data as [width,height]. Therefore, the data in cimg are transposed.
 
     T inv_rows_{};
@@ -107,35 +109,10 @@ template <typename T> class img final
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
 
-    img(const T &prototype, size_t rows, size_t cols, size_t req_threads = 0) : vv_()
+    img(const T &prototype, idx_t rows, idx_t cols, idx_t req_threads = 0) : vv_()
     {
-        assert(cols > 0);
-        assert(rows > 0);
-
-        // Вычислен c помощью функции determine_work_number;
-        const size_t MIN_THREAD_WORK = 12000;
-        rows_ = rows;
-        cols_ = cols;
-
-        vv_.reserve(rows_);
-        vv_.resize(rows_);
-
-        size_t nthreads = req_threads;
-        if (req_threads == 0)
-            nthreads = determine_threads(MIN_THREAD_WORK);
-
-        // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row) {
-            for (auto i = st_row; i < en_row; ++i)
-            {
-                vv_[i].reserve(cols_);
-                for (size_t j = 0; j < cols_; ++j)
-                    vv_[i].push_back(prototype);
-            }
-        });
-
-        set_inv_rows();
-        set_inv_cols();
+        auto get_val = [&prototype](idx_t, idx_t) { return prototype; };
+        _ctor_implt(rows, cols, get_val, req_threads);
     }
 
     /*! @brief Инициализации двумерного массива чёрно-белым изображением
@@ -145,69 +122,32 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
-    img(const T &prototype, const std::string &img_path, size_t req_threads = 0) : vv_()
+    img(const T &prototype, const std::string &img_path, idx_t req_threads = 0) : vv_()
     {
-        // Вычислен c помощью функции determine_work_number TODO
-        const size_t MIN_THREAD_WORK = 12000;
+        cimg_library::CImg img_flt = read_img<img_t>(img_path);
 
-        cimg_library::CImg img_flt = read_img<IMG_T>(img_path);
+        assert(img_flt.height() >= 0);
+        assert(img_flt.width() >= 0);
+        auto rows = static_cast<idx_t>(img_flt.height());
+        auto cols = static_cast<idx_t>(img_flt.width());
+        auto get_val = [&prototype, &img_flt](idx_t i, idx_t j) { return T::from_float(prototype, img_flt(j, i)); };
 
-        assert(img_flt.height() > 0);
-        assert(img_flt.width() > 0);
-        rows_ = static_cast<size_t>(img_flt.height());
-        cols_ = static_cast<size_t>(img_flt.width());
-
-        vv_.reserve(rows_);
-        vv_.resize(rows_);
-
-        size_t nthreads = req_threads;
-        if (req_threads == 0)
-            nthreads = determine_threads(MIN_THREAD_WORK);
-
-        // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row) {
-            for (size_t i = st_row; i < en_row; ++i)
-            {
-                vv_[i].reserve(cols_);
-                for (size_t j = 0; j < cols_; ++j)
-                    vv_[i].push_back(T::from_float(prototype, img_flt(j, i)));
-            }
-        });
-
-        set_inv_rows();
-        set_inv_cols();
+        _ctor_implt(rows, cols, get_val, req_threads);
     }
 
-    img(const T &prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t req_threads = 0, size_t depth = 0,
-        size_t dim = 0) : vv_()
+    img(const T &prototype, const cimg_library::CImg<img_t> &img_flt, idx_t req_threads = 0, idx_t depth = 0,
+        idx_t dim = 0)
+        : vv_()
     {
-        // Вычислен c помощью функции determine_work_number TODO
-        const size_t MIN_THREAD_WORK = 12000;
+        assert(img_flt.height() >= 0);
+        assert(img_flt.width() >= 0);
+        auto rows = static_cast<idx_t>(img_flt.height());
+        auto cols = static_cast<idx_t>(img_flt.width());
+        auto get_val = [&prototype, &img_flt, &depth, &dim](idx_t i, idx_t j) {
+            return T::from_float(prototype, img_flt(j, i, depth, dim));
+        };
 
-        assert(img_flt.height() > 0);
-        assert(img_flt.width() > 0);
-        rows_ = static_cast<size_t>(img_flt.height());
-        cols_ = static_cast<size_t>(img_flt.width());
-
-        vv_.reserve(rows_);
-        vv_.resize(rows_);
-
-        size_t nthreads = req_threads;
-        if (req_threads == 0)
-            nthreads = determine_threads(MIN_THREAD_WORK);
-
-        // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row) {
-            for (auto i = st_row; i < en_row; ++i)
-            {
-                vv_[i].reserve(cols_);
-                for (size_t j = 0; j < cols_; ++j)
-                    vv_[i].push_back(T::from_float(prototype, img_flt(j, i, depth, dim)));
-            }
-        });
-
-        set_inv_rows();
-        set_inv_cols();
+        _ctor_implt(rows, cols, get_val, req_threads);
     }
 
     /*! @brief Инициализации двумерного массива другим массивом
@@ -217,36 +157,14 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, инициализация будет разделена на отпимальное количество потоков
      */
-    img(const vector<vector<T>> &base, size_t req_threads = 0) : vv_()
+    img(const vector<vector<T>> &base, idx_t req_threads = 0) : vv_()
     {
+        auto rows = static_cast<idx_t>(base.size());
         assert(base.size() > 0);
-        assert(base[0].size() > 0);
+        auto cols = static_cast<idx_t>(base[0].size());
+        auto get_val = [&base](idx_t i, idx_t j) { return base[i][j]; };
 
-        // Вычислен c помощью функции determine_work_number TODO
-        const size_t MIN_THREAD_WORK = 12000;
-
-        rows_ = base.size();
-        cols_ = base[0].size();
-
-        vv_.reserve(rows_);
-        vv_.resize(rows_);
-
-        size_t nthreads = req_threads;
-        if (req_threads == 0)
-            nthreads = determine_threads(MIN_THREAD_WORK);
-
-        // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row) {
-            for (auto i = st_row; i < en_row; ++i)
-            {
-                vv_[i].reserve(cols_);
-                for (size_t j = 0; j < cols_; ++j)
-                    vv_[i].push_back(base[i][j]);
-            }
-        });
-
-        set_inv_rows();
-        set_inv_cols();
+        _ctor_implt(rows, cols, get_val, req_threads);
     }
 
 #ifdef PYBIND
@@ -263,7 +181,7 @@ template <typename T> class img final
         assert(base.dtype().num() == 7); // int
 
         // Вычислен c помощью функции determine_work_number TODO
-        const size_t MIN_THREAD_WORK = 12000;
+        const idx_t MIN_THREAD_WORK = 12000;
 
         rows_ = base.shape(0);
         cols_ = base.shape(1);
@@ -271,14 +189,14 @@ template <typename T> class img final
         vv_.reserve(rows_);
         vv_.resize(rows_);
 
-        size_t nthreads = determine_threads(MIN_THREAD_WORK);
+        idx_t nthreads = determine_threads(MIN_THREAD_WORK);
 
         // разбиваем по потокам
-        work(nthreads, [&](size_t st_row, size_t en_row) {
+        work(nthreads, [&](idx_t st_row, idx_t en_row) {
             for (auto i = st_row; i < en_row; ++i)
             {
                 vv_[i].reserve(cols_);
-                for (size_t j = 0; j < cols_; ++j)
+                for (idx_t j = 0; j < cols_; ++j)
                 {
                     float val = static_cast<float>(*(reinterpret_cast<const int *>(base.data(i, j))));
                     vv_[i].push_back(T::from_float(8, 23, 127, val));
@@ -297,19 +215,19 @@ template <typename T> class img final
      */
     void write(const std::string &out_path)
     {
-        cimg_library::CImg<IMG_T> img_flt(cols_, rows_);
+        cimg_library::CImg<img_t> img_flt(cols_, rows_);
 
-        for (size_t i = 0; i < rows_; ++i)
-            for (size_t j = 0; j < cols_; ++j)
+        for (idx_t i = 0; i < rows_; ++i)
+            for (idx_t j = 0; j < cols_; ++j)
                 img_flt(j, i) = vv_[i][j].to_float();
 
         clib::write_img(img_flt, out_path);
     }
 
-    void write(cimg_library::CImg<IMG_T> &img_flt, size_t depth = 0, size_t dim = 0)
+    void write(cimg_library::CImg<img_t> &img_flt, idx_t depth = 0, idx_t dim = 0)
     {
-        for (size_t i = 0; i < rows_; ++i)
-            for (size_t j = 0; j < cols_; ++j)
+        for (idx_t i = 0; i < rows_; ++i)
+            for (idx_t j = 0; j < cols_; ++j)
                 img_flt(j, i, depth, dim) = vv_[i][j].to_float();
     }
 
@@ -338,16 +256,16 @@ template <typename T> class img final
      * sum = part_sums[0] + part_sums[1] + part_sums[2]
      *
      */
-    T sum(size_t req_threads = 0) const
+    T sum(idx_t req_threads = 0) const
     {
-        const size_t modulus = 3;
+        const idx_t modulus = 3;
         auto modulus_sum = [modulus](const vector<T> &line) {
             vector<T> part_sums(line.begin(), line.begin() + modulus);
-            // for (size_t j = 0; j < modulus; ++j)
+            // for (idx_t j = 0; j < modulus; ++j)
             //     std::cout << "part_sums[" << j << "] " << part_sums[j] << " = " << part_sums[j].to_float() <<
             //     std::endl;
 
-            for (size_t j = modulus; j < line.size(); ++j)
+            for (idx_t j = modulus; j < line.size(); ++j)
             {
                 T::sum(line[j], part_sums[j % modulus], part_sums[j % modulus]);
                 // std::cout << "part_sums[" << j % modulus << "] " << part_sums[j % modulus] << " = " << part_sums[j %
@@ -359,21 +277,21 @@ template <typename T> class img final
             // Собираем промежуточные суммы для разных остатков по модулю
             auto st_indx = (line.size() - modulus) % modulus;
             T ans = part_sums[st_indx];
-            for (size_t j = 1; j < modulus; ++j)
+            for (idx_t j = 1; j < modulus; ++j)
                 T::sum(part_sums[(st_indx + j) % modulus], ans, ans);
 
             return ans;
         };
 
         // Вычислен c помощью функции determine_work_number;
-        const size_t MIN_THREAD_WORK = 12000;
-        size_t nthreads = req_threads;
+        const idx_t MIN_THREAD_WORK = 12000;
+        idx_t nthreads = req_threads;
         if (req_threads == 0)
             nthreads = determine_threads(MIN_THREAD_WORK);
 
         vector<T> results(rows_, vv_[0][0]);
-        work(nthreads, [&](size_t st_row, size_t en_row) {
-            for (size_t i = st_row; i < en_row; ++i)
+        work(nthreads, [&](idx_t st_row, idx_t en_row) {
+            for (idx_t i = st_row; i < en_row; ++i)
             {
                 results[i] = modulus_sum(vv_[i]);
                 // std::cout << "line[" << i << "]  " << results[i]  << " = " << results[i].to_float() << std::endl;
@@ -393,23 +311,24 @@ template <typename T> class img final
     {
         T summ = sum();
 
-        #ifndef NDEBUG
-        CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float() << std::endl << " Volume:" << (rows_ * cols_) << std::endl;
-        #endif
+#ifndef NDEBUG
+        CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float() << std::endl
+                    << " Volume:" << (rows_ * cols_) << std::endl;
+#endif
 
-        T volume = T::from_float(summ,static_cast<float>(rows_ * cols_));
+        T volume = T::from_float(summ, static_cast<float>(rows_ * cols_));
 
-        #ifndef NDEBUG
+#ifndef NDEBUG
         CLOG(debug) << "Volume value: " << volume << std::endl;
-        #endif
+#endif
 
-        T inv_volume = T::from_float(summ,0);
+        T inv_volume = T::from_float(summ, 0);
 
         T::inv(volume, inv_volume);
 
-        #ifndef NDEBUG
+#ifndef NDEBUG
         CLOG(debug) << "Volume inv_value: " << inv_volume << std::endl;
-        #endif
+#endif
 
         T::mult(summ, inv_volume, summ);
 
@@ -421,10 +340,10 @@ template <typename T> class img final
      * \param[in] req_threads Количество потоков на которые необходимо разделить инициализацию. Если этот параметр не
      *                        задан, подсчет среднего будет разделен на отпимальное количество потоков
      */
-    img clip(size_t minn = 0, size_t maxx = 255) const
+    img clip(idx_t minn = 0, idx_t maxx = 255) const
     {
         img res(*this);
-        for_each(rows_, cols_, [&](size_t i, size_t j) {
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) {
             if (vv_[i][j].to_float() < static_cast<float>(minn))
                 res.vv_[i][j] = T::from_float(vv_[i][j], static_cast<float>(minn));
             else if (vv_[i][j].to_float() > static_cast<float>(maxx))
@@ -441,25 +360,25 @@ template <typename T> class img final
         return vv_;
     }
 
-    size_t rows() const
+    idx_t rows() const
     {
-        return vv_.size();
+        return static_cast<idx_t>(vv_.size());
     }
 
-    size_t cols() const
+    idx_t cols() const
     {
-        return vv_.empty()?0:vv_[0].size();
+        return vv_.empty() ? 0 : static_cast<idx_t>(vv_[0].size());
     }
 
     static void determine_work_number(const T &prototype)
     {
         struct test_res
         {
-            size_t t_init;
-            size_t t_calc;
+            long int t_init;
+            long int t_calc;
             float mean;
         };
-        auto calc = [&prototype](size_t req_threads, size_t rows, size_t cols) {
+        auto calc = [&prototype](idx_t req_threads, idx_t rows, idx_t cols) {
             auto s_begin = std::chrono::steady_clock::now();
 
             auto one = T::from_float(prototype, 1);
@@ -476,21 +395,21 @@ template <typename T> class img final
             return tr;
         };
 
-        const size_t tests_num = 33;
-        const size_t means_num = 40;
-        const size_t rows = 500;
-        const size_t cols = 500;
+        const idx_t tests_num = 33;
+        const idx_t means_num = 40;
+        const idx_t rows = 500;
+        const idx_t cols = 500;
 
         // Прогреваем кэши
-        for (size_t i = 0; i < tests_num; i += 4)
+        for (idx_t i = 0; i < tests_num; i += 4)
             calc(i, rows, cols);
 
         std::vector<test_res> results;
-        for (size_t i = 0; i < tests_num; ++i)
+        for (idx_t i = 0; i < tests_num; ++i)
         {
             // усреднение
             test_res cur_res = {0, 0, 0};
-            for (size_t j = 0; j < means_num; ++j)
+            for (idx_t j = 0; j < means_num; ++j)
             {
                 test_res temp_res = calc(i, rows, cols);
                 cur_res.t_init += temp_res.t_init;
@@ -499,34 +418,26 @@ template <typename T> class img final
             }
             results.push_back({cur_res.t_init / means_num, cur_res.t_calc / means_num, cur_res.mean});
         }
-
-        // for (size_t i = 0; i < tests_num; ++i)
-        // {
-        //     std::cout << "for i = " << std::setw(2) << i;
-        //     std::cout << " init = " << std::setw(5) << results[i].t_init;
-        //     std::cout << " calc = " << std::setw(5) << results[i].t_calc;
-        //     std::cout << " mean = " << results[i].mean << std::endl;
-        // }
     }
 
     img operator+(const T &rhs) const
     {
         img res(*this);
-        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sum(res.vv_[i][j], rhs, res.vv_[i][j]); });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::sum(res.vv_[i][j], rhs, res.vv_[i][j]); });
 
         return res;
     }
     img operator*(const T &rhs) const
     {
         img res(*this);
-        for_each(rows_, cols_, [&](size_t i, size_t j) { T::mult(res.vv_[i][j], rhs, res.vv_[i][j]); });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], rhs, res.vv_[i][j]); });
 
         return res;
     }
     img operator-(const T &rhs) const
     {
         img res(*this);
-        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sub(res.vv_[i][j], rhs, res.vv_[i][j]); });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::sub(res.vv_[i][j], rhs, res.vv_[i][j]); });
 
         return res;
     }
@@ -535,7 +446,7 @@ template <typename T> class img final
         img res(*this);
         T inv_rhs(rhs);
         T::inv(rhs, inv_rhs);
-        for_each(rows_, cols_, [&](size_t i, size_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
         return res;
     }
 
@@ -550,7 +461,7 @@ template <typename T> class img final
         assert(rows_ == rhs.rows_);
 
         img res(*this);
-        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sum(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::sum(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
 
         return res;
     }
@@ -560,7 +471,7 @@ template <typename T> class img final
         assert(rows_ == rhs.rows_);
 
         img res(*this);
-        for_each(rows_, cols_, [&](size_t i, size_t j) { T::mult(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
 
         return res;
     }
@@ -570,7 +481,7 @@ template <typename T> class img final
         assert(rows_ == rhs.rows_);
 
         img res(*this);
-        for_each(rows_, cols_, [&](size_t i, size_t j) { T::sub(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::sub(res.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
 
         return res;
     }
@@ -582,7 +493,7 @@ template <typename T> class img final
 
         img res(*this);
         T inverted(res.vv_[0][0]);
-        for_each(rows_, cols_, [&](size_t i, size_t j) {
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) {
             T::inv(rhs.vv_[i][j], inverted);
             T::mult(res.vv_[i][j], inverted, res.vv_[i][j]);
         });
@@ -590,76 +501,75 @@ template <typename T> class img final
         return res;
     }
 
-    T &operator()(const size_t &i, const size_t &j)
+    T &operator()(const idx_t &i, const idx_t &j)
     {
         assert(i < vv_.size() && j < vv_[0].size());
         return vv_[i][j];
     }
 
-    const T &operator()(const size_t &i, const size_t &j) const
+    const T &operator()(const idx_t &i, const idx_t &j) const
     {
         assert(i < vv_.size() && j < vv_[0].size());
         return vv_[i][j];
     }
-
-    // template <typename... IMGS>
-    // static img& max(const img& first, const img& second, const IMGS & ... imgs)
-    // {
-    //     if (sizeof...(imgs) == 0)
-    //         return max_impl(first, second);
-
-    //     auto cur_max = max_impl(first, second);
-    //     return max(cur_max, imgs...);
-    // }
 
     template <typename... IMGS> static img maxxxx(const img &first, const IMGS &...imgs)
     {
         img res(first);
-        for_each(first.rows(), first.cols(), [&](size_t i, size_t j) {
+        for_each(first.rows(), first.cols(), [&](idx_t i, idx_t j) {
             res(i, j) = std::max({first(i, j), imgs(i, j)...});
         });
 
         return res;
-
-        // for (size_t i; i < first.rows(); ++ i)
-        //     for (size_t j; j < first.rows(); ++ j)
-        //         res[i][j] = std::max({imgs(i, j)...});
     }
 
-    // template <typename... IMGS>
-    // static img max(const T& prototype, std::vector<img>& list, IMGS... imgs){
-    //     assert(list.size() != 0);
-
-    //     size_t rows = list[0].rows(), cols = list[0].cols();
-
-    //     img res_img(prototype,rows,cols);
-
-    //     for_each(rows, cols, [&](size_t i, size_t j) {
-    //         auto el = std::max_element(list.begin(),list.end(),[&](const img& left, const img& right)
-    //         {
-    //             return right(i,j) > left(i,h);
-    //         })
-    //         res_img(i,j) = el ;
-    //     });
-    //     return res_img;
-    // }
-
   private:
+    template <typename Func> void _ctor_implt(idx_t rows, idx_t cols, Func get_val, idx_t req_threads = 0)
+    {
+        assert(cols > 0);
+        assert(rows > 0);
+
+        // Вычислен c помощью функции determine_work_number;
+        const idx_t MIN_THREAD_WORK = 12000;
+        rows_ = rows;
+        cols_ = cols;
+
+        vv_.reserve(rows_);
+        vv_.resize(rows_);
+
+        idx_t nthreads = req_threads;
+        if (req_threads == 0)
+            nthreads = determine_threads(MIN_THREAD_WORK);
+
+        // разбиваем по потокам
+        work(nthreads, [&](idx_t st_row, idx_t en_row) {
+            for (auto i = st_row; i < en_row; ++i)
+            {
+                vv_[i].reserve(cols_);
+                for (idx_t j = 0; j < cols_; ++j)
+                    vv_[i].push_back(get_val(i, j));
+            }
+        });
+
+        set_inv_rows();
+        set_inv_cols();
+    }
+
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
-    template <typename Func, typename... Args> static void for_each(size_t rows, size_t cols, Func func, Args... args)
+    template <typename Func, typename... Args> static void for_each(idx_t rows, idx_t cols, Func func, Args... args)
     {
         assert(rows != 0);
         assert(cols != 0);
 
-        auto do_func = [&](size_t st, size_t en) {
-            for (size_t i = st; i < en; ++i)
-                for (size_t j = 0; j < cols; ++j)
+        auto do_func = [&](idx_t st, idx_t en) {
+            for (idx_t i = st; i < en; ++i)
+                for (idx_t j = 0; j < cols; ++j)
                     func(i, j, args...);
         };
 
-        const size_t MIN_THREAD_WORK = 10000;
-        size_t nthreads = determine_threads(rows, cols, MIN_THREAD_WORK);
+        const idx_t MIN_THREAD_WORK = 10000;
+        idx_t nthreads = determine_threads(rows, cols, MIN_THREAD_WORK);
         if (nthreads == 1)
         {
             do_func(0, rows);
@@ -667,11 +577,11 @@ template <typename T> class img final
         }
 
         vector<std::thread> threads(nthreads);
-        size_t bsize = std::max(rows / nthreads, 1ul);
+        idx_t bsize = std::max(rows / nthreads, 1u);
 
         // Создаем потоки
-        size_t tidx = 0;
-        size_t last_row = 0;
+        idx_t tidx = 0;
+        idx_t last_row = 0;
         for (; rows >= bsize * (tidx + 1) && tidx < nthreads; last_row += bsize, tidx += 1)
             threads[tidx] = std::thread(do_func, last_row, last_row + bsize);
 
@@ -681,7 +591,7 @@ template <typename T> class img final
             do_func(last_row, rows);
 
         // Ждем потоки
-        for (size_t th = 0; th < tidx; ++th)
+        for (idx_t th = 0; th < tidx; ++th)
             threads[th].join();
 
         return;
@@ -689,7 +599,7 @@ template <typename T> class img final
 
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
-    template <typename Func, typename... Args> void work(size_t nthreads, Func func, Args... args) const
+    template <typename Func, typename... Args> void work(idx_t nthreads, Func func, Args... args) const
     {
         assert(nthreads > 0);
         assert(rows_ != 0);
@@ -702,11 +612,11 @@ template <typename T> class img final
         }
 
         vector<std::thread> threads(nthreads);
-        size_t bsize = std::max(rows_ / nthreads, 1ul);
+        idx_t bsize = std::max(rows_ / nthreads, 1u);
 
         /////////////////// Создаем потоки ///////////////////
-        size_t tidx = 0;
-        size_t last_row = 0;
+        idx_t tidx = 0;
+        idx_t last_row = 0;
         for (; rows_ >= bsize * (tidx + 1); last_row += bsize, tidx += 1)
         {
             // std::cout << "tidx = " << tidx << std::endl;
@@ -728,25 +638,25 @@ template <typename T> class img final
             auto en = rows_;
             std::invoke(func, st, en, args...);
         }
-        for (size_t th = 0; th < tidx; ++th)
+        for (idx_t th = 0; th < tidx; ++th)
             threads[th].join();
 
         return;
     }
 
     // Определение оптимального количество потоков исходя из количества работы и параметров системы
-    static size_t determine_threads(size_t rows, size_t cols, size_t min_thread_work)
+    static idx_t determine_threads(idx_t rows, idx_t cols, idx_t min_thread_work)
     {
         assert(rows != 0);
         assert(cols != 0);
 
-        size_t rows_per_thread = std::max(min_thread_work / cols, 1ul);
-        size_t det_threads = std::max(rows / rows_per_thread, 1ul);
+        idx_t rows_per_thread = std::max(min_thread_work / cols, 1u);
+        idx_t det_threads = std::max(rows / rows_per_thread, 1u);
 
-        size_t hard_conc = static_cast<size_t>(std::thread::hardware_concurrency());
+        idx_t hard_conc = static_cast<idx_t>(std::thread::hardware_concurrency());
         return std::min(hard_conc != 0 ? hard_conc : 2, det_threads);
     }
-    size_t determine_threads(size_t min_thread_work) const
+    idx_t determine_threads(idx_t min_thread_work) const
     {
         return determine_threads(rows_, cols_, min_thread_work);
     }
@@ -759,7 +669,7 @@ template <typename T> class img final
 
     void set_inv_cols()
     {
-        inv_cols_ = T::from_float(vv_[0][0],  static_cast<float>(cols_));
+        inv_cols_ = T::from_float(vv_[0][0], static_cast<float>(cols_));
         T::inv(inv_cols_, inv_cols_);
     }
 
@@ -777,7 +687,7 @@ template <typename T> class img final
 template <typename T> img<T> operator+(const T &lhs, const img<T> &rhs)
 {
     img<T> res(rhs);
-    img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::sum(lhs, res.vv_[i][j], res.vv_[i][j]); });
+    img<T>::for_each(rhs.rows(), rhs.cols(), [&](idx_t i, idx_t j) { T::sum(lhs, res.vv_[i][j], res.vv_[i][j]); });
 
     return res;
 }
@@ -785,7 +695,7 @@ template <typename T> img<T> operator+(const T &lhs, const img<T> &rhs)
 template <typename T> img<T> operator*(const T &lhs, const img<T> &rhs)
 {
     img<T> res(rhs);
-    img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::mult(lhs, res.vv_[i][j], res.vv_[i][j]); });
+    img<T>::for_each(rhs.rows(), rhs.cols(), [&](idx_t i, idx_t j) { T::mult(lhs, res.vv_[i][j], res.vv_[i][j]); });
 
     return res;
 }
@@ -793,7 +703,7 @@ template <typename T> img<T> operator*(const T &lhs, const img<T> &rhs)
 template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
 {
     img<T> res(rhs);
-    img<T>::for_each(rhs.rows(), rhs.cols(), [&](size_t i, size_t j) { T::sub(lhs, res.vv_[i][j], res.vv_[i][j]); });
+    img<T>::for_each(rhs.rows(), rhs.cols(), [&](idx_t i, idx_t j) { T::sub(lhs, res.vv_[i][j], res.vv_[i][j]); });
 
     return res;
 }
@@ -804,8 +714,8 @@ const int threads_quantity = 1;
 //
 template <typename T> class img_rgb
 {
-    const size_t depth = 1; // depth
-    img<T> r, g, b;         // spectrum
+    const idx_t depth = 1; // depth
+    img<T> r, g, b;        // spectrum
   public:
     enum spectrum
     {
@@ -820,9 +730,9 @@ template <typename T> class img_rgb
     {
     }
 
-    img_rgb(const T &prototype, const std::string &img_path, size_t req_threads = 0)
+    img_rgb(const T &prototype, const std::string &img_path, idx_t req_threads = 0)
     {
-        cimg_library::CImg img_flt = read_img<IMG_T>(img_path);
+        cimg_library::CImg img_flt = read_img<img_t>(img_path);
 
         assert(img_flt.spectrum() == 3);
         assert(img_flt.depth() == 1);
@@ -832,7 +742,7 @@ template <typename T> class img_rgb
         b = img(prototype, img_flt, req_threads, depth - 1, B);
     }
 
-    img_rgb(const T &prototype, const cimg_library::CImg<IMG_T> &img_flt, size_t frame, size_t req_threads = 0)
+    img_rgb(const T &prototype, const cimg_library::CImg<img_t> &img_flt, idx_t frame, idx_t req_threads = 0)
     {
         assert(img_flt.spectrum() == 3);
 
@@ -845,7 +755,7 @@ template <typename T> class img_rgb
 
     void write(const std::string &out_path)
     {
-        cimg_library::CImg<IMG_T> img_flt(r.cols(), r.rows(), depth, 3);
+        cimg_library::CImg<img_t> img_flt(r.cols(), r.rows(), depth, 3);
 
         r.write(img_flt, depth - 1, R);
         g.write(img_flt, depth - 1, G);
@@ -854,7 +764,7 @@ template <typename T> class img_rgb
         clib::write_img(img_flt, out_path);
     }
 
-    void write(cimg_library::CImg<IMG_T> &img_flt, size_t frame)
+    void write(cimg_library::CImg<img_t> &img_flt, idx_t frame)
     {
         r.write(img_flt, frame, R);
         g.write(img_flt, frame, G);
@@ -862,13 +772,13 @@ template <typename T> class img_rgb
     }
 
     // rows - height of image
-    size_t rows() const
+    idx_t rows() const
     {
         return r.rows();
     }
 
     // cols - width of image
-    size_t cols() const
+    idx_t cols() const
     {
         return r.cols();
     }
