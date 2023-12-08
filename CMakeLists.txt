@@ -117,7 +117,7 @@ set(MY_FLAGS
     -Wlogical-op
     -Wundef
     -Wshadow
-    -Wstrict-overflow=5
+    -Wstrict-overflow=2
     -Wwrite-strings
     -Wpointer-arith
     -Wformat=2

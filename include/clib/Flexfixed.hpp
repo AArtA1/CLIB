@@ -206,7 +206,9 @@ class Flexfixed
         return {I, F};
     }
 
-    static void convert_ff_to_fx(const Flexfloat& value, Flexfixed& res);
+
+    // todo
+    //static void convert_ff_to_fx(const Flexfloat& value, Flexfixed& res);
 
     static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 
