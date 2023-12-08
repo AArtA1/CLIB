@@ -1,5 +1,8 @@
 #pragma once
 
+#define cimg_use_png
+#define cimg_use_jpeg
+
 #include "CImg.h"
 #include "video.hpp"
 #include "image.hpp"
@@ -8,6 +11,14 @@ namespace clib
 {
 
 // ----------------------- SUPPORTS ONLY MP4, MKV extensions --------------------
+
+static bool check_ext(const std::string &s, const std::vector<std::string> &exts)
+{
+    for (auto ext : exts)
+        if (s.substr(s.find_last_of(".") + 1) == ext)
+            return true;
+    return false;
+}
 
 template <typename T> cimg_library::CImg<T> read_video(const std::string &path)
 {

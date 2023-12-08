@@ -31,7 +31,7 @@ TEST_CASE("Test Image Max")
     
     c.vv_ = {{from_float_(14.2), from_float_(3.14),from_float_(6.123),from_float_(5.1),from_float_(3.2)}};
 
-    auto res = img::maxxxx(r,g,b,c);
+    auto res = img::max(r,g,b,c);
 
     for(auto i = 0; i < res.rows();++i)
         for(auto j = 0; j < res.cols();++j)
