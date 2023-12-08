@@ -81,9 +81,13 @@ struct CImg : ImgView
         return image_(j, i, frame, clr);
     }
 
+
     void set(img_t val, idx_t i, idx_t j, idx_t frame, idx_t clr) override
     {
         check_created();
+        assert(i < static_cast<idx_t>(image_.height()));
+        assert(j < static_cast<idx_t>(image_.width()));
+        
         image_(j, i, frame, clr) = val;
     }
 

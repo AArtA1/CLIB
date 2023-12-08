@@ -42,32 +42,18 @@ template <typename T> class img final
         _ctor_implt(rows, cols, get_val, req_threads);
     }
 
-    /*! @brief Инициализации изображения из файла
-     *
-     * \param[in] img_path Путь до чёрно-белого изображения
-     * \param[in] view Представление изображения
-     */
-    img(const T &prototype, const std::string &img_path, ImgView &view, idx_t req_threads = 0) : vv_()
-    {
-        view.read_img(img_path);
-
-        assert(view.frames() == 1);
-
-        auto get_val = [&prototype, &view](idx_t i, idx_t j) { return T::from_float(prototype, view.get(i, j, 0, 0)); };
-        _ctor_implt(view.rows(), view.cols(), get_val, req_threads);
-    }
-
-    /*! @brief Инициализации изображения из видео
+    // TODO
+    /*! @brief Инициализации изображения из Представления
      *
      * \param[in] prorotype Элемент, из которого берутся гиперпараметры
      * \param[in] view Представление видео
      * \param[in] frame Номер кадра
      * \param[in] clr Номер цвета
      */
-    img(const T &prototype, const ImgView &view, idx_t frame, idx_t clr, idx_t req_threads = 0) : vv_()
+    img(const T &prototype, const ImgView &view, idx_t frame = 0, idx_t clr = 0, idx_t req_threads = 0) : vv_()
     {
         auto get_val = [&prototype, &view, frame, clr](idx_t i, idx_t j) {
-            return T::from_float(prototype, view.get(j, i, frame, clr));
+            return T::from_float(prototype, view.get(i, j, frame, clr));
         };
         _ctor_implt(view.rows(), view.cols(), get_val, req_threads);
     }
@@ -324,23 +310,8 @@ template <typename T> class img final
         return vv_[i][j];
     }
 
-    /*! @brief Записывает изображение в файл
-     *
-     * \param[in] out_path Выходной файл
-     * \param[in] view Представление изображения
-     */
-    void write(const std::string &out_path, ImgView &view)
-    {
-        view.init(rows_, cols_);
-
-        for (idx_t i = 0; i < rows_; ++i)
-            for (idx_t j = 0; j < cols_; ++j)
-                view.set(vv_[i][j].to_float(), i, j, 0, 0);
-
-        view.write_img(out_path);
-    }
-
-    /*! @brief Записывает одноцветынй кадр в видео
+    //TODO
+    /*! @brief Записывает одноцветынй кадр в Представление
      *
      * \param[in] view Представление видео
      * \param[in] frame Номер кадра
@@ -352,7 +323,6 @@ template <typename T> class img final
             for (idx_t j = 0; j < cols_; ++j)
                 view.set(vv_[i][j].to_float(), i, j, frame, clr);
     }
-
 
   private:
     template <typename Func> void _ctor_implt(idx_t rows, idx_t cols, Func get_val, idx_t req_threads = 0)
@@ -404,8 +374,7 @@ template <typename T> class img final
 
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
-    template <typename Func, typename... Args>
-    static void work(idx_t nthreads, idx_t rows, Func func, Args... args)
+    template <typename Func, typename... Args> static void work(idx_t nthreads, idx_t rows, Func func, Args... args)
     {
         assert(nthreads > 0);
         assert(rows != 0);
@@ -546,7 +515,7 @@ template <typename T> class img_rgb
         B
     };
 
-    /*! @brief Поканальная инициализации изображения 
+    /*! @brief Поканальная инициализации изображения
      *
      * \param[in] r Интенсивности красного
      * \param[in] g Интенсивности зелёного
@@ -556,31 +525,14 @@ template <typename T> class img_rgb
     {
     }
 
-    /*! @brief Инициализации изображения из файла
-     *
-     * \param[in] prorotype Элемент, из которого берутся гиперпараметры
-     * \param[in] img_path Путь до чёрно-белого изображения
-     * \param[in] view Представление изображения
-     */
-    img_rgb(const T &prototype, const std::string &img_path, ImgView &view, idx_t req_threads = 0)
-    {
-        view.read_img(img_path);
-
-        assert(view.clrs() == 3);
-        assert(view.frames() == 1);
-
-        r_ = img(prototype, view, frame_num - 1, R, req_threads);
-        g_ = img(prototype, view, frame_num - 1, G, req_threads);
-        b_ = img(prototype, view, frame_num - 1, B, req_threads);
-    }
-
-    /*! @brief Инициализации изображения из видео
+    //TODO
+    /*! @brief Инициализации изображения из Представления
      *
      * \param[in] prorotype Элемент, из которого берутся гиперпараметры
      * \param[in] view Представление видео
      * \param[in] frame Номер кадра
      */
-    img_rgb(const T &prototype, const ImgView &view, idx_t frame, idx_t req_threads = 0)
+    img_rgb(const T &prototype, const ImgView &view, idx_t frame = 0, idx_t req_threads = 0)
     {
         assert(view.clrs() == 3);
 
@@ -589,23 +541,8 @@ template <typename T> class img_rgb
         b_ = img(prototype, view, frame, B, req_threads);
     }
 
-    /*! @brief Записывает изображение в файл
-     *
-     * \param[in] out_path Выходной файл
-     * \param[in] view Представление изображения
-     */
-    void write(const std::string &out_path, ImgView &view)
-    {
-        view.init(r_.rows(), r_.cols(), frame_num, 3);
-
-        r_.write(view, frame_num - 1, R);
-        g_.write(view, frame_num - 1, G);
-        b_.write(view, frame_num - 1, B);
-
-        view.write_img(out_path);
-    }
-
-    /*! @brief Записывает трёхцветный кадр в видео
+    // TODO
+    /*! @brief Записывает трёхцветный кадр в Представление
      *
      * \param[in] view Представление видео
      * \param[in] frame Номер кадра
