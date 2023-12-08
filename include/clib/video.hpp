@@ -1,6 +1,8 @@
 #pragma once
 
+#include "CImg.h"
 #include "video.hpp"
+#include "image.hpp"
 
 namespace clib
 {
@@ -10,10 +12,7 @@ namespace clib
 template <typename T> cimg_library::CImg<T> read_video(const std::string &path)
 {
     cimg_library::CImg<T> video;
-    if (check_ext(path, {
-                            "mp4",
-                            "mkv"
-                        }))
+    if (check_ext(path, {"mp4", "mkv"}))
     {
 
         video = cimg_library::CImg<T>::get_load_video(path.c_str());
@@ -46,71 +45,71 @@ template <typename T> void write_video(const cimg_library::CImg<T> &video, const
     }
 }
 
-
 // -----------------------------------------------------------------------
 
-
-template<typename T> class video
+template <typename T> class video
 {
     std::vector<img_rgb<T>> frames;
 
   public:
-
-
     video() = default;
 
-    video(const T& prototype, const std::string & video_path , size_t req_threads = 0){
-        cimg_library::CImg img_flt = read_video<IMG_T>(video_path);
+    video(const T &prototype, const std::string &video_path, idx_t req_threads = 0)
+    {
+        cimg_library::CImg img_flt = read_video<img_t>(video_path);
         frames.reserve(img_flt.depth());
-        for(size_t i = 0; i < img_flt.depth();++i){
-            frames.push_back(img_rgb(prototype,img_flt,i,req_threads));
+        for (idx_t i = 0; i < img_flt.depth(); ++i)
+        {
+            frames.push_back(img_rgb(prototype, img_flt, i, req_threads));
         }
     }
 
-    video(std::vector<img_rgb<T>> frames_) : frames(frames_){
+    video(std::vector<img_rgb<T>> frames_) : frames(frames_)
+    {
     }
 
-    void write(const std::string& video_path){
-        cimg_library::CImg<IMG_T> img_flt(cols(), rows(), frames.size(), 3);
+    void write(const std::string &video_path)
+    {
+        cimg_library::CImg<img_t> img_flt(cols(), rows(), frames.size(), 3);
 
-        for(size_t i = 0; i < depth();++i){
-            frames[i].write(img_flt,i);
+        for (idx_t i = 0; i < depth(); ++i)
+        {
+            frames[i].write(img_flt, i);
         }
 
-        write_video(img_flt,video_path);
+        write_video(img_flt, video_path);
     }
 
     // rows - height of image
-    const size_t rows() const
+    idx_t rows() const
     {
         return frames[0].rows();
     }
 
     // cols - width of image
-    const size_t cols() const
+    idx_t cols() const
     {
         return frames[0].cols();
     }
-    
-    const size_t depth() const
+
+    idx_t depth() const
     {
-        return frames.size();
+        return static_cast<idx_t>(frames.size());
     }
 
-    const img_rgb<T>& operator()(const size_t i) const{
-        assert(i >= 0 && i < frames.size());
+    const img_rgb<T> &operator()(idx_t i) const
+    {
+        assert(i < frames.size());
 
         return frames[i];
     }
 
+    img_rgb<T> &operator()(idx_t i)
+    {
+        assert(i < frames.size());
 
+        return frames[i];
+    }
 };
-
-
-
-
-
-
-
 
 } // namespace clib
