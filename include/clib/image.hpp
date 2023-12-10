@@ -21,11 +21,12 @@ namespace clib
  * \details Класс содержит в себе двумерный массив с числами типа T и реализует функции для работы с массивом
  */
 using std::vector;
+using pixel_t = ImgView::pixel_t;
+using idx_t = ImgView::idx_t;
 template <typename T> class img final
 {
     idx_t rows_ = 0; // height of image
     idx_t cols_ = 0; // width of image
-                     // CImg stores data as [width,height]. Therefore, the data in cimg are transposed.
 
   public:
     vector<vector<T>> vv_;
@@ -42,18 +43,16 @@ template <typename T> class img final
         _ctor_implt(rows, cols, get_val, req_threads);
     }
 
-    // TODO
     /*! @brief Инициализации изображения из Представления
      *
      * \param[in] prorotype Элемент, из которого берутся гиперпараметры
-     * \param[in] view Представление видео
-     * \param[in] frame Номер кадра
+     * \param[in] view Представление изображения
      * \param[in] clr Номер цвета
      */
-    img(const T &prototype, const ImgView &view, idx_t frame = 0, idx_t clr = 0, idx_t req_threads = 0) : vv_()
+    img(const T &prototype, const ImgView &view, idx_t clr = 0, idx_t req_threads = 0) : vv_()
     {
-        auto get_val = [&prototype, &view, frame, clr](idx_t i, idx_t j) {
-            return T::from_float(prototype, view.get(i, j, frame, clr));
+        auto get_val = [&prototype, &view, clr](idx_t i, idx_t j) {
+            return T::from_float(prototype, view.get(i, j, clr));
         };
         _ctor_implt(view.rows(), view.cols(), get_val, req_threads);
     }
@@ -205,7 +204,7 @@ template <typename T> class img final
     }
 
     /// @brief Обрезает все числа в двумерном массиве между minn и maxx
-    img clip(img_t minn = 0, img_t maxx = 255) const
+    img clip(pixel_t minn = 0, pixel_t maxx = 255) const
     {
         img res(*this);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) {
@@ -310,18 +309,17 @@ template <typename T> class img final
         return vv_[i][j];
     }
 
-    //TODO
     /*! @brief Записывает одноцветынй кадр в Представление
      *
-     * \param[in] view Представление видео
-     * \param[in] frame Номер кадра
+     * \param[in] view Представление изображение
      * \param[in] clr Номер цвета
      */
-    void write(ImgView &view, idx_t frame = 0, idx_t clr = 0)
+    void write(ImgView &view, idx_t clr = 0)
     {
         for (idx_t i = 0; i < rows_; ++i)
             for (idx_t j = 0; j < cols_; ++j)
-                view.set(vv_[i][j].to_float(), i, j, frame, clr);
+                view.set(vv_[i][j].to_float(), i, j, clr);
+        
     }
 
   private:
@@ -504,17 +502,9 @@ extern template class img<Flexfloat>;
  */
 template <typename T> class img_rgb
 {
-    const idx_t frame_num = 1;
     img<T> r_, g_, b_;
 
   public:
-    enum spectrum
-    {
-        R,
-        G,
-        B
-    };
-
     /*! @brief Поканальная инициализации изображения
      *
      * \param[in] r Интенсивности красного
@@ -525,33 +515,28 @@ template <typename T> class img_rgb
     {
     }
 
-    //TODO
     /*! @brief Инициализации изображения из Представления
      *
      * \param[in] prorotype Элемент, из которого берутся гиперпараметры
-     * \param[in] view Представление видео
-     * \param[in] frame Номер кадра
+     * \param[in] view Представление изображения
      */
-    img_rgb(const T &prototype, const ImgView &view, idx_t frame = 0, idx_t req_threads = 0)
+    img_rgb(const T &prototype, const ImgView &view, idx_t req_threads = 0)
+        : r_(prototype, view, ImgView::R, req_threads), 
+          g_(prototype, view, ImgView::G, req_threads),
+          b_(prototype, view, ImgView::B, req_threads)
     {
         assert(view.clrs() == 3);
-
-        r_ = img(prototype, view, frame, R, req_threads);
-        g_ = img(prototype, view, frame, G, req_threads);
-        b_ = img(prototype, view, frame, B, req_threads);
     }
 
-    // TODO
     /*! @brief Записывает трёхцветный кадр в Представление
      *
-     * \param[in] view Представление видео
-     * \param[in] frame Номер кадра
+     * \param[in] view Представление изображения
      */
-    void write(ImgView &view, idx_t frame)
+    void write(ImgView &view)
     {
-        r_.write(view, frame, R);
-        g_.write(view, frame, G);
-        b_.write(view, frame, B);
+        r_.write(view, ImgView::R);
+        g_.write(view, ImgView::G);
+        b_.write(view, ImgView::B);
     }
 
     // rows - height of image

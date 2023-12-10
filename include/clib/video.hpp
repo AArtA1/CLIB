@@ -4,122 +4,96 @@
 #define cimg_use_jpeg
 
 #include "CImg.h"
-#include "video.hpp"
 #include "image.hpp"
+#include "video.hpp"
 
 namespace clib
 {
 
-// ----------------------- SUPPORTS ONLY MP4, MKV extensions --------------------
+cimg_library::CImg<pixel_t> read_video(const std::string &path);
+void write_video(const cimg_library::CImg<pixel_t> &video, const std::string &path);
 
-static bool check_ext(const std::string &s, const std::vector<std::string> &exts)
-{
-    for (auto ext : exts)
-        if (s.substr(s.find_last_of(".") + 1) == ext)
-            return true;
-    return false;
-}
-
-template <typename T> cimg_library::CImg<T> read_video(const std::string &path)
-{
-    cimg_library::CImg<T> video;
-    if (check_ext(path, {"mp4", "mkv"}))
-    {
-
-        video = cimg_library::CImg<T>::get_load_video(path.c_str());
-    }
-    else
-    {
-#ifndef NDEBUG
-        CLOG(error) << "Unknown format: " << path.substr(path.find_last_of(".") + 1) << std::endl;
-#endif
-        throw std::invalid_argument("Unknown format. Please check again");
-    }
-    return video;
-}
-
-template <typename T> void write_video(const cimg_library::CImg<T> &video, const std::string &path)
-{
-    if (check_ext(path, {
-                            "mp4",
-                            "mkv",
-                        }))
-    {
-        video.save_video(path.c_str());
-    }
-    else
-    {
-#ifndef NDEBUG
-        CLOG(error) << "Unknown format: " << path.substr(path.find_last_of(".") + 1) << std::endl;
-#endif
-        throw std::invalid_argument("Unknown format. Please check again");
-    }
-}
-
-// -----------------------------------------------------------------------
-
+using pixel_t = ImgView::pixel_t;
+using idx_t = ImgView::idx_t;
 template <typename T> class video
 {
-    std::vector<img_rgb<T>> frames;
+    std::vector<img_rgb<T>> frames_;
 
   public:
-    video() = default;
-
-    video(const T &prototype, const std::string &video_path, idx_t req_threads = 0)
+    video(const T &prototype, const std::string &video_path)
     {
-        cimg_library::CImg img_flt = read_video<img_t>(video_path);
-        frames.reserve(img_flt.depth());
-        for (idx_t i = 0; i < img_flt.depth(); ++i)
+        cimg_library::CImg video_view = read_video(video_path);
+        frames_.reserve(static_cast<idx_t>(video_view.depth()));
+
+        auto view_r = clib::CImgView{};
+        auto view_g = clib::CImgView{};
+        auto view_b = clib::CImgView{};
+
+        for (idx_t i = 0; i < static_cast<idx_t>(video_view.depth()); ++i)
         {
-            frames.push_back(img_rgb(prototype, img_flt, i, req_threads));
+            view_r.load(video_view.get_shared_slice(i, ImgView::R));
+            view_g.load(video_view.get_shared_slice(i, ImgView::G));
+            view_b.load(video_view.get_shared_slice(i, ImgView::B));
+
+            //std::cout << i << std::endl;
+            auto r = img<T>(prototype, view_r);
+            auto g = img<T>(prototype, view_g);
+            auto b = img<T>(prototype, view_b);
+
+            frames_.push_back(img_rgb(r, g, b));
         }
     }
 
-    video(std::vector<img_rgb<T>> frames_) : frames(frames_)
+    video(const std::vector<img_rgb<T>> &frames) : frames_(frames)
     {
     }
 
     void write(const std::string &video_path)
     {
-        cimg_library::CImg<img_t> img_flt(cols(), rows(), frames.size(), 3);
+        cimg_library::CImg<pixel_t> video_view(cols(), rows(), static_cast<idx_t>(frames_.size()), 3);
 
+        auto view = clib::CImgView{};
+        view.init(rows(), cols(), 3);
         for (idx_t i = 0; i < depth(); ++i)
         {
-            frames[i].write(img_flt, i);
+            frames_[i].write(view);
+            video_view.get_shared_slice(i, 0) = view.unload().get_shared_slice(0, 0);
+            video_view.get_shared_slice(i, 1) = view.unload().get_shared_slice(0, 1);
+            video_view.get_shared_slice(i, 2) = view.unload().get_shared_slice(0, 2);
         }
 
-        write_video(img_flt, video_path);
+        write_video(video_view, video_path);
     }
 
     // rows - height of image
     idx_t rows() const
     {
-        return frames[0].rows();
+        return frames_[0].rows();
     }
 
     // cols - width of image
     idx_t cols() const
     {
-        return frames[0].cols();
+        return frames_[0].cols();
     }
 
     idx_t depth() const
     {
-        return static_cast<idx_t>(frames.size());
+        return static_cast<idx_t>(frames_.size());
     }
 
     const img_rgb<T> &operator()(idx_t i) const
     {
-        assert(i < frames.size());
+        assert(i < frames_.size());
 
-        return frames[i];
+        return frames_[i];
     }
 
     img_rgb<T> &operator()(idx_t i)
     {
-        assert(i < frames.size());
+        assert(i < frames_.size());
 
-        return frames[i];
+        return frames_[i];
     }
 };
 
