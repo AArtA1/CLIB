@@ -177,18 +177,26 @@ template <typename T> class img final
     T mean() const
     {
         T summ = sum();
-        T volume = T::from_float(summ, static_cast<float>(rows_ * cols_));
-        T inv_volume = T::from_float(summ, 0);
-        T::inv(volume, inv_volume);
+        
+        // The code below only works with correct implemented INVERSION function
+
+        // T volume = T::from_float(summ, static_cast<float>(rows_ * cols_));
+        // T inv_volume = T::from_float(summ, 0);
+        // T::inv(volume, inv_volume);
+        // T::mult(summ, inv_volume, summ);
+
+
+        summ = T::from_float(summ,summ.to_float() / (rows_*cols_)); // comment this if INVERSION works correctly
+
+
 
 #ifndef NDEBUG
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
         CLOG(debug) << "Volume:" << (rows_ * cols_);
-        CLOG(debug) << "Volume value: " << volume;
-        CLOG(debug) << "Volume inv_value: " << inv_volume;
+        //CLOG(debug) << "Volume value: " << volume;
+        CLOG(debug) << "Volume inv_value: " << summ;
 #endif
 
-        T::mult(summ, inv_volume, summ);
         return summ;
     }
 
@@ -243,13 +251,15 @@ template <typename T> class img final
     img operator/(const T &rhs) const
     {
         img res(*this);
-        T inv_rhs(rhs);
-        T::inv(rhs, inv_rhs);
-        const auto copy_inv = inv_rhs;
 
-        for_each(rows_, cols_, [&](idx_t i, idx_t j) { 
-            T::mult(res.vv_[i][j], copy_inv, res.vv_[i][j]); 
-        });
+        // The code below only works with correct implemented INVERSION function
+        //T inv_rhs(rhs);
+        //T::inv(rhs, inv_rhs);
+
+        const T inv_rhs = T::from_float(rhs,1.0f / rhs.to_float()); // comment this if INVERSION works correctly
+
+
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
         return res;
     }
 
@@ -293,9 +303,15 @@ template <typename T> class img final
         assert(rows_ == rhs.rows_);
 
         img res(*this);
+        // The code below only works with correct implemented INVERSION function
+
+        //T inverted(res.vv_[0][0]);
+
         for_each(rows_, cols_, [&](idx_t i, idx_t j) {
-            T inverted(res.vv_[i][j]);
-            T::inv(rhs.vv_[i][j], inverted);
+            //T::inv(rhs.vv_[i][j], inverted);
+
+            const T inverted = T::from_float(rhs.vv_[i][j],1.0f / rhs.vv_[i][j].to_float());  // comment this if INVERSION works correctly
+
             T::mult(res.vv_[i][j], inverted, res.vv_[i][j]);
         });
 
