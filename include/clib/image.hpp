@@ -186,7 +186,7 @@ template <typename T> class img final
         // T::mult(summ, inv_volume, summ);
 
 
-        summ = T::from_float(summ,summ.to_float() / (rows_*cols_)); // comment this if INVERSION works correctly
+        summ = T::from_float(summ,summ.to_float() / static_cast<float>(rows_*cols_)); // comment this if INVERSION works correctly
 
 
 
