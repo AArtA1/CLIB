@@ -245,7 +245,11 @@ template <typename T> class img final
         img res(*this);
         T inv_rhs(rhs);
         T::inv(rhs, inv_rhs);
-        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
+        const auto copy_inv = inv_rhs;
+
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { 
+            T::mult(res.vv_[i][j], copy_inv, res.vv_[i][j]); 
+        });
         return res;
     }
 
@@ -289,8 +293,8 @@ template <typename T> class img final
         assert(rows_ == rhs.rows_);
 
         img res(*this);
-        T inverted(res.vv_[0][0]);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) {
+            T inverted(res.vv_[i][j]);
             T::inv(rhs.vv_[i][j], inverted);
             T::mult(res.vv_[i][j], inverted, res.vv_[i][j]);
         });
