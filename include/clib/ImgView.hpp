@@ -130,8 +130,6 @@ struct CImgView : ImgView
         else
             throw std::invalid_argument("Unknown format. Please check again" + path);
     }
-
-  private:
     static bool check_ext(const std::string &s, const std::vector<std::string> &exts)
     {
         for (auto ext : exts)
@@ -139,7 +137,7 @@ struct CImgView : ImgView
                 return true;
         return false;
     }
-
+private:
     void check_created() const
     {
         if (!img_was_readed_)
