@@ -194,12 +194,9 @@ template <typename T> class img final
 
         summ = T::from_float(summ,summ.to_float() / static_cast<float>(rows_*cols_)); // comment this if INVERSION works correctly
 
-
-
 #ifndef NDEBUG
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
         CLOG(debug) << "Volume:" << (rows_ * cols_);
-        //CLOG(debug) << "Volume value: " << volume;
         CLOG(debug) << "Volume inv_value: " << summ;
 #endif
 
@@ -615,16 +612,26 @@ template <typename T> class img_rgb
 
     T &operator()(idx_t i, idx_t j, idx_t clr)
     {
-        assert(i < vv_.size());
-        assert(j < vv_[0].size());
         assert(clr < 3);
 
         if (clr == ImgView::R)
+        {
+            assert(i < r_.rows());
+            assert(j < r_.cols());
             return r_(i, j);
+        }
         if (clr == ImgView::G)
+        {
+            assert(i < g_.rows());
+            assert(j < g_.cols());
             return g_(i, j);
+        }
         if (clr == ImgView::B)
+        {
+            assert(i < b_.rows());
+            assert(j < b_.cols());
             return b_(i, j);
+        }
 
         throw std::runtime_error{"Unreachable path"};
     }
@@ -657,16 +664,26 @@ template <typename T> class img_rgb
     }
     const T &operator()(idx_t i, idx_t j, idx_t clr) const
     {
-        assert(i < vv_.size());
-        assert(j < vv_[0].size());
         assert(clr < 3);
 
         if (clr == ImgView::R)
+        {
+            assert(i < r_.rows());
+            assert(j < r_.cols());
             return r_(i, j);
+        }
         if (clr == ImgView::G)
+        {
+            assert(i < g_.rows());
+            assert(j < g_.cols());
             return g_(i, j);
+        }
         if (clr == ImgView::B)
+        {
+            assert(i < b_.rows());
+            assert(j < b_.cols());
             return b_(i, j);
+        }
 
         throw std::runtime_error{"Unreachable path"};
     }

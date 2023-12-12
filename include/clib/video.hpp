@@ -25,7 +25,7 @@ template <typename T> class video
      * \param[in] prorotype Элемент, из которого берутся гиперпараметры
      * \param[in] view Представление видео
      */
-    video(const T &prototype, const VideoView &view, idx_t req_threads = 0)
+    video(const T &prototype, const VideoView &view)
     {
         assert(view.rows() > 0);
         assert(view.cols() > 0);
