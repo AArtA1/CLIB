@@ -1,11 +1,12 @@
 #pragma once
 
+#include <iostream>
+#include <stdexcept>
+
 #include "Flexfloat.hpp"
 #include "ImgView.hpp"
 #include "common.hpp"
 #include "logs.hpp"
-
-#include <iostream>
 
 #ifdef PYBIND
 namespace py = pybind11;
@@ -27,9 +28,10 @@ template <typename T> class img final
 {
     idx_t rows_ = 0; // height of image
     idx_t cols_ = 0; // width of image
+    vector<vector<T>> vv_;
 
   public:
-    vector<vector<T>> vv_;
+    // img() = default();
 
     /*! @brief Инициализации изображения одинаковыми значениями
      *
@@ -93,6 +95,10 @@ template <typename T> class img final
 #endif
 
     const vector<vector<T>> vv() const
+    {
+        return vv_;
+    }
+    vector<vector<T>> vv()
     {
         return vv_;
     }
@@ -247,9 +253,7 @@ template <typename T> class img final
         T::inv(rhs, inv_rhs);
         const auto copy_inv = inv_rhs;
 
-        for_each(rows_, cols_, [&](idx_t i, idx_t j) { 
-            T::mult(res.vv_[i][j], copy_inv, res.vv_[i][j]); 
-        });
+        for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], copy_inv, res.vv_[i][j]); });
         return res;
     }
 
@@ -302,14 +306,16 @@ template <typename T> class img final
         return res;
     }
 
-    T &operator()(const idx_t &i, const idx_t &j)
+    T &operator()(idx_t i, idx_t j)
     {
-        assert(i < vv_.size() && j < vv_[0].size());
+        assert(i < vv_.size());
+        assert(j < vv_[0].size());
         return vv_[i][j];
     }
-    const T &operator()(const idx_t &i, const idx_t &j) const
+    const T &operator()(idx_t i, idx_t j) const
     {
-        assert(i < vv_.size() && j < vv_[0].size());
+        assert(i < vv_.size());
+        assert(j < vv_[0].size());
         return vv_[i][j];
     }
 
@@ -323,7 +329,6 @@ template <typename T> class img final
         for (idx_t i = 0; i < rows_; ++i)
             for (idx_t j = 0; j < cols_; ++j)
                 view.set(vv_[i][j].to_float(), i, j, clr);
-        
     }
 
   private:
@@ -509,6 +514,8 @@ template <typename T> class img_rgb
     img<T> r_, g_, b_;
 
   public:
+    img_rgb() = default;
+
     /*! @brief Поканальная инициализации изображения
      *
      * \param[in] r Интенсивности красного
@@ -525,11 +532,22 @@ template <typename T> class img_rgb
      * \param[in] view Представление изображения
      */
     img_rgb(const T &prototype, const ImgView &view, idx_t req_threads = 0)
-        : r_(prototype, view, ImgView::R, req_threads), 
-          g_(prototype, view, ImgView::G, req_threads),
+        : r_(prototype, view, ImgView::R, req_threads), g_(prototype, view, ImgView::G, req_threads),
           b_(prototype, view, ImgView::B, req_threads)
     {
         assert(view.clrs() == 3);
+    }
+
+    /*! @brief Инициализации изображения одинаковыми значениями
+     *
+     * \param[in] prorotype Элемент, из которого берутся гиперпараметры
+     * \param[in] rows Количество строк
+     * \param[in] cols Количество столбцов
+     */
+    img_rgb(const T &prototype, idx_t rows, idx_t cols, idx_t req_threads = 0)
+        : r_(prototype, rows, cols, req_threads), g_(prototype, rows, cols, req_threads),
+          b_(prototype, rows, cols, req_threads)
+    {
     }
 
     /*! @brief Записывает трёхцветный кадр в Представление
@@ -553,6 +571,18 @@ template <typename T> class img_rgb
     {
         return r_.cols();
     }
+    img<T> &r()
+    {
+        return r_;
+    }
+    img<T> &g()
+    {
+        return g_;
+    }
+    img<T> &b()
+    {
+        return b_;
+    }
     const img<T> &r() const
     {
         return r_;
@@ -564,6 +594,64 @@ template <typename T> class img_rgb
     const img<T> &b() const
     {
         return b_;
+    }
+
+    T &operator()(idx_t i, idx_t j, idx_t clr)
+    {
+        assert(i < vv_.size());
+        assert(j < vv_[0].size());
+        assert(clr < 3);
+
+        if (clr == ImgView::R)
+            return r_(i, j);
+        if (clr == ImgView::G)
+            return g_(i, j);
+        if (clr == ImgView::B)
+            return b_(i, j);
+
+        throw std::runtime_error{"Unreachable path"};
+    }
+    const img<T> &operator[](idx_t clr) const
+    {
+        assert(clr < 3);
+
+        if (clr == ImgView::R)
+            return r_;
+        if (clr == ImgView::G)
+            return g_;
+        if (clr == ImgView::B)
+            return b_;
+
+        throw std::runtime_error{"Unreachable path"};
+    }
+
+    img<T> &operator[](idx_t clr)
+    {
+        assert(clr < 3);
+
+        if (clr == ImgView::R)
+            return r_;
+        if (clr == ImgView::G)
+            return g_;
+        if (clr == ImgView::B)
+            return b_;
+
+        throw std::runtime_error{"Unreachable path"};
+    }
+    const T &operator()(idx_t i, idx_t j, idx_t clr) const
+    {
+        assert(i < vv_.size());
+        assert(j < vv_[0].size());
+        assert(clr < 3);
+
+        if (clr == ImgView::R)
+            return r_(i, j);
+        if (clr == ImgView::G)
+            return g_(i, j);
+        if (clr == ImgView::B)
+            return b_(i, j);
+
+        throw std::runtime_error{"Unreachable path"};
     }
 
     img_rgb operator+(const T &rhs) const

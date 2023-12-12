@@ -63,17 +63,6 @@ struct CImgView : ImgView
         img_was_readed_ = true;
     }
 
-    // TODO затычка для работа с видео
-    void load(const cimg_library::CImg<pixel_t> &image)
-    {
-        image_ = image;
-        img_was_readed_ = true;
-    }
-    const cimg_library::CImg<pixel_t> & unload()
-    {
-        return image_;
-    }
-
     idx_t rows() const override
     {
         check_created();
@@ -93,9 +82,10 @@ struct CImgView : ImgView
     // CImg stores data as [width,height]. Therefore, the data in cimg are transposed
     pixel_t get(idx_t i, idx_t j, idx_t clr) const override
     {
-        assert(i < static_cast<idx_t>(image_.height()));
-        assert(j < static_cast<idx_t>(image_.width()));
-        assert(clr < static_cast<idx_t>(image_.spectrum()));
+        assert(image_.depth() == 1);
+        assert(i < rows());
+        assert(j < cols());
+        assert(clr < clrs());
 
         check_created();
         return image_(j, i, 0, clr);
@@ -104,9 +94,10 @@ struct CImgView : ImgView
     // CImg stores data as [width,height]. Therefore, the data in cimg are transposed
     void set(pixel_t val, idx_t i, idx_t j, idx_t clr) override
     {
-        assert(i < static_cast<idx_t>(image_.height()));
-        assert(j < static_cast<idx_t>(image_.width()));
-        assert(clr < static_cast<idx_t>(image_.spectrum()));
+        assert(image_.depth() == 1);
+        assert(i < rows());
+        assert(j < cols());
+        assert(clr < clrs());
 
         check_created();
         image_(j, i, 0, clr) = val;

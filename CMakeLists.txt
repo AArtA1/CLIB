@@ -83,7 +83,6 @@ set(MY_SOURCES
     src/clib/Uint32.cpp
     src/clib/converter.cpp
     src/clib/image.cpp
-    src/clib/video.cpp
 )
 
 ###################################################################################################
