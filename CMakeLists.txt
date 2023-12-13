@@ -83,6 +83,8 @@ set(MY_SOURCES
     src/clib/Uint32.cpp
     src/clib/converter.cpp
     src/clib/image.cpp
+    src/clib/ImgView.cpp
+    src/clib/VideoView.cpp
 )
 
 ###################################################################################################
@@ -153,6 +155,11 @@ find_package(PNG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(X11 REQUIRED)
 
+# AVFORMAT Library 
+find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
+find_library(AVFORMAT_LIBRARY avformat REQUIRED)
+
+
 ###################################################################################################
 ##
 ##      Заголовочная библиотека
@@ -170,6 +177,7 @@ target_include_directories(clib_headers SYSTEM INTERFACE
     ${X11_INCLUDE_DIR}
     ${PNG_INCLUDE_DIR}
     ${JPEG_INCLUDE_DIR}
+    ${AVFORMAT_INCLUDE_DIR}
 )
 target_compile_features(clib_headers INTERFACE cxx_std_17)
 
@@ -189,6 +197,7 @@ target_link_libraries(clib_library
     ${X11_LIBRARIES}
     ${PNG_LIBRARY}
     ${JPEG_LIBRARY}
+    ${AVFORMAT_LIBRARY}
   PUBLIC
     ${Boost_LIBRARIES}
     clib_headers

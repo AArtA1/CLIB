@@ -421,7 +421,7 @@ template <typename T> class img final
             std::invoke(func, last_row, rows, args...);
 
         // Ждем потоки
-        for (idx_t th = 0; th < tidx; ++th)
+        for (idx_t th = 0; th < nthreads; ++th)
             threads[th].join();
     }
 

@@ -3,8 +3,13 @@
 #define cimg_use_png
 #define cimg_use_jpeg
 
+
 #include "CImg.h"
 #include "X11/Xlib.h"
+
+extern "C" {
+    #include <libavformat/avformat.h>
+}
 
 #include <cassert>
 #include <stdexcept>
@@ -13,6 +18,8 @@
 
 namespace clib
 {
+
+
 
 /*!
  * \brief Обёртка над классом для работы с видео
@@ -23,6 +30,8 @@ struct VideoView
 {
     using pixel_t = float;
     using idx_t = unsigned;
+
+    size_t fps_;
 
     // colors number
     enum spectrum
@@ -57,83 +66,32 @@ struct CVideoView : VideoView
     bool video_created_ = false;
 
   public:
-    idx_t rows() const override
-    {
-        check_created();
-        return static_cast<idx_t>(video_.height());
-    }
-    idx_t cols() const override
-    {
-        check_created();
-        return static_cast<idx_t>(video_.width());
-    }
-    idx_t clrs() const override
-    {
-        check_created();
-        return static_cast<idx_t>(video_.spectrum());
-    }
-    idx_t frames() const override
-    {
-        check_created();
-        return static_cast<idx_t>(video_.depth());
-    }
+    idx_t rows() const override;
+    
+    idx_t cols() const override;
+    
+    idx_t clrs() const override;
+
+    idx_t frames() const override;
 
     // CImg stores data as [width,height]. Therefore, the data in cimg are transposed
-    pixel_t get(idx_t i, idx_t j, idx_t clr, idx_t frame) const override
-    {
-        assert(i < rows());
-        assert(j < cols());
-        assert(clr < clrs());
-        assert(frame < frames());
-
-        check_created();
-        return video_(j, i, frame, clr);
-    }
+    pixel_t get(idx_t i, idx_t j, idx_t clr, idx_t frame) const override;
 
     // CImg stores data as [width,height]. Therefore, the data in cimg are transposed
-    void set(pixel_t val, idx_t i, idx_t j, idx_t clr, idx_t frame) override
-    {
-        assert(i < rows());
-        assert(j < cols());
-        assert(clr < clrs());
-        assert(frame < frames());
+    void set(pixel_t val, idx_t i, idx_t j, idx_t clr, idx_t frame) override;
 
-        check_created();
-        video_(j, i, frame, clr) = val;
-    }
+    void read_video(const std::string &path);
 
-    void read_video(const std::string &path)
-    {
-        if (check_ext(path, {"mp4", "mkv"}))
-            video_ = cimg_library::CImg<pixel_t>::get_load_video(path.c_str());
-        else
-            throw std::invalid_argument("Unknown format: " + path);
-
-        video_created_ = true;
-    }
-
-    void write_video(const std::string &path)
-    {
-        if (check_ext(path, {"mp4", "mkv"}))
-            video_.save_video(path.c_str());
-        else
-            throw std::invalid_argument("Unknown format: " + path);
-    }
+    void write_video(const std::string &path);
 
   private:
-    static bool check_ext(const std::string &s, const std::vector<std::string> &exts)
-    {
-        for (auto ext : exts)
-            if (s.substr(s.find_last_of(".") + 1) == ext)
-                return true;
-        return false;
-    }
+    static bool check_ext(const std::string &s, const std::vector<std::string> &exts);
 
-    void check_created() const
-    {
-        if (!video_created_)
-            throw std::runtime_error{"video was not created"};
-    }
+    void check_created() const;
 };
+
+
+size_t get_fps(const std::string& path);
+
 
 } // namespace clib
