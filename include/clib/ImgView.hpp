@@ -19,6 +19,7 @@ namespace clib
  *
  * \details Абстрагирует любую библиотеку в набор методов
  */
+const std::vector<std::string> image_extensions = {"jpg","jpeg","png"};
 
 
 struct ImgView

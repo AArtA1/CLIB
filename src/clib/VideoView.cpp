@@ -7,6 +7,9 @@ namespace clib
 using idx_t = VideoView::idx_t;
 using pixel_t = VideoView::pixel_t;
 
+
+
+
 idx_t CVideoView::rows() const
 {
     check_created();
@@ -54,7 +57,7 @@ void CVideoView::set(pixel_t val, idx_t i, idx_t j, idx_t clr, idx_t frame)
 
 void CVideoView::read_video(const std::string &path)
 {
-    if (check_ext(path, {"mp4", "mkv"}))
+    if (check_ext(path, video_extensions))
     {
         video_ = cimg_library::CImg<pixel_t>::get_load_video(path.c_str());
         fps_ = get_fps(path);
@@ -69,7 +72,7 @@ void CVideoView::read_video(const std::string &path)
 
 void CVideoView::write_video(const std::string &path)
 {
-    if (check_ext(path, {"mp4", "mkv"}))
+    if (check_ext(path, video_extensions))
         video_.save_video(path.c_str(), static_cast<unsigned int>(fps_));
     else
         throw std::invalid_argument("Unknown format: " + path);
@@ -102,11 +105,11 @@ size_t get_fps(const std::string &path)
     // Open the video file
     AVFormatContext *formatContext = avformat_alloc_context();
     if (avformat_open_input(&formatContext, videoFilePath, nullptr, nullptr) != 0)
-        throw std::invalid_argument("Error opening video file");
+        throw std::runtime_error("Error opening video file");
 
     // Retrieve stream information
     if (avformat_find_stream_info(formatContext, nullptr) < 0)
-        throw std::invalid_argument("Error finding stream information");
+        throw std::runtime_error("Error finding stream information");
             
 
     // Find the first video stream
@@ -124,7 +127,7 @@ size_t get_fps(const std::string &path)
     if (videoStreamIndex == -1)
     {
         avformat_close_input(&formatContext);
-        throw std::invalid_argument("No video stream found in the input file");
+        throw std::runtime_error("No video stream found in the input file");
     }
 
     // Get the frame rate of the video stream
