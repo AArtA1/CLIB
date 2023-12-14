@@ -1,11 +1,9 @@
 #pragma once
+#include "Flexfixed.hpp"
 #include "common.hpp"
- 
+
 namespace clib
 {
-
-class Flexfloat;
-
 /*!
  * \brief Число с фиксированной запятой.
  *
@@ -34,7 +32,6 @@ class Flexfixed
     ntype n;
 
   public:
-    
     Flexfixed() = default;
 
     /*! @brief Создает Flexfixed
@@ -131,7 +128,6 @@ class Flexfixed
     /// false.
     friend bool operator>(const Flexfixed &left, const Flexfixed &right);
 
-    
     friend bool operator<(const Flexfixed &left, const Flexfixed &right);
 
     /// @brief Перегруженный оператор вывода << для представления экземпляра
@@ -206,9 +202,8 @@ class Flexfixed
         return {I, F};
     }
 
-
     // todo
-    //static void convert_ff_to_fx(const Flexfloat& value, Flexfixed& res);
+    // static void convert_ff_to_fx(const Flexfloat& value, Flexfixed& res);
 
     static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 
@@ -234,7 +229,6 @@ class Flexfixed
     /// 2^(I+F), а знак s <= 1
     /// @return Возвращает флаг корректности значения
     bool is_valid() const;
-
 };
 
 } // namespace clib

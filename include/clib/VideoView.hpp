@@ -22,6 +22,7 @@ namespace clib
 const std::vector<std::string> video_extensions = {"mp4","mkv"};
 
 
+
 /*!
  * \brief Обёртка над классом для работы с видео
  *
