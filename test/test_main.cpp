@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 {
 #ifndef NDEBUG
     clib::init_logs();
-    clib::tag_sev_filter("NONE", clib::debug);
+    clib::tag_sev_filter("Flexfloat cmp", clib::trace);
 #endif
 
     doctest::Context context;

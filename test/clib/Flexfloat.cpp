@@ -209,6 +209,34 @@ TEST_CASE("Test Flexfloat float")
     CHECK(1);
 }
 
+TEST_CASE("Test Flexfloat cmp")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat cmp");
+    LOG(debug) << std::fixed << std::setprecision(5);
+    using ff = clib::Flexfloat;
+
+    const ff::Mtype E = 8;
+    const ff::Etype M = 23;
+    const ff::Btype B = 127;
+
+    auto fm2 = ff::from_float(E, M, B, -2);
+    auto fm1 = ff::from_float(E, M, B, -1);
+    auto f0  = ff::from_float(E, M, B, 0);
+    auto f1  = ff::from_float(E, M, B, 1);
+    auto f2  = ff::from_float(E, M, B, 2);
+    LOG(debug) << "-2  < -1: " << (fm2  < fm1);
+    LOG(debug) << "-1  < -2: " << (fm1  < fm2);
+    LOG(debug) << " 2  <  1: " << (f2   < f1);
+    LOG(debug) << " 1  <  2: " << (f1   < f2);
+    LOG(debug) << "-2 == -1: " << (fm2 == fm1);
+    LOG(debug) << "-2  >  1: " << (fm2  > f1);
+    LOG(debug) << " 0  >  1: " << (f0   > f1);
+    LOG(debug) << " 0  > -1: " << (f0   > fm1);
+    
+    CHECK(1);
+}
+
+
 TEST_CASE("Test Flexfloat mean")
 {
     // BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat mean");

@@ -57,7 +57,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) : B(B_n), E(E
     }
 }
 
-Flexfloat::Flexfloat(const Flexfloat &hyperparams, mtype value)  : B(0), E(0), M(0), s(0), e(0), m(0)
+Flexfloat::Flexfloat(const Flexfloat &hyperparams, mtype value) : B(0), E(0), M(0), s(0), e(0), m(0)
 {
     B = hyperparams.get_B();
     E = hyperparams.get_E();
@@ -208,14 +208,14 @@ void Flexfloat::mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &r
         return;
     }
 
-    mexttype left_m = unzip(left);
-    mexttype right_m = unzip(right);
-
     uint8_t nsign = left.s ^ right.s;
     eexttype nexp = +static_cast<eexttype>(left.e) + right.e + res.B - left.B - right.B;
 
     // Largest M. All calculations will be with the largest mantissa
     Mtype LM = std::max({left.M, right.M, res.M});
+
+    mexttype left_m = unzip(left);
+    mexttype right_m = unzip(right);
 
     // Casting all mantissa's to LM
     left_m <<= (LM - left.M);
@@ -257,6 +257,7 @@ void Flexfloat::sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &re
     // Casting all mantissa's to LM
     left_m <<= (LM - left.M);
     right_m <<= (LM - right.M);
+
     eexttype right_e = right.e;
     eexttype left_e = left.e;
 
@@ -560,27 +561,70 @@ std::string Flexfloat::bits(const Flexfloat &ff) const
     return ostream.str();
 }
 
-bool operator>(const Flexfloat& left, const Flexfloat& right){
-    assert(left.E == right.E && left.B == right.B && left.M == right.M);
-    // if(left.s == right.s){
-    //     // negative
-    //     if(left.s == 1){
-    //         return left.E < right.E?true:left.M < right.M;
-    //     }
-    //     else{
-    //         return left.E > right.E?true:left.M > right.M;
-    //     }
-    // }
-    // else{
-    //     return left.s == 0;
-    // }
+bool operator>(const Flexfloat &lhs, const Flexfloat &rhs)
+{
+    assert(lhs.E == rhs.E && lhs.B == rhs.B && lhs.M == rhs.M);
+#ifndef NDEBUG
+    CLOG(trace) << "operator>";
+    Flexfloat::check_ffs({lhs, rhs});
+    CLOG(trace) << "lhs: " << lhs;
+    CLOG(trace) << "rhs: " << rhs;
+#endif
 
-    return left.to_float() > right.to_float();
+    if (lhs.s != rhs.s)
+        return lhs.s == 0;
+
+    // Largest M. All calculations will be with the largest mantissa
+    Flexfloat::Mtype LM = std::max({lhs.M, rhs.M});
+
+    Flexfloat::mexttype lhs_m = Flexfloat::unzip(lhs);
+    Flexfloat::mexttype rhs_m = Flexfloat::unzip(rhs);
+
+    // Casting all mantissa's to LM
+    lhs_m <<= (LM - lhs.M);
+    rhs_m <<= (LM - rhs.M);
+
+    auto lhs_e = static_cast<Flexfloat::eexttype>(lhs.e) + Flexfloat::msb(lhs_m) - lhs.B;
+    auto rhs_e = static_cast<Flexfloat::eexttype>(rhs.e) + Flexfloat::msb(rhs_m) - rhs.B;
+
+    if (lhs_e > rhs_e)
+        return lhs.s == 0;
+    if (lhs_e < rhs_e)
+        return lhs.s == 1;
+
+    // Exponents are equal
+    if (lhs_m > rhs_m)
+        return lhs.s == 0;
+
+    if (lhs_m == rhs_m)
+        return false;
+
+    if (lhs_m < rhs_m)
+        return lhs.s == 1;
+
+    assert(0);
+}
+bool operator==(const Flexfloat &lhs, const Flexfloat &rhs)
+{
+    assert(lhs.E == rhs.E && lhs.B == rhs.B && lhs.M == rhs.M);
+    return lhs.s == rhs.s && lhs.m == rhs.m && lhs.e == rhs.e;
 }
 
-
-bool operator<(const Flexfloat& left, const Flexfloat& right){
-    return left.to_float() < right.to_float(); 
+bool operator<(const Flexfloat &lhs, const Flexfloat &rhs)
+{
+    return !(lhs > rhs);
+}
+bool operator>=(const Flexfloat &lhs, const Flexfloat &rhs)
+{
+    return (lhs > rhs) || (lhs == rhs);
+}
+bool operator<=(const Flexfloat &lhs, const Flexfloat &rhs)
+{
+    return !(lhs > rhs) || (lhs == rhs);
+}
+bool operator!=(const Flexfloat &lhs, const Flexfloat &rhs)
+{
+    return !(lhs == rhs);
 }
 
 //
