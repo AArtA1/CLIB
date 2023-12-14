@@ -1,12 +1,9 @@
 #pragma once
+#include "Flexfixed.hpp"
 #include "common.hpp"
 
 namespace clib
 {
-
-
-class Flexfixed;
-
 /*!
  * \brief Число с плавующей запятой с настриваемой мантиссой и экспонентой.
  *
@@ -14,6 +11,7 @@ class Flexfixed;
  *
  * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
  */
+#pragma GCC diagnostic ignored "-Wattributes"
 class Flexfloat
 {
   public:
@@ -48,7 +46,7 @@ class Flexfloat
 
   public:
     /// @brief Создает не валидный Flexfloat
-    /// synthesizer_func Flexfloat::Const 
+    //[[syntheizer_func(Flexfloat::Const)]] //
     Flexfloat();
 
     /*! @brief Создает Flexfloat
@@ -60,8 +58,8 @@ class Flexfloat
      * \param[in] e_n Exponent
      * \param[in] m_n Mantissa
      */
-    /// synthesizer_func Flexfloat::Const 
-    /// synthesizer_in E_n,M_n,B_n,s_n,e_n,m_n 
+    [[synthesizer_func(Flexfloat::Const)]]           //
+    [[synthesizer_in(E_n, M_n, B_n, s_n, e_n, m_n)]] //
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
@@ -71,8 +69,8 @@ class Flexfloat
      * \param[in] B_n Bias
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    /// synthesizer_func Flexfloat::Const 
-    /// synthesizer_in E_n,M_n,B_n,value 
+    //[[syntheizer_func(Flexfloat::Const)]] //
+    //[[synthesizer_in(E_n,M_n,B_n,value)]] //
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
@@ -80,8 +78,8 @@ class Flexfloat
      * \param[in] hyperparams Число содержит E, M, B для нового Flexfloat
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    /// synthesizer_func Flexfloat::Const 
-    /// synthesizer_in hyperparams,value 
+    //[[syntheizer_func(Flexfloat::Const)]] //
+    //[[synthesizer_in(hyperparams,value)]] //
     Flexfloat(const Flexfloat &hyperparams, mtype value);
 
     // /*! @brief Создает Flexfloat из double
@@ -171,10 +169,11 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
      */
-    /// synthesizer_func Flexfloat::Mult 
-    /// synthesizer_in left,right 
-    /// synthesizer_out res 
-    static void mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
+    [[syntheizer_func(Flexfloat::Mult)]] //
+    [[synthesizer_in(left, right)]]      //
+    [[synthesizer_out(res)]]             //
+    static void
+    mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Сложение Flexfloat
      *
@@ -184,10 +183,11 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
-    /// synthesizer_func Flexfloat::Add 
-    /// synthesizer_in left,right 
-    /// synthesizer_out res 
-    static void sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
+    [[syntheizer_func(Flexfloat::Add)]] //
+    [[synthesizer_in(left, right)]]     //
+    [[synthesizer_out(res)]]            //
+    static void
+    sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Вычитание Flexfloat
      *
@@ -197,10 +197,11 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
-    /// synthesizer_func Flexfloat::Sub 
-    /// synthesizer_in left,right 
-    /// synthesizer_out res 
-    static void sub(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
+    [[syntheizer_func(Flexfloat::Sub)]] //
+    [[synthesizer_in(left, right)]]     //
+    [[synthesizer_out(res)]]            //
+    static void
+    sub(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Получение 1/x
      *
@@ -209,10 +210,11 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
      */
-    /// synthesizer_func Flexfloat::Inv 
-    /// synthesizer_in x 
-    /// synthesizer_out res 
-    static void inv(const Flexfloat &x, Flexfloat &res);
+    [[syntheizer_func(Flexfloat::Inv)]] //
+    [[synthesizer_in(x)]]               //
+    [[synthesizer_out(res)]]            //
+    static void
+    inv(const Flexfloat &x, Flexfloat &res);
 
     friend bool operator>(const Flexfloat &left, const Flexfloat &right);
 
@@ -242,7 +244,6 @@ class Flexfloat
      */
     static Flexfloat ff_from_int(Etype E, Mtype M, Btype B, int x);
 
-
     /*! @brief Округление FlexFloat до ближайшего целого числа вниз
      *
      * \return ближайшее целое число меньшее FlexFloat
@@ -256,26 +257,29 @@ class Flexfloat
      * \return ближайшее float число
      *
      */
-    /// synthesizer_func Flexfloat::ToFloat 
-    float to_float() const;
+    [[syntheizer_func(Flexfloat::ToFloat)]] //
+    float
+    to_float() const;
 
     /*! @brief Конвертация float числа в FlexFloat
      *
      * \param[in] flt float число
      * \return FlexFloat
      */
-    /// synthesizer_func Flexfloat::FromFloat 
-    /// synthesizer_in E,M,flt 
-    static Flexfloat from_float(Etype E, Mtype M, Btype B, float flt);
+    [[syntheizer_func(Flexfloat::FromFloat)]] //
+    [[synthesizer_in(E, M, flt)]]             //
+    static Flexfloat
+    from_float(Etype E, Mtype M, Btype B, float flt);
 
     /*! @brief Конвертация float числа в FlexFloat
      *
      * \param[in] flt float число
      * \return FlexFloat
      */
-    /// synthesizer_func Flexfloat::FromFloat 
-    /// synthesizer_in hyperparams,flt 
-    static Flexfloat from_float(const Flexfloat &hyperparams, float flt);
+    [[syntheizer_func(Flexfloat::FromFloat)]] //
+    [[synthesizer_in(hyperparams, flt)]]      //
+    static Flexfloat
+    from_float(const Flexfloat &hyperparams, float flt);
 
     // /*! @brief Преобразует Flexfloat в double
     // *
@@ -287,8 +291,7 @@ class Flexfloat
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
 
-    //static void convert_fx_to_ff(const Flexfixed& value, Flexfloat& res);
-
+    // static void convert_fx_to_ff(const Flexfixed& value, Flexfloat& res);
 
     /// Выводит Flexfloat в битовом виде
     std::string bits() const;
@@ -332,7 +335,6 @@ class Flexfloat
     static mtype zip(eexttype exp, mexttype ext_mant, Mtype M);
     static mtype zip(eexttype exp, mexttype ext_mant, Mtype curM, Mtype reqM);
 
-
     // Преобразует число с обычной мантиссой в число с расширенной мантиссой
     static mexttype unzip(etype exp, mtype mant, Mtype M);
     static mexttype unzip(const Flexfloat &ff);
@@ -340,4 +342,5 @@ class Flexfloat
     bool is_valid() const;
     void static check_ffs(std::initializer_list<Flexfloat> list);
 };
+#pragma GCC diagnostic warning "-Wattributes"
 } // namespace clib

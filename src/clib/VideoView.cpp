@@ -7,9 +7,6 @@ namespace clib
 using idx_t = VideoView::idx_t;
 using pixel_t = VideoView::pixel_t;
 
-
-
-
 idx_t CVideoView::rows() const
 {
     check_created();
