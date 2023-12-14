@@ -304,6 +304,21 @@ class Flexfloat
     friend bool operator==(const Flexfloat &lhs, const Flexfloat &rhs);
     friend bool operator!=(const Flexfloat &lhs, const Flexfloat &rhs);
 
+    static void min(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);
+    static void max(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);
+
+    /*! @brief Обрезает x до промежутка [a;b]
+     *
+     * \param[in] a Левая граница
+     * \param[in] x Число для обрезания
+     * \param[in] b Правая граница
+     * 
+     */
+    [[synthesizer_func(Flexfloat::clip)]] //
+    [[synthesizer_in(a, x, b)]]           //
+    [[synthesizer_out(out)]]
+    static void clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b, Flexfloat &out);
+
   private:
     // Обрезает мантиссу и экспоненту числа до необходимых значений
     //

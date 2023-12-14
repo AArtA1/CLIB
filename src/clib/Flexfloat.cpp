@@ -627,6 +627,47 @@ bool operator!=(const Flexfloat &lhs, const Flexfloat &rhs)
     return !(lhs == rhs);
 }
 
+void Flexfloat::min(const Flexfloat &first, const Flexfloat &second, Flexfloat &res)
+{
+#ifndef NDEBUG
+    CLOG(trace) << "min";
+    Flexfloat::check_ffs({first, second, res});
+    CLOG(trace) << "first: " << first;
+    CLOG(trace) << "second: " << second;
+#endif
+    if (first > second)
+        res = second;
+    else
+        res = first;
+}
+void Flexfloat::max(const Flexfloat &first, const Flexfloat &second, Flexfloat &res)
+{
+#ifndef NDEBUG
+    CLOG(trace) << "max";
+    Flexfloat::check_ffs({first, second, res});
+    CLOG(trace) << "first: " << first;
+    CLOG(trace) << "second: " << second;
+#endif
+    if (first < second)
+        res = second;
+    else
+        res = first;
+}
+
+void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b, Flexfloat &out)
+{
+#ifndef NDEBUG
+    CLOG(trace) << "clip";
+    Flexfloat::check_ffs({a, x, b, out});
+    CLOG(trace) << "a: " << a;
+    CLOG(trace) << "x: " << x;
+    CLOG(trace) << "b: " << b;
+#endif
+
+    min(x, b, out);
+    max(a, out, out);
+}
+
 //
 // See
 // gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
