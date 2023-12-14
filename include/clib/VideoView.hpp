@@ -19,9 +19,7 @@ extern "C" {
 namespace clib
 {
 
-
 const std::vector<std::string> video_extensions = {"mp4","mkv"};
-
 
 
 /*!

@@ -8,8 +8,6 @@ using idx_t = VideoView::idx_t;
 using pixel_t = VideoView::pixel_t;
 
 
-
-
 idx_t CVideoView::rows() const
 {
     check_created();
@@ -94,11 +92,6 @@ void CVideoView::check_created() const
 
 size_t get_fps(const std::string &path)
 {
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    av_register_all();
-    #pragma GCC diagnostic warning "-Wdeprecated-declarations"
-
-
     // Input video file path
     const char *videoFilePath = path.c_str();
 

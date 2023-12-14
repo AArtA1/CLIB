@@ -14,14 +14,14 @@
 namespace clib
 {
 
+const std::vector<std::string> image_extensions = {"jpg","jpeg","png"};
+
+
 /*!
  * \brief Обёртка над классом для работы с изображениями
  *
  * \details Абстрагирует любую библиотеку в набор методов
  */
-const std::vector<std::string> image_extensions = {"jpg","jpeg","png"};
-
-
 struct ImgView
 {
     using pixel_t = float;

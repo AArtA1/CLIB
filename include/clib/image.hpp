@@ -45,6 +45,14 @@ template <typename T> class img final
         _ctor_implt(rows, cols, get_val, req_threads);
     }
 
+
+    img(std::vector<std::vector<T>> &data) : vv_(data){
+        assert(!data.empty());
+        rows_ = static_cast<idx_t>(data.size());
+        cols_ = static_cast<idx_t>(data[0].size());
+    }
+
+
     /*! @brief Инициализации изображения из Представления
      *
      * \param[in] prorotype Элемент, из которого берутся гиперпараметры
