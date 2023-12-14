@@ -46,7 +46,7 @@ class Flexfloat
 
   public:
     /// @brief Создает не валидный Flexfloat
-    //[[syntheizer_func(Flexfloat::Const)]] //
+    //[[synthesizer_func(Flexfloat::Const)]] //
     Flexfloat();
 
     /*! @brief Создает Flexfloat
@@ -60,6 +60,7 @@ class Flexfloat
      */
     [[synthesizer_func(Flexfloat::Const)]]           //
     [[synthesizer_in(E_n, M_n, B_n, s_n, e_n, m_n)]] //
+    [[synthesizer_out()]] //
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
@@ -69,7 +70,7 @@ class Flexfloat
      * \param[in] B_n Bias
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    //[[syntheizer_func(Flexfloat::Const)]] //
+    //[[synthesizer_func(Flexfloat::Const)]] //
     //[[synthesizer_in(E_n,M_n,B_n,value)]] //
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
 
@@ -78,7 +79,7 @@ class Flexfloat
      * \param[in] hyperparams Число содержит E, M, B для нового Flexfloat
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    //[[syntheizer_func(Flexfloat::Const)]] //
+    //[[synthesizer_func(Flexfloat::Const)]] //
     //[[synthesizer_in(hyperparams,value)]] //
     Flexfloat(const Flexfloat &hyperparams, mtype value);
 
@@ -169,7 +170,7 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
      */
-    [[syntheizer_func(Flexfloat::Mult)]] //
+    [[synthesizer_func(Flexfloat::Mult)]] //
     [[synthesizer_in(left, right)]]      //
     [[synthesizer_out(res)]]             //
     static void
@@ -183,7 +184,7 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
-    [[syntheizer_func(Flexfloat::Add)]] //
+    [[synthesizer_func(Flexfloat::Add)]] //
     [[synthesizer_in(left, right)]]     //
     [[synthesizer_out(res)]]            //
     static void
@@ -197,7 +198,7 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
-    [[syntheizer_func(Flexfloat::Sub)]] //
+    [[synthesizer_func(Flexfloat::Sub)]] //
     [[synthesizer_in(left, right)]]     //
     [[synthesizer_out(res)]]            //
     static void
@@ -210,7 +211,7 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
      */
-    [[syntheizer_func(Flexfloat::Inv)]] //
+    [[synthesizer_func(Flexfloat::Inv)]] //
     [[synthesizer_in(x)]]               //
     [[synthesizer_out(res)]]            //
     static void
@@ -257,7 +258,7 @@ class Flexfloat
      * \return ближайшее float число
      *
      */
-    [[syntheizer_func(Flexfloat::ToFloat)]] //
+    [[synthesizer_func(Flexfloat::ToFloat)]] //
     float
     to_float() const;
 
@@ -266,7 +267,7 @@ class Flexfloat
      * \param[in] flt float число
      * \return FlexFloat
      */
-    [[syntheizer_func(Flexfloat::FromFloat)]] //
+    [[synthesizer_func(Flexfloat::FromFloat)]] //
     [[synthesizer_in(E, M, flt)]]             //
     static Flexfloat
     from_float(Etype E, Mtype M, Btype B, float flt);
@@ -276,7 +277,7 @@ class Flexfloat
      * \param[in] flt float число
      * \return FlexFloat
      */
-    [[syntheizer_func(Flexfloat::FromFloat)]] //
+    [[synthesizer_func(Flexfloat::FromFloat)]] //
     [[synthesizer_in(hyperparams, flt)]]      //
     static Flexfloat
     from_float(const Flexfloat &hyperparams, float flt);
