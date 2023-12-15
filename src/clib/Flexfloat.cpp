@@ -543,6 +543,12 @@ Flexfloat Flexfloat::from_float(const Flexfloat &hyperparams, float flt)
     return from_float(hyperparams.E, hyperparams.M, hyperparams.B, flt);
 }
 
+
+void Flexfloat::from_float(float flt, const Flexfloat &in, Flexfloat &out)
+{
+    out = from_float(in.E, in.M, in.B, flt);
+}
+
 std::string Flexfloat::bits() const
 {
     std::stringstream ostream;

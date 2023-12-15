@@ -58,9 +58,6 @@ class Flexfloat
      * \param[in] e_n Exponent
      * \param[in] m_n Mantissa
      */
-    [[synthesizer_func(Flexfloat::Const)]]           //
-    [[synthesizer_in(E_n, M_n, B_n, s_n, e_n, m_n)]] //
-    [[synthesizer_out()]]                            //
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
@@ -258,8 +255,6 @@ class Flexfloat
      * \param[in] flt float число
      * \return FlexFloat
      */
-    [[synthesizer_func(Flexfloat::FromFloat)]] //
-    [[synthesizer_in(E, M, flt)]]
     static Flexfloat from_float(Etype E, Mtype M, Btype B, float flt);
 
     /*! @brief Конвертация float числа в FlexFloat
@@ -267,9 +262,12 @@ class Flexfloat
      * \param[in] flt float число
      * \return FlexFloat
      */
-    [[synthesizer_func(Flexfloat::FromFloat)]] //
-    [[synthesizer_in(hyperparams, flt)]]
     static Flexfloat from_float(const Flexfloat &hyperparams, float flt);
+
+    [[synthesizer_func(Flexfloat::Const)]] //
+    [[synthesizer_in(flt, in)]]            //
+    [[synthesizer_out(out)]]
+    static void from_float(float flt, const Flexfloat &in, Flexfloat &out);
 
     // /*! @brief Преобразует Flexfloat в double
     // *
@@ -312,7 +310,7 @@ class Flexfloat
      * \param[in] a Левая граница
      * \param[in] x Число для обрезания
      * \param[in] b Правая граница
-     * 
+     *
      */
     [[synthesizer_func(Flexfloat::clip)]] //
     [[synthesizer_in(a, x, b)]]           //

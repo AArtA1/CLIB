@@ -15,7 +15,6 @@ namespace py = pybind11;
 
 namespace clib
 {
-
 /*!
  * \brief Обёртка над одноцветным Image
  *
@@ -33,6 +32,20 @@ template <typename T> class img final
   public:
     // img() = default();
 
+    /*! @brief Инициализации изображения из другого изображения
+     */
+    //[[synthesizer_func(Flexfloat::Const)]] //
+    //[[synthesizer_in(a, x, b)]]     //
+    //[[synthesizer_out(out)]]
+    img(const img<T> &base, idx_t req_threads = 0) : vv_()
+    {
+        assert(base.rows() > 0);
+        assert(base.cols() > 0);
+
+        auto get_val = [&base](idx_t i, idx_t j) { return base(i, j); };
+        _ctor_implt(base.rows(), base.cols(), get_val, req_threads);
+    }
+
     /*! @brief Инициализации изображения одинаковыми значениями
      *
      * \param[in] prorotype Элемент, которым нужно заполнить массив
@@ -44,14 +57,6 @@ template <typename T> class img final
         auto get_val = [&prototype](idx_t, idx_t) { return prototype; };
         _ctor_implt(rows, cols, get_val, req_threads);
     }
-
-
-    img(std::vector<std::vector<T>> &data) : vv_(data){
-        assert(!data.empty());
-        rows_ = static_cast<idx_t>(data.size());
-        cols_ = static_cast<idx_t>(data[0].size());
-    }
-
 
     /*! @brief Инициализации изображения из Представления
      *
