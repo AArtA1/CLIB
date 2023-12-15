@@ -46,7 +46,7 @@ class Flexfloat
 
   public:
     /// @brief Создает не валидный Flexfloat
-    //[[synthesizer_func(Flexfloat::Const)]] //
+    ////[[synthesizer_func(Flexfloat::Const)]] //
     Flexfloat();
 
     /*! @brief Создает Flexfloat
@@ -67,8 +67,8 @@ class Flexfloat
      * \param[in] B_n Bias
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    //[[synthesizer_func(Flexfloat::Const)]] //
-    //[[synthesizer_in(E_n,M_n,B_n,value)]] //
+    ////[[synthesizer_func(Flexfloat::Const)]] //
+    ////[[synthesizer_in(E_n,M_n,B_n,value)]] //
     Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
@@ -76,8 +76,8 @@ class Flexfloat
      * \param[in] hyperparams Число содержит E, M, B для нового Flexfloat
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    //[[synthesizer_func(Flexfloat::Const)]] //
-    //[[synthesizer_in(hyperparams,value)]] //
+    ////[[synthesizer_func(Flexfloat::Const)]] //
+    ////[[synthesizer_in(hyperparams,value)]] //
     Flexfloat(const Flexfloat &hyperparams, mtype value);
 
     // /*! @brief Создает Flexfloat из double
@@ -167,9 +167,9 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
      */
-    [[synthesizer_func(Flexfloat::Mult)]] //
-    [[synthesizer_in(left, right)]]       //
-    [[synthesizer_out(res)]]
+    //[[synthesizer_func(Flexfloat::Mult)]] //
+    //[[synthesizer_in(left, right)]]       //
+    //[[synthesizer_out(res)]]
     static void mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Сложение Flexfloat
@@ -180,9 +180,9 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
-    [[synthesizer_func(Flexfloat::Add)]] //
-    [[synthesizer_in(left, right)]]      //
-    [[synthesizer_out(res)]]
+    //[[synthesizer_func(Flexfloat::Add)]] //
+    //[[synthesizer_in(left, right)]]      //
+    //[[synthesizer_out(res)]]
     static void sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Вычитание Flexfloat
@@ -193,9 +193,9 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
-    [[synthesizer_func(Flexfloat::Sub)]] //
-    [[synthesizer_in(left, right)]]      //
-    [[synthesizer_out(res)]]
+    //[[synthesizer_func(Flexfloat::Sub)]] //
+    //[[synthesizer_in(left, right)]]      //
+    //[[synthesizer_out(res)]]
     static void sub(const Flexfloat &left, const Flexfloat &right, Flexfloat &res);
 
     /*! @brief Получение 1/x
@@ -205,9 +205,9 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
      */
-    [[synthesizer_func(Flexfloat::Inv)]] //
-    [[synthesizer_in(x)]]                //
-    [[synthesizer_out(res)]]
+    //[[synthesizer_func(Flexfloat::Inv)]] //
+    //[[synthesizer_in(x)]]                //
+    //[[synthesizer_out(res)]]
     static void inv(const Flexfloat &x, Flexfloat &res);
 
     /*! @brief Получение нормализованного числа из денормализованного
@@ -247,7 +247,7 @@ class Flexfloat
      * \return ближайшее float число
      *
      */
-    [[synthesizer_func(Flexfloat::ToFloat)]]
+    //[[synthesizer_func(Flexfloat::ToFloat)]]
     float to_float() const;
 
     /*! @brief Конвертация float числа в FlexFloat
@@ -312,9 +312,9 @@ class Flexfloat
      * \param[in] b Правая граница
      *
      */
-    [[synthesizer_func(Flexfloat::clip)]] //
-    [[synthesizer_in(a, x, b)]]           //
-    [[synthesizer_out(out)]]
+    //[[synthesizer_func(Flexfloat::clip)]] //
+    //[[synthesizer_in(a, x, b)]]           //
+    //[[synthesizer_out(out)]]
     static void clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b, Flexfloat &out);
 
   private:

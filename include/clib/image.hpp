@@ -23,6 +23,7 @@ namespace clib
 using std::vector;
 using pixel_t = ImgView::pixel_t;
 using idx_t = ImgView::idx_t;
+#pragma GCC diagnostic ignored "-Wattributes"
 template <typename T> class img final
 {
     idx_t rows_ = 0; // height of image
@@ -196,7 +197,7 @@ template <typename T> class img final
     T mean() const
     {
         T summ = sum();
-        
+
         // The code below only works with correct implemented INVERSION function
 
         // T volume = T::from_float(summ, static_cast<float>(rows_ * cols_));
@@ -204,8 +205,8 @@ template <typename T> class img final
         // T::inv(volume, inv_volume);
         // T::mult(summ, inv_volume, summ);
 
-
-        summ = T::from_float(summ,summ.to_float() / static_cast<float>(rows_*cols_)); // comment this if INVERSION works correctly
+        summ = T::from_float(summ, summ.to_float() /
+                                       static_cast<float>(rows_ * cols_)); // comment this if INVERSION works correctly
 
 #ifndef NDEBUG
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
@@ -243,36 +244,47 @@ template <typename T> class img final
         return res;
     }
 
-    img operator+(const T &rhs) const
+    [[synthesizer_func(Flexfloat::Add)]]
+    img
+    operator+(const T &rhs) const
     {
         img res(*this);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::sum(res.vv_[i][j], rhs, res.vv_[i][j]); });
 
         return res;
     }
-    img operator*(const T &rhs) const
+
+    [[synthesizer_func(Flexfloat::Mult)]]
+    img
+    operator*(const T &rhs) const
     {
         img res(*this);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], rhs, res.vv_[i][j]); });
 
         return res;
     }
-    img operator-(const T &rhs) const
+
+    [[synthesizer_func(Flexfloat::Sub)]]
+    img
+    operator-(const T &rhs) const
     {
         img res(*this);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::sub(res.vv_[i][j], rhs, res.vv_[i][j]); });
 
         return res;
     }
-    img operator/(const T &rhs) const
+
+    [[synthesizer_func(Flexfloat::Inv)]]
+    img
+    operator/(const T &rhs) const
     {
         img res(*this);
 
         // The code below only works with correct implemented INVERSION function
-        //T inv_rhs(rhs);
-        //T::inv(rhs, inv_rhs);
+        // T inv_rhs(rhs);
+        // T::inv(rhs, inv_rhs);
 
-        const T inv_rhs = T::from_float(rhs,1.0f / rhs.to_float()); // comment this if INVERSION works correctly
+        const T inv_rhs = T::from_float(rhs, 1.0f / rhs.to_float()); // comment this if INVERSION works correctly
 
         for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
         return res;
@@ -320,12 +332,13 @@ template <typename T> class img final
         img res(*this);
         // The code below only works with correct implemented INVERSION function
 
-        //T inverted(res.vv_[0][0]);
+        // T inverted(res.vv_[0][0]);
 
         for_each(rows_, cols_, [&](idx_t i, idx_t j) {
-            //T::inv(rhs.vv_[i][j], inverted);
+            // T::inv(rhs.vv_[i][j], inverted);
 
-            const T inverted = T::from_float(rhs.vv_[i][j],1.0f / rhs.vv_[i][j].to_float());  // comment this if INVERSION works correctly
+            const T inverted = T::from_float(
+                rhs.vv_[i][j], 1.0f / rhs.vv_[i][j].to_float()); // comment this if INVERSION works correctly
 
             T::mult(res.vv_[i][j], inverted, res.vv_[i][j]);
         });
@@ -807,5 +820,5 @@ template <typename T> img_rgb<T> operator-(const T &lhs, const img_rgb<T> &rhs)
 
     return res;
 }
-
+#pragma GCC diagnostic warning "-Wattributes"
 } // namespace clib
