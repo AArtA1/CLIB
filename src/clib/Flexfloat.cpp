@@ -190,38 +190,38 @@ void Flexfloat::check_ffs(std::initializer_list<Flexfloat> list)
     }
 }
 
-void Flexfloat::mult(const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
+void Flexfloat::mult(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 {
 #ifndef NDEBUG
     CLOG(trace) << std::endl;
     CLOG(trace) << "Multiplication of two numbers";
-    check_ffs({left, right, res});
-    CLOG(trace) << "Left  operand: " << left;
-    CLOG(trace) << "Right operand: " << right;
+    check_ffs({lhs, rhs, res});
+    CLOG(trace) << "Left  operand: " << lhs;
+    CLOG(trace) << "Right operand: " << rhs;
 #endif
 
     // Corner cases
-    if (is_zero(left) || is_zero(right))
+    if (is_zero(lhs) || is_zero(rhs))
     {
         res.e = res.m = 0;
-        res.s = left.s ^ right.s;
+        res.s = lhs.s ^ rhs.s;
         return;
     }
 
-    uint8_t nsign = left.s ^ right.s;
-    eexttype nexp = +static_cast<eexttype>(left.e) + right.e + res.B - left.B - right.B;
+    uint8_t nsign = lhs.s ^ rhs.s;
+    eexttype nexp = +static_cast<eexttype>(lhs.e) + rhs.e + res.B - lhs.B - rhs.B;
 
     // Largest M. All calculations will be with the largest mantissa
-    Mtype LM = std::max({left.M, right.M, res.M});
+    Mtype LM = std::max({lhs.M, rhs.M, res.M});
 
-    mexttype left_m = unzip(left);
-    mexttype right_m = unzip(right);
+    mexttype lhs_m = unzip(lhs);
+    mexttype rhs_m = unzip(rhs);
 
     // Casting all mantissa's to LM
-    left_m <<= (LM - left.M);
-    right_m <<= (LM - right.M);
+    lhs_m <<= (LM - lhs.M);
+    rhs_m <<= (LM - rhs.M);
 
-    mexttype nmant = left_m * right_m;
+    mexttype nmant = lhs_m * rhs_m;
 
     Flexfloat norm_ans = normalise(nsign, nexp - LM, nmant, LM, {res.E, res.M, res.B});
     res = norm_ans;
@@ -238,76 +238,76 @@ std::ostream &operator<<(std::ostream &oss, const Flexfloat &num)
     return oss;
 }
 
-void Flexfloat::sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
+void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 {
 #ifndef NDEBUG
     CLOG(trace) << std::endl;
     CLOG(trace) << "Sum of two numbers";
-    check_ffs({left, right, res});
-    CLOG(trace) << "Left  operand: " << left;
-    CLOG(trace) << "Right operand: " << right;
+    check_ffs({lhs, rhs, res});
+    CLOG(trace) << "Left  operand: " << lhs;
+    CLOG(trace) << "Right operand: " << rhs;
 #endif
 
-    mexttype left_m = unzip(left);
-    mexttype right_m = unzip(right);
+    mexttype lhs_m = unzip(lhs);
+    mexttype rhs_m = unzip(rhs);
 
     // Largest M. All calculations will be with the largest mantissa
-    Mtype LM = std::max({left.M, right.M, res.M});
+    Mtype LM = std::max({lhs.M, rhs.M, res.M});
 
     // Casting all mantissa's to LM
-    left_m <<= (LM - left.M);
-    right_m <<= (LM - right.M);
+    lhs_m <<= (LM - lhs.M);
+    rhs_m <<= (LM - rhs.M);
 
-    eexttype right_e = right.e;
-    eexttype left_e = left.e;
+    eexttype rhs_e = rhs.e;
+    eexttype lhs_e = lhs.e;
 
     // Casting inputs to maximum exponent
     etype nexp = 0;
-    if (left_e - left.B > right_e - right.B)
+    if (lhs_e - lhs.B > rhs_e - rhs.B)
     {
-        auto delta_e = left_e - right_e - left.B + right.B;
-        right_e += delta_e;
-        right_m >>= delta_e;
+        auto delta_e = lhs_e - rhs_e - lhs.B + rhs.B;
+        rhs_e += delta_e;
+        rhs_m >>= delta_e;
 
-        assert(left_e - left.B + res.B >= 0);
-        nexp = static_cast<etype>(left_e - left.B + res.B);
+        assert(lhs_e - lhs.B + res.B >= 0);
+        nexp = static_cast<etype>(lhs_e - lhs.B + res.B);
     }
     else
     {
-        auto delta_e = right_e - left_e - right.B + left.B;
-        left_e += delta_e;
-        left_m >>= delta_e;
+        auto delta_e = rhs_e - lhs_e - rhs.B + lhs.B;
+        lhs_e += delta_e;
+        lhs_m >>= delta_e;
 
-        assert(right_e - right.B + res.B >= 0);
-        nexp = static_cast<etype>(right_e - right.B + res.B);
+        assert(rhs_e - rhs.B + res.B >= 0);
+        nexp = static_cast<etype>(rhs_e - rhs.B + res.B);
     }
 
 #ifndef NDEBUG
     CLOG(trace) << "=================== Values after casting ====================";
-    CLOG(trace) << "left_e:  " << clib::bits(left_e);
-    CLOG(trace) << "left_m:  " << clib::bits(left_m);
-    CLOG(trace) << "right_e: " << clib::bits(right_e);
-    CLOG(trace) << "right_m: " << clib::bits(right_m);
+    CLOG(trace) << "lhs_e:  " << clib::bits(lhs_e);
+    CLOG(trace) << "lhs_m:  " << clib::bits(lhs_m);
+    CLOG(trace) << "rhs_e: " << clib::bits(rhs_e);
+    CLOG(trace) << "rhs_m: " << clib::bits(rhs_m);
     CLOG(trace) << "=============================================================";
 #endif
 
     mexttype nmant = 0;
     stype nsign = 0;
 
-    if (left.s == right.s)
+    if (lhs.s == rhs.s)
     {
-        nsign = left.s;
-        nmant = left_m + right_m;
+        nsign = lhs.s;
+        nmant = lhs_m + rhs_m;
     }
-    else if (left_m >= right_m)
+    else if (lhs_m >= rhs_m)
     {
-        nsign = left.s;
-        nmant = left_m - right_m;
+        nsign = lhs.s;
+        nmant = lhs_m - rhs_m;
     }
     else
     {
-        nsign = right.s;
-        nmant = right_m - left_m;
+        nsign = rhs.s;
+        nmant = rhs_m - lhs_m;
     }
 
     Flexfloat norm_ans = normalise(nsign, nexp, nmant, LM, {res.E, res.M, res.B});
@@ -317,9 +317,9 @@ void Flexfloat::sum(const Flexfloat &left, const Flexfloat &right, Flexfloat &re
     return;
 }
 
-void Flexfloat::sub(const Flexfloat &left, const Flexfloat &right, Flexfloat &res)
+void Flexfloat::sub(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 {
-    sum(left, Flexfloat(right.E, right.M, right.B, !right.s, right.e, right.m), res);
+    sum(lhs, Flexfloat(rhs.E, rhs.M, rhs.B, !rhs.s, rhs.e, rhs.m), res);
 }
 
 Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
