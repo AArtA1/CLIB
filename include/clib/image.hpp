@@ -31,7 +31,14 @@ template <typename T> class img final
     vector<vector<T>> vv_;
 
   public:
-    // img() = default();
+    img& operator=(const img& in)
+    {
+        rows_ = in.rows_;
+        cols_ = in.cols_;
+        vv_   = in.vv_;
+
+        return *this;
+    }
 
     /*! @brief Инициализации изображения из другого изображения
      */
