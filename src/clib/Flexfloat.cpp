@@ -7,7 +7,7 @@
 namespace clib
 {
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
 #define $(...) __VA_ARGS__
 #else
 #define $(...) ;
@@ -22,7 +22,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
 {
     if (!is_valid())
     {
-#ifndef NDEBUG
+#ifdef EN_LOGS
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -44,7 +44,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) : B(B_n), E(E
 
     if (!is_valid())
     {
-#ifndef NDEBUG
+#ifdef EN_LOGS
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -69,7 +69,7 @@ Flexfloat::Flexfloat(const Flexfloat &hyperparams, mtype value) : B(0), E(0), M(
 
     if (!is_valid())
     {
-#ifndef NDEBUG
+#ifdef EN_LOGS
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -192,7 +192,7 @@ void Flexfloat::check_ffs(std::initializer_list<Flexfloat> list)
 
 void Flexfloat::mult(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Multiplication of two numbers";
     check_ffs({lhs, rhs, res});
@@ -240,7 +240,7 @@ std::ostream &operator<<(std::ostream &oss, const Flexfloat &num)
 
 void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Sum of two numbers";
     check_ffs({lhs, rhs, res});
@@ -282,7 +282,7 @@ void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
         nexp = static_cast<etype>(rhs_e - rhs.B + res.B);
     }
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "=================== Values after casting ====================";
     CLOG(trace) << "lhs_e:  " << clib::bits(lhs_e);
     CLOG(trace) << "lhs_m:  " << clib::bits(lhs_m);
@@ -324,7 +324,7 @@ void Flexfloat::sub(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 
 Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "Getting normal value of denormal";
     check_ffs({denorm});
     CLOG(trace) << "Value " << denorm;
@@ -343,7 +343,7 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
     eexttype ext_exp = static_cast<eexttype>(1) - delta_N;
     ext_mant = n << delta_N;
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "Extended exp  = " << clib::bits(ext_exp);
     CLOG(trace) << "Extended mant = " << clib::bits(ext_mant);
 #endif
@@ -354,7 +354,7 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
 void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
 {
     size_t precision = 0; // TODO
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Inv: 1/x";
     check_ffs({x, res});
@@ -430,7 +430,7 @@ Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n)
 
 int Flexfloat::ceil() const
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "ceil";
     check_ffs({*this});
     CLOG(trace) << "ff: " << *this;
@@ -483,7 +483,7 @@ float Flexfloat::to_float() const
     else
         nmant = nmant / (1 << (M - M_FLOAT));
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "FlexFloat to_float";
     CLOG(trace) << *this;
@@ -528,7 +528,7 @@ Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
     else
         nmant = nmant * (1 << (M - M_FLOAT));
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "FlexFloat from_float = " << flt;
     CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
@@ -570,7 +570,7 @@ std::string Flexfloat::bits(const Flexfloat &ff) const
 bool operator>(const Flexfloat &lhs, const Flexfloat &rhs)
 {
     assert(lhs.E == rhs.E && lhs.B == rhs.B && lhs.M == rhs.M);
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "operator>";
     Flexfloat::check_ffs({lhs, rhs});
     CLOG(trace) << "lhs: " << lhs;
@@ -635,7 +635,7 @@ bool operator!=(const Flexfloat &lhs, const Flexfloat &rhs)
 
 void Flexfloat::min(const Flexfloat &first, const Flexfloat &second, Flexfloat &res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "min";
     Flexfloat::check_ffs({first, second, res});
     CLOG(trace) << "first: " << first;
@@ -648,7 +648,7 @@ void Flexfloat::min(const Flexfloat &first, const Flexfloat &second, Flexfloat &
 }
 void Flexfloat::max(const Flexfloat &first, const Flexfloat &second, Flexfloat &res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "max";
     Flexfloat::check_ffs({first, second, res});
     CLOG(trace) << "first: " << first;
@@ -662,7 +662,7 @@ void Flexfloat::max(const Flexfloat &first, const Flexfloat &second, Flexfloat &
 
 void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b, Flexfloat &out)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "clip";
     Flexfloat::check_ffs({a, x, b, out});
     CLOG(trace) << "a: " << a;
@@ -680,7 +680,7 @@ void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b,
 //
 Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_mant, Mtype curM, hyper_params res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "============== Values before normalisation ==================";
     CLOG(trace) << "exp:  " << clib::bits(cur_exp);
     CLOG(trace) << "mant: " << clib::bits(cur_mant);
@@ -796,7 +796,7 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
     mtype mant = zip(cur_exp, cur_mant, curM, res.M);
     etype exp = static_cast<etype>(cur_exp);
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "================ Values after normalisation =================";
     CLOG(trace) << "exp:  " << clib::bits(cur_exp);
     CLOG(trace) << "mant: " << clib::bits(cur_mant);

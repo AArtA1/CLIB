@@ -215,7 +215,7 @@ template <typename T> class img final
         summ = T::from_float(summ, summ.to_float() /
                                        static_cast<float>(rows_ * cols_)); // comment this if INVERSION works correctly
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
         CLOG(debug) << "Volume:" << (rows_ * cols_);
         CLOG(debug) << "Volume inv_value: " << summ;

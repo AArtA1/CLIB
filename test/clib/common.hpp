@@ -14,7 +14,7 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/expressions.hpp>
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
 extern boost::log::sources::severity_logger< clib::severity_level > slg;
 #endif
 

@@ -5,7 +5,7 @@
 namespace clib
 {
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
 #define $(...) __VA_ARGS__
 #else
 #define $(...) ;
@@ -41,7 +41,7 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : I(I_n), F(F_n
 // consider we already have res parameters: I and F
 void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "Addition of two numbers";
     check_fxs({left, right, res});
     CLOG(trace) << "Left  operand: " << left;
@@ -77,7 +77,7 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
 
 void Flexfixed::sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "Addition of two numbers";
     check_fxs({left, right, res});
     CLOG(trace) << "Left  operand: " << left;
@@ -150,7 +150,7 @@ void Flexfixed::sub(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
 
 void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << "Number inv";
     check_fxs({value, res});
     CLOG(trace) << "Value: " << value;
@@ -162,7 +162,7 @@ void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
     if (value.n == 0)
     {
         res.n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
-#ifndef NDEBUG
+#ifdef EN_LOGS
         CLOG(trace) << "IS_OVERFLOW: TRUE";
         CLOG(trace) << "Result of value inv: " << res;
 #endif
@@ -224,7 +224,7 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
 
 Flexfixed Flexfixed::from_float(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, float flt)
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Flexfixed from_float = " << flt;
 #endif
@@ -239,7 +239,7 @@ Flexfixed Flexfixed::from_float(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, floa
     assert(res_n <= std::numeric_limits<ntype>::max());
     result.n = static_cast<ntype>(res_n);
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Result = " << result;
 #endif
@@ -255,7 +255,7 @@ Flexfixed Flexfixed::from_float(const Flexfixed& hyperparams, float flt)
 
 float Flexfixed::to_float() const
 {
-#ifndef NDEBUG
+#ifdef EN_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Flexfixed to_float";
     CLOG(trace) << *this;

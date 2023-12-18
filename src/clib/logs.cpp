@@ -15,7 +15,7 @@
 
 namespace clib {
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
 boost::log::sources::severity_logger< severity_level > slg;
 #endif
 
