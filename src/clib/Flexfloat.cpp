@@ -258,36 +258,34 @@ void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
     lhs_m <<= (LM - lhs.M);
     rhs_m <<= (LM - rhs.M);
 
-    eexttype rhs_e = rhs.e;
-    eexttype lhs_e = lhs.e;
+    eexttype rhs_eps = static_cast<eexttype>(rhs.e) - rhs.B;
+    eexttype lhs_eps = static_cast<eexttype>(lhs.e) - lhs.B;
 
     // Casting inputs to maximum exponent
     etype nexp = 0;
-    if (lhs_e - lhs.B > rhs_e - rhs.B)
+    if (lhs_eps > rhs_eps)
     {
-        auto delta_e = lhs_e - rhs_e - lhs.B + rhs.B;
-        rhs_e += delta_e;
+        auto delta_e = lhs_eps - rhs_eps;
         rhs_m >>= delta_e;
 
-        assert(lhs_e - lhs.B + res.B >= 0);
-        nexp = static_cast<etype>(lhs_e - lhs.B + res.B);
+        assert(lhs_eps + res.B >= 0);
+        nexp = static_cast<etype>(lhs_eps + res.B);
     }
     else
     {
-        auto delta_e = rhs_e - lhs_e - rhs.B + lhs.B;
-        lhs_e += delta_e;
+        auto delta_e = rhs_eps - lhs_eps;
         lhs_m >>= delta_e;
 
-        assert(rhs_e - rhs.B + res.B >= 0);
-        nexp = static_cast<etype>(rhs_e - rhs.B + res.B);
+        assert(rhs_eps + res.B >= 0);
+        nexp = static_cast<etype>(rhs_eps + res.B);
     }
 
 #ifdef EN_LOGS
     CLOG(trace) << "=================== Values after casting ====================";
-    CLOG(trace) << "lhs_e:  " << clib::bits(lhs_e);
-    CLOG(trace) << "lhs_m:  " << clib::bits(lhs_m);
-    CLOG(trace) << "rhs_e: " << clib::bits(rhs_e);
-    CLOG(trace) << "rhs_m: " << clib::bits(rhs_m);
+    CLOG(trace) << "lhs_eps: " << clib::bits(lhs_eps);
+    CLOG(trace) << "lhs_m:   " << clib::bits(lhs_m);
+    CLOG(trace) << "rhs_eps: " << clib::bits(rhs_eps);
+    CLOG(trace) << "rhs_m:   " << clib::bits(rhs_m);
     CLOG(trace) << "=============================================================";
 #endif
 
@@ -381,11 +379,21 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
     Mtype LM = std::max({x.M, res.M});
     nmant <<= (LM - x.M);
 
+#ifdef EN_LOGS
+    CLOG(trace) << "nmant before: " << clib::bits(nmant);
+    CLOG(trace) << "nexp before : " << clib::bits(nexp);
+#endif
+
     // (1-x)/(1+x) = 1 - x
     if (precision == 0)
     {
         nexp = -nexp + (x.B + res.B - static_cast<eexttype>(1));
         nmant = static_cast<mexttype>(1 << LM) - nmant - 1;
+
+#ifdef EN_LOGS
+        CLOG(trace) << "nmant after: " << clib::bits(nmant);
+        CLOG(trace) << "nexp after : " << clib::bits(nexp);
+#endif
 
         // normalise expects extended mantissa
         nmant += static_cast<mexttype>(1 << LM);
