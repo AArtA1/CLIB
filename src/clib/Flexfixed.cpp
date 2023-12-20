@@ -13,6 +13,18 @@ namespace clib
 
 //#define LSB
 
+
+//#define DEPRECATED_OPERATORS
+
+
+using Itype = Flexfixed::Itype;
+using Ftype = Flexfixed::Ftype;
+using stype = Flexfixed::stype;      
+using ntype = Flexfixed::ntype;     
+using nrestype = Flexfixed::nrestype; 
+using wtype = Flexfixed::wtype;
+
+
 Flexfixed::Flexfixed(Itype I_n, Ftype F_n) : I(I_n), F(F_n), s(0), n(0)
 {
 }
@@ -39,22 +51,22 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : I(I_n), F(F_n
 }
 
 // consider we already have res parameters: I and F
-void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
+void Flexfixed::mult(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
 #ifndef NDEBUG
     CLOG(trace) << "Addition of two numbers";
-    check_fxs({left, right, res});
-    CLOG(trace) << "Left  operand: " << left;
-    CLOG(trace) << "Right operand: " << right;
+    check_fxs({lhs, rhs, res});
+    CLOG(trace) << "lhs  operand: " << lhs;
+    CLOG(trace) << "rhs operand: " << rhs;
 #endif
 
-    res.s = left.s ^ right.s;
+    res.s = lhs.s ^ rhs.s;
 
-    wtype delta_f = static_cast<wtype>(left.F + right.F - res.F);
+    wtype delta_f = static_cast<wtype>(lhs.F + rhs.F - res.F);
 
     $(CLOG(trace) << "DELTA_F:" << delta_f);
 
-    nrestype res_n = left.n * right.n;
+    nrestype res_n = lhs.n * rhs.n;
 
     if (delta_f >= 0)
     {
@@ -65,7 +77,6 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
         res_n = res_n << abs(delta_f);
     }
 
-    // overflow
     res_n = check_ovf(res_n, res.I, res.F);
 
     assert(res_n <= std::numeric_limits<ntype>::max());
@@ -75,32 +86,32 @@ void Flexfixed::mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &r
     $(CLOG(trace) << "Result of flex mult: " << res << std::endl);
 }
 
-void Flexfixed::sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
+void Flexfixed::sum(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
 #ifndef NDEBUG
     CLOG(trace) << "Addition of two numbers";
-    check_fxs({left, right, res});
-    CLOG(trace) << "Left  operand: " << left;
-    CLOG(trace) << "Right operand: " << right;
+    check_fxs({lhs, rhs, res});
+    CLOG(trace) << "lhs  operand: " << lhs;
+    CLOG(trace) << "rhs operand: " << rhs;
 #endif
 
-    Ftype max_F = std::max(left.F, right.F);
+    Ftype max_F = std::max(lhs.F, rhs.F);
 
-    ntype left_n = left.n << (max_F - left.F), right_n = right.n << (max_F - right.F);
+    ntype lhs_n = lhs.n << (max_F - lhs.F), rhs_n = rhs.n << (max_F - rhs.F);
 
     bool flag = false;
 
     // check for |a| >= |b|
     // |a| < |b|
-    if (!((left_n << max_F >= right_n << max_F) ||
-          (left_n << max_F == right_n << max_F &&
-           (((static_cast<ntype>(1) << max_F) - 1) & left_n) >= (((static_cast<ntype>(1) << max_F) - 1) & right_n))))
+    if (!((lhs_n << max_F >= rhs_n << max_F) ||
+          (lhs_n << max_F == rhs_n << max_F &&
+           (((static_cast<ntype>(1) << max_F) - 1) & lhs_n) >= (((static_cast<ntype>(1) << max_F) - 1) & rhs_n))))
     {
-        std::swap(left_n, right_n);
+        std::swap(lhs_n, rhs_n);
         flag = true;
     }
 
-    nrestype res_n = left.s == right.s ? left_n + right_n : left_n - right_n;
+    nrestype res_n = lhs.s == rhs.s ? lhs_n + rhs_n : lhs_n - rhs_n;
 
     wtype delta_F = static_cast<wtype>(max_F) - res.F;
 
@@ -115,12 +126,9 @@ void Flexfixed::sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
         res_n = res_n << delta_F;
     }
 
-    res.s = flag ? right.s : left.s;
+    res.s = flag ? rhs.s : lhs.s;
 
-    // overflow
     res_n = check_ovf(res_n, res.I, res.F);
-
-    // todo : add assert to prevent unexcepted errors
 
     assert(res_n <= std::numeric_limits<ntype>::max());
 
@@ -129,23 +137,17 @@ void Flexfixed::sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &re
     $(CLOG(trace) << "Result of flex add: " << res << std::endl);
 }
 
-void Flexfixed::sub(const Flexfixed &left, const Flexfixed &right, Flexfixed &res)
+void Flexfixed::sub(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
-    Flexfixed right_temp = right;
+    Flexfixed rhs_temp = rhs;
 
-    if (right_temp.s == 0)
-    {
-        right_temp.s = 1;
-    }
+    if (rhs_temp.s == 0)
+        rhs_temp.s = 1;
     else
-    {
-        if (right_temp.s == 1)
-        {
-            right_temp.s = 0;
-        }
-    }
+        if (rhs_temp.s == 1)
+            rhs_temp.s = 0;
 
-    Flexfixed::sum(left, right_temp, res);
+    Flexfixed::sum(lhs, rhs_temp, res);
 }
 
 void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
@@ -273,27 +275,63 @@ float Flexfixed::to_float() const
     return res;
 }
 
-bool operator>(const Flexfixed &left, const Flexfixed &right)
+bool operator>(const Flexfixed &lhs, const Flexfixed &rhs)
 {
-    assert(left.I == right.I && left.F == right.F);
-    // if(left.s == right.s){
-    //     if(left.s == 1){
-    //         return left.get_int() != right.get_int() ? left.get_int() < right.get_int() : left.get_frac() < right.get_frac();
-    //     }
-    //     else{
-    //         return left.get_int() != right.get_int() ? left.get_int() > right.get_int() : left.get_frac() > right.get_frac();
-    //     }
-    // }
-    // else{
-    //     return left.s == 0;
-    // }
-    return left.to_float() > right.to_float();
+    assert(lhs.I == rhs.I);
+    assert(lhs.F == rhs.F);
+
+    #ifndef DEPRECATED_OPERATORS
+    // the same sign
+    if(lhs.s == rhs.s)
+        // sign is zero
+        return lhs.s == 0? lhs.n > rhs.n: lhs.n < rhs.n;
+
+    return lhs.s == 0?true:false;
+    #endif
+
+    #ifdef DEPRECATED_OPERATORS
+    return lhs.to_float() > rhs.to_float();
+    #endif
 }
 
+bool operator>=(const Flexfixed &lhs, const Flexfixed &rhs){
+    assert(lhs.I == rhs.I);
+    assert(lhs.F == rhs.F);
 
-bool operator<(const Flexfixed & left, const Flexfixed & right){
-    return left.to_float() < right.to_float();
+    return lhs > rhs || lhs == rhs;
 }
+
+// todo: write without to_float
+bool operator<(const Flexfixed & lhs, const Flexfixed & rhs){
+    assert(lhs.I == rhs.I);
+    assert(lhs.F == rhs.F);
+
+    #ifndef DEPRECATED_OPERATORS
+    // the same sign
+    if(lhs.s == rhs.s)
+        // sign is zero
+        return lhs.s == 0? lhs.n < rhs.n: lhs.n > rhs.n;
+
+    return lhs.s == 0?true:false;
+    #endif
+
+    #ifdef DEPRECATED_OPERATORS
+    return lhs.to_float() > rhs.to_float();
+    #endif
+}
+
+bool operator<=(const Flexfixed &lhs, const Flexfixed &rhs){
+    return lhs < rhs || lhs == rhs;
+}
+
+bool operator==(const Flexfixed &lhs, const Flexfixed &rhs){
+    return lhs.n == rhs.n && lhs.s == rhs.s;
+}
+
+bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs){
+    return !(lhs == rhs);
+}
+
 
 std::string Flexfixed::bits() const
 {
@@ -358,5 +396,10 @@ bool Flexfixed::is_valid() const
 #ifdef LSB
 #undef LSB
 #endif
+
+#ifdef DEPRECATED_OPERATORS
+#undef DEPRECATED_OPERATORS
+#endif
+
 
 } // namespace clib
