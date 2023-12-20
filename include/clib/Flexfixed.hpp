@@ -31,6 +31,7 @@ class Flexfixed
     /// numerator
     ntype n;
 
+
   public:
     Flexfixed() = default;
 
