@@ -126,9 +126,17 @@ class Flexfixed
     /// @param right Правый операнд
     /// @return Возвращает true, если левое значение больше первого, иначе
     /// false.
-    friend bool operator>(const Flexfixed &left, const Flexfixed &right);
+    friend bool operator>(const Flexfixed &lhs, const Flexfixed &rhs);
 
-    friend bool operator<(const Flexfixed &left, const Flexfixed &right);
+    friend bool operator>=(const Flexfixed &lhs, const Flexfixed &rhs);
+
+    friend bool operator<(const Flexfixed &lhs, const Flexfixed &rhs);
+
+    friend bool operator<=(const Flexfixed &lhs, const Flexfixed &rhs);
+
+    friend bool operator==(const Flexfixed &lhs, const Flexfixed &rhs);
+
+    friend bool operator!=(const Flexfixed &lhs,const Flexfixed &rhs);
 
     /// @brief Перегруженный оператор вывода << для представления экземпляра
     /// Flexfixed в виде строки
