@@ -761,8 +761,8 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
         cur_exp = 0;
     };
 
-    eexttype delta_m = (cur_mant > 0) ? abs<eexttype>(msb(cur_mant) - curM) : 0;
-    eexttype delta_e = abs<eexttype>(cur_exp - max_exp(res.E));
+    eexttype delta_m = (cur_mant > 0) ? std::abs(msb(cur_mant) - curM) : 0;
+    eexttype delta_e = std::abs(cur_exp - max_exp(res.E));
 
     if (cur_exp <= 0)
     {
@@ -851,12 +851,21 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
     return Flexfloat(res.E, res.M, res.B, cur_sign, exp, mant);
 }
 
-Flexfloat Flexfloat::operator-() const{
-    $(CLOG(trace) << "un_op -");
-    Flexfloat res(*this);
-    res.s = res.s >= 1?0:1;
+void Flexfloat::negative(const Flexfloat &val, Flexfloat &res){
+#ifdef EN_LOGS
+    CLOG(trace) << "negative";
+    Flexfloat::check_ffs({val,res});
+    CLOG(trace) << "Value: " << val;
+    CLOG(trace) << "Result: " << res;
+#endif
+
+    assert(val.E == res.E);
+    assert(val.M == res.M);
+
+    res.e = val.e;
+    res.m = val.m;
+    res.s = val.s >= 1?0:1;
     $(CLOG(trace) << "res: " << res);
-    return res;
 }
 
 // if e > 0  -> normalized value   -> m' = 2^M + m
@@ -897,10 +906,21 @@ Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype curM, Mty
 }
 
 
-Flexfloat Flexfloat::abs(const Flexfloat& value){
-    Flexfloat res(value);
+void Flexfloat::abs(const Flexfloat& val, Flexfloat &res){
+#ifdef EN_LOGS
+    CLOG(trace) << "abs";
+    Flexfloat::check_ffs({val,res});
+    CLOG(trace) << "Value: " << val;
+    CLOG(trace) << "Result: " << res;
+#endif
+
+    assert(val.E == res.E);
+    assert(val.M == res.M);
+
+    res.e = val.e;
+    res.m = val.m;
     res.s = 0;
-    return res;
+    $(CLOG(trace) << "res: " << res);
 }
 
 
