@@ -142,6 +142,7 @@ class Flexfixed
 
     friend bool operator!=(const Flexfixed &lhs,const Flexfixed &rhs);
 
+    Flexfixed operator-() const;
     
     static void min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
     
@@ -192,6 +193,8 @@ class Flexfixed
     {
         return n >> F;
     }
+
+    static Flexfixed abs(const Flexfixed& value);
 
     //! \return Возвращает последние F бит от n - дробные биты числа.
     inline ntype get_frac() const

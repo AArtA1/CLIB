@@ -851,6 +851,14 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
     return Flexfloat(res.E, res.M, res.B, cur_sign, exp, mant);
 }
 
+Flexfloat Flexfloat::operator-() const{
+    $(CLOG(trace) << "un_op -");
+    Flexfloat res(*this);
+    res.s = res.s >= 1?0:1;
+    $(CLOG(trace) << "res: " << res);
+    return res;
+}
+
 // if e > 0  -> normalized value   -> m' = 2^M + m
 // if e == 0 -> denormalized value -> m' = 2*m
 Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype curM, Mtype reqM)
@@ -887,6 +895,14 @@ Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype curM, Mty
     assert(ext_mant <= max_mant(reqM));
     return static_cast<mtype>(ext_mant);
 }
+
+
+Flexfloat Flexfloat::abs(const Flexfloat& value){
+    Flexfloat res(value);
+    res.s = 0;
+    return res;
+}
+
 
 // if e > 0  -> normalized value   -> m' = 2^M + m
 // if e == 0 -> denormalized value -> m' = 2*m

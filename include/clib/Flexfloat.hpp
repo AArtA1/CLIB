@@ -305,6 +305,10 @@ class Flexfloat
     friend bool operator==(const Flexfloat &lhs, const Flexfloat &rhs);
     friend bool operator!=(const Flexfloat &lhs, const Flexfloat &rhs);
 
+    Flexfloat operator-() const;
+
+    static Flexfloat abs(const Flexfloat& value);
+
     static void min(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);
     static void max(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);
 

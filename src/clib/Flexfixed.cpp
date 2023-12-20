@@ -381,6 +381,20 @@ bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs){
     return !(lhs == rhs);
 }
 
+Flexfixed Flexfixed::operator-() const{
+    $(CLOG(trace) << "un_op -");
+    Flexfixed res(*this);
+    res.s = res.s >= 1?0:1;
+    $(CLOG(trace) << "res: " << res);
+    return res;
+}
+
+
+Flexfixed Flexfixed::abs(const Flexfixed& value){
+    Flexfixed res(value);
+    res.s == 0;
+    return res;
+}
 
 std::string Flexfixed::bits() const
 {
