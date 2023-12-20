@@ -1,9 +1,13 @@
 #pragma once
 #include "Flexfixed.hpp"
+#include "Flexfloat.hpp"
 #include "common.hpp"
 
 namespace clib
 {
+
+class Flexfloat;
+
 /*!
  * \brief Число с фиксированной запятой.
  *
@@ -218,7 +222,7 @@ class Flexfixed
     }
 
     // todo
-    // static void convert_ff_to_fx(const Flexfloat& value, Flexfixed& res);
+    friend void to_flexfixed(const Flexfloat &value, Flexfixed& res);
 
     static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 

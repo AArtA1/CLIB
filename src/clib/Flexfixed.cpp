@@ -292,6 +292,13 @@ void Flexfixed::clip(const Flexfixed &a, const Flexfixed &x, const Flexfixed &b,
     max(a, out, out);
 }
 
+
+// todo 
+// void to_flexfixed(const Flexfloat &value, Flexfixed& res){
+
+// }
+
+
 Flexfixed Flexfixed::from_float(const Flexfixed& hyperparams, float flt)
 {
     return from_float(hyperparams.I,hyperparams.F,flt);

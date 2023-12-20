@@ -683,6 +683,38 @@ void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b,
     max(a, out, out);
 }
 
+
+void to_flexfloat(const Flexfixed &value, Flexfloat& res){
+#ifdef EN_LOGS
+    CLOG(trace) << "from_fx_to_ff";
+    Flexfloat::check_ffs({value,res});
+    CLOG(trace) << "value: " << value;
+#endif
+
+    Flexfixed::wtype msb = Flexfixed::msb(value);
+
+    assert(res.max_exp() > static_cast<Flexfloat::etype>(msb + res.B - value.get_F()));
+    res.e = static_cast<Flexfloat::etype>(msb + res.B - value.get_F());
+
+    assert(res.e < res.max_exp());
+
+    Flexfixed::wtype delta = msb - res.M;
+
+    if(delta >= 0){
+        assert(res.max_mant() > (value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) >> delta);
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) >> delta);
+    }
+    else {
+        assert(res.max_mant() > (value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) << -delta);
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) << -delta);
+    }
+
+    assert(res.m < res.max_mant());
+
+    $(CLOG(trace) << "res: " << res);
+}
+
+
 //
 // See
 // gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
