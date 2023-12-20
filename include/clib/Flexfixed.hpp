@@ -68,11 +68,11 @@ class Flexfixed
 
     /*! @brief Умножение Flexfixed
      *
-     * \param[in] left Левый операнд
-     * \param[in] right Правый операнд
+     * \param[in] lhs Левый операнд
+     * \param[in] rhs Правый операнд
      * \param[in] res Результат
      */
-    static void mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void mult(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
 
     /// @brief Взятие обратного элемента (1/x)
     /// @param value Операнд
@@ -89,19 +89,19 @@ class Flexfixed
 
     /*! @brief Сложение Flexfixed
      *
-     * \param[in] left Левый операнд
-     * \param[in] right Правый операнд
+     * \param[in] lhs Левый операнд
+     * \param[in] rhs Правый операнд
      * \param[in] res Результат
      */
-    static void sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void sum(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
 
     /*! @brief Вычитание Flexfixed
      *
-     * \param[in] left Левый операнд
-     * \param[in] right Правый операнд
+     * \param[in] lhs Левый операнд
+     * \param[in] rhs Правый операнд
      * \param[in] res Результат
      */
-    static void sub(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void sub(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
 
     static nrestype check_ovf(nrestype n, Itype I, Ftype F);
 
@@ -122,8 +122,8 @@ class Flexfixed
     std::string bits(const Flexfixed &fx) const;
 
     /// @brief Сравнивает два Flexfixed значения
-    /// @param left Левый операнд
-    /// @param right Правый операнд
+    /// @param lhs Левый операнд
+    /// @param rhs Правый операнд
     /// @return Возвращает true, если левое значение больше первого, иначе
     /// false.
     friend bool operator>(const Flexfixed &lhs, const Flexfixed &rhs);
@@ -137,6 +137,13 @@ class Flexfixed
     friend bool operator==(const Flexfixed &lhs, const Flexfixed &rhs);
 
     friend bool operator!=(const Flexfixed &lhs,const Flexfixed &rhs);
+
+    
+    static void min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
+    
+    static void max(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
+
+    static void clip(const Flexfixed &a, const Flexfixed &x, const Flexfixed &b, Flexfixed &out);
 
     /// @brief Перегруженный оператор вывода << для представления экземпляра
     /// Flexfixed в виде строки
