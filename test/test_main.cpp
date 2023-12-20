@@ -5,13 +5,13 @@
 
 #include <string>
 
-#ifdef EN_LOGS
+#ifndef NDEBUG
 boost::log::sources::severity_logger< clib::severity_level > slg;
 #endif
 
 int main(int argc, char** argv) 
 {
-#ifdef EN_LOGS
+#ifndef NDEBUG
     clib::init_logs();
     clib::tag_sev_filter("Flexfloat clip", clib::debug);
 #endif

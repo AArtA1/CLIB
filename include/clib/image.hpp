@@ -31,14 +31,7 @@ template <typename T> class img final
     vector<vector<T>> vv_;
 
   public:
-    img& operator=(const img& in)
-    {
-        rows_ = in.rows_;
-        cols_ = in.cols_;
-        vv_   = in.vv_;
-
-        return *this;
-    }
+    // img() = default();
 
     /*! @brief Инициализации изображения из другого изображения
      */
@@ -215,7 +208,7 @@ template <typename T> class img final
         summ = T::from_float(summ, summ.to_float() /
                                        static_cast<float>(rows_ * cols_)); // comment this if INVERSION works correctly
 
-#ifdef EN_LOGS
+#ifndef NDEBUG
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
         CLOG(debug) << "Volume:" << (rows_ * cols_);
         CLOG(debug) << "Volume inv_value: " << summ;
