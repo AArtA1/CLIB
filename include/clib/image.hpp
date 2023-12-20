@@ -31,11 +31,11 @@ template <typename T> class img final
     vector<vector<T>> vv_;
 
   public:
-    img& operator=(const img& in)
+    img &operator=(const img &in)
     {
         rows_ = in.rows_;
         cols_ = in.cols_;
-        vv_   = in.vv_;
+        vv_ = in.vv_;
 
         return *this;
     }
