@@ -20,7 +20,7 @@ enum severity_level
 //
 // global logger
 //
-#ifdef EN_LOGS
+#ifndef NDEBUG
 extern boost::log::sources::severity_logger< severity_level > slg;
 #endif
 
@@ -29,7 +29,7 @@ extern boost::log::sources::severity_logger< severity_level > slg;
 //
 std::ostream& operator<< (std::ostream& strm, severity_level level);
 
-#ifdef EN_LOGS
+#ifndef NDEBUG
     #define CLOG(lvl) BOOST_LOG_SEV(slg, lvl)
     #define LOG(lvl)  BOOST_LOG_SEV(clib::slg, clib::lvl)
 #endif

@@ -4,6 +4,9 @@
 
 namespace clib
 {
+
+class Flexfixed;
+
 /*!
  * \brief Число с плавующей запятой с настриваемой мантиссой и экспонентой.
  *
@@ -267,8 +270,8 @@ class Flexfloat
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
-
-    // static void convert_fx_to_ff(const Flexfixed& value, Flexfloat& res);
+    
+    friend void to_flexfloat(const Flexfixed& value, Flexfloat& res);
 
     /// Выводит Flexfloat в битовом виде
     std::string bits() const;
@@ -290,6 +293,10 @@ class Flexfloat
     friend bool operator<=(const Flexfloat &lhs, const Flexfloat &rhs);
     friend bool operator==(const Flexfloat &lhs, const Flexfloat &rhs);
     friend bool operator!=(const Flexfloat &lhs, const Flexfloat &rhs);
+
+    static void negative(const Flexfloat &val, Flexfloat &res);
+
+    static void abs(const Flexfloat& val, Flexfloat &res);
 
     static void min(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);
     static void max(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);
