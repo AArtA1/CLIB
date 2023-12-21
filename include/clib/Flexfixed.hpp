@@ -107,7 +107,7 @@ class Flexfixed
      */
     static void sub(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
 
-    static void log2(const Flexfixed &val, const Flexfixed &res);
+    static void log2(const Flexfixed &val, Flexfixed &res);
 
     static nrestype check_ovf(nrestype n, Itype I, Ftype F);
 
