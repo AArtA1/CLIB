@@ -35,7 +35,6 @@ class Flexfixed
     /// numerator
     ntype n;
 
-
   public:
     Flexfixed() = default;
 
@@ -143,12 +142,12 @@ class Flexfixed
 
     friend bool operator==(const Flexfixed &lhs, const Flexfixed &rhs);
 
-    friend bool operator!=(const Flexfixed &lhs,const Flexfixed &rhs);
+    friend bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs);
 
-    static void negative(const Flexfixed &val,Flexfixed &res);
-    
+    static void negative(const Flexfixed &val, Flexfixed &res);
+
     static void min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
-    
+
     static void max(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
 
     static void clip(const Flexfixed &a, const Flexfixed &x, const Flexfixed &b, Flexfixed &out);
@@ -197,7 +196,7 @@ class Flexfixed
         return n >> F;
     }
 
-    static void abs(const Flexfixed& val, Flexfixed& res);
+    static void abs(const Flexfixed &val, Flexfixed &res);
 
     //! \return Возвращает последние F бит от n - дробные биты числа.
     inline ntype get_frac() const
@@ -228,7 +227,7 @@ class Flexfixed
     }
 
     // todo
-    friend void to_flexfixed(const Flexfloat &val, Flexfixed& res);
+    friend void to_flexfixed(const Flexfloat &val, Flexfixed &res);
 
     static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 
