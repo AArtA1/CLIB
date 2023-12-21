@@ -25,7 +25,7 @@ class Flexfixed
     using ntype = uint64_t;     // size of NUMERATOR
     using nrestype = uint128_t; // size for calculating operations with ntype
     using wtype = int16_t;      // size for calculating operations with itype and ftype
-  private:
+  //private:
     /// INT_WIDTH
     Itype I;
     /// FRAC_WIDTH

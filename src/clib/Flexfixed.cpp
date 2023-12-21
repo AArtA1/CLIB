@@ -380,44 +380,6 @@ bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs){
     return !(lhs == rhs);
 }
 
-bool operator>=(const Flexfixed &lhs, const Flexfixed &rhs){
-    assert(lhs.I == rhs.I);
-    assert(lhs.F == rhs.F);
-
-    return lhs > rhs || lhs == rhs;
-}
-
-// todo: write without to_float
-bool operator<(const Flexfixed & lhs, const Flexfixed & rhs){
-    assert(lhs.I == rhs.I);
-    assert(lhs.F == rhs.F);
-
-    #ifndef DEPRECATED_OPERATORS
-    // the same sign
-    if(lhs.s == rhs.s)
-        // sign is zero
-        return lhs.s == 0? lhs.n < rhs.n: lhs.n > rhs.n;
-
-    return lhs.s == 0?true:false;
-    #endif
-
-    #ifdef DEPRECATED_OPERATORS
-    return lhs.to_float() > rhs.to_float();
-    #endif
-}
-
-bool operator<=(const Flexfixed &lhs, const Flexfixed &rhs){
-    return lhs < rhs || lhs == rhs;
-}
-
-bool operator==(const Flexfixed &lhs, const Flexfixed &rhs){
-    return lhs.n == rhs.n && lhs.s == rhs.s;
-}
-
-bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs){
-    return !(lhs == rhs);
-}
-
 void Flexfixed::abs(const Flexfixed& val, Flexfixed &res){
 #ifdef EN_LOGS
     CLOG(trace) << "abs";
