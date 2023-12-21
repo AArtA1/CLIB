@@ -31,7 +31,6 @@ template <typename T> class img final
     vector<vector<T>> vv_;
 
   public:
-
     img &operator=(const img &in)
     {
         rows_ = in.rows_;
@@ -43,9 +42,6 @@ template <typename T> class img final
 
     /*! @brief Инициализации изображения из другого изображения
      */
-    //[[synthesizer_func(Flexfloat::Const)]] //
-    //[[synthesizer_in(a, x, b)]]     //
-    //[[synthesizer_out(out)]]
     img(const img<T> &base, idx_t req_threads = 0) : vv_()
     {
         assert(base.rows() > 0);
@@ -101,36 +97,18 @@ template <typename T> class img final
      *
      * TODO
      */
-    img(const vector<vector<T>> &base, clib::Flexfloat::Etype E, clib::Flexfloat::Etype M, clib::Flexfloat::Etype B,
-        idx_t req_threads = 0)
-        : vv_()
+    img(const img &base, const clib::Flexfloat::hyper_params &params, idx_t req_threads = 0) : vv_()
     {
-        assert(base.size() > 0);
+        assert(base.vv_.size() > 0);
 
-        auto rows = static_cast<idx_t>(base.size());
-        auto cols = static_cast<idx_t>(base[0].size());
-        auto get_val = [&base, E, M, B](idx_t i, idx_t j) { return clib::Flexfloat::pack(base[i][j], {E, M, B}); };
+        auto rows = static_cast<idx_t>(base.vv_.size());
+        auto cols = static_cast<idx_t>(base.vv_[0].size());
+        auto get_val = [&base, &params](idx_t i, idx_t j) {
+            return clib::Flexfloat::pack(base.vv_[i][j], params);
+        };
 
         _ctor_implt(rows, cols, get_val, req_threads);
     }
-
-    /*! @brief Инициализации изображения массивом
-     *
-     * TODO
-     */
-    static void from_float(const vector<vector<T>> &base, clib::Flexfloat::Etype E, clib::Flexfloat::Etype M, clib::Flexfloat::Etype B,
-        idx_t req_threads = 0)
-        : vv_()
-    {
-        assert(base.size() > 0);
-
-        auto rows = static_cast<idx_t>(base.size());
-        auto cols = static_cast<idx_t>(base[0].size());
-        auto get_val = [&base, E, M, B](idx_t i, idx_t j) { return clib::Flexfloat::pack(base[i][j], {E, M, B}); };
-
-        _ctor_implt(rows, cols, get_val, req_threads);
-    }
-
 
 #ifdef PYBIND
     img(const py::array &base) : vv_()
@@ -234,13 +212,6 @@ template <typename T> class img final
         // Собираем промежуточные суммы с потоков
         return modulus_sum(results);
     }
-    [[synthesizer_func(Flexfloat::sum)]] //
-    [[synthesizer_in(in)]]               //
-    [[synthesizer_out(out)]]
-    static void sum(const img<T> &in, T &out)
-    {
-        out = in.sum();
-    }
 
     /// @brief Подсчет среднего двумерного массива
     T mean() const
@@ -300,63 +271,56 @@ template <typename T> class img final
 
         return res;
     }
-    [[synthesizer_func(Flexfloat::Add)]] //
-    [[synthesizer_in(lhs, rhs)]]         //
-    [[synthesizer_out(res)]]
-    static void add(const img<T> &rhs, const img<T> &lhs, img<T> &res)
+    static void add(const img<T> &lhs, const img<T> &rhs, img<T> &res)
     {
-        assert(rhs.rows_ == lhs.rows_ == res.rows_);
-        assert(rhs.cols_ == lhs.cols_ == res.cols_);
+        assert((rhs.rows_ == lhs.rows_) == res.rows_);
+        assert((rhs.cols_ == lhs.cols_) == res.cols_);
 
         for_each(res.rows(), res.cols(),
                  [&](idx_t i, idx_t j) { T::sum(lhs.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
     }
-    static void add(const img<T> &rhs, const T &lhs, img<T> &res)
+    static void add(const img<T> &lhs, const T &rhs, img<T> &res)
     {
         assert(rhs.rows_ == res.rows_);
         assert(rhs.cols_ == res.cols_);
 
-        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sum(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
+        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sum(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
     }
-    static void add(const T &rhs, const img<T> &lhs, img<T> &res)
+    static void add(const T &lhs, const img<T> &rhs, img<T> &res)
     {
         assert(lhs.rows_ == res.rows_);
         assert(lhs.cols_ == res.cols_);
 
-        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sum(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
+        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sum(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
     }
-
-    img operator*(const T & rhs) const
+    img operator*(const T &rhs) const
     {
         img res(*this);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], rhs, res.vv_[i][j]); });
 
         return res;
     }
-    [[synthesizer_func(Flexfloat::Mult)]] //
-    [[synthesizer_in(lhs, rhs)]]          //
-    [[synthesizer_out(res)]]
-    static void mult(const img<T> &rhs, const img<T> &lhs, img<T> &res)
+    static void mult(const img<T> &lhs, const img<T> &rhs, img<T> &res)
     {
-        assert(rhs.rows_ == lhs.rows_ == res.rows_);
-        assert(rhs.cols_ == lhs.cols_ == res.cols_);
+        assert((rhs.rows_ == lhs.rows_) == res.rows_);
+        assert((rhs.cols_ == lhs.cols_) == res.cols_);
 
         for_each(res.rows(), res.cols(),
                  [&](idx_t i, idx_t j) { T::mult(lhs.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
     }
-    static void mult(const img<T> &rhs, const T &lhs, img<T> &res)
+    static void mult(const img<T> &lhs, const T &rhs, img<T> &res)
     {
         assert(rhs.rows_ == res.rows_);
         assert(rhs.cols_ == res.cols_);
 
-        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::mult(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
+        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::mult(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
     }
-    static void mult(const T &rhs, const img<T> &lhs, img<T> &res)
+    static void mult(const T &lhs, const img<T> &rhs, img<T> &res)
     {
         assert(lhs.rows_ == res.rows_);
         assert(lhs.cols_ == res.cols_);
 
-        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::mult(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
+        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::mult(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
     }
 
     img operator-(const T &rhs) const
@@ -366,30 +330,27 @@ template <typename T> class img final
 
         return res;
     }
-    [[synthesizer_func(Flexfloat::Sub)]] //
-    [[synthesizer_in(lhs, rhs)]]         //
-    [[synthesizer_out(res)]]
-    static void sub(const img<T> &rhs, const img<T> &lhs, img<T> &res)
+    static void sub(const img<T> &lhs, const img<T> &rhs, img<T> &res)
     {
-        assert(rhs.rows_ == lhs.rows_ == res.rows_);
-        assert(rhs.cols_ == lhs.cols_ == res.cols_);
+        assert((rhs.rows_ == lhs.rows_) == res.rows_);
+        assert((rhs.cols_ == lhs.cols_) == res.cols_);
 
         for_each(res.rows(), res.cols(),
                  [&](idx_t i, idx_t j) { T::sub(lhs.vv_[i][j], rhs.vv_[i][j], res.vv_[i][j]); });
     }
-    static void sub(const img<T> &rhs, const T &lhs, img<T> &res)
+    static void sub(const img<T> &lhs, const T &rhs, img<T> &res)
     {
         assert(rhs.rows_ == res.rows_);
         assert(rhs.cols_ == res.cols_);
 
-        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sub(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
+        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sub(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
     }
-    static void sub(const T &rhs, const img<T> &lhs, img<T> &res)
+    static void sub(const T &lhs, const img<T> &rhs, img<T> &res)
     {
         assert(lhs.rows_ == res.rows_);
         assert(lhs.cols_ == res.cols_);
 
-        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sub(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
+        for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sub(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
     }
 
     img operator/(const T &rhs) const
@@ -405,9 +366,6 @@ template <typename T> class img final
         for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
         return res;
     }
-    [[synthesizer_func(Flexfloat::Inv)]] //
-    [[synthesizer_in(x)]]                //
-    [[synthesizer_out(res)]]
     static void inv(const img<T> &x, img<T> &res)
     {
         assert(x.rows_ == res.rows_);
@@ -548,7 +506,6 @@ template <typename T> class img final
 
         work(nthreads, rows, do_func);
     }
-
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
     template <typename Func, typename... Args> static void work(idx_t nthreads, idx_t rows, Func func, Args... args)

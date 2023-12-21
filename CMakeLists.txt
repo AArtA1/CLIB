@@ -85,6 +85,7 @@ set(MY_SOURCES
     src/clib/image.cpp
     src/clib/ImgView.cpp
     src/clib/VideoView.cpp
+    src/clib/synth.cpp
 )
 
 ###################################################################################################

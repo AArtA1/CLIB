@@ -84,7 +84,8 @@ Flexfloat::Flexfloat(const Flexfloat &hyperparams, mtype value) : B(0), E(0), M(
 
 Flexfloat Flexfloat::pack(const Flexfloat& in, hyper_params req_hyperparams)
 {
-    return normalise(in.s, in.e, in.m, in.M, req_hyperparams);
+    mexttype in_m = unzip(in);
+    return normalise(in.s, in.e, in_m, in.M, req_hyperparams);
 }
 
 Flexfloat Flexfloat::ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n)
