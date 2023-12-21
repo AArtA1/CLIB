@@ -5,7 +5,7 @@
 namespace clib
 {
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
 #define $(...) __VA_ARGS__
 #else
 #define $(...) ;
@@ -29,10 +29,10 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n) : I(I_n), F(F_n), s(0), n(0)
 {
 }
 
-Flexfixed::Flexfixed(Itype I_n, Ftype F_n, nrestype value) : I(I_n), F(F_n), s(0), n(0)
+Flexfixed::Flexfixed(Itype I_n, Ftype F_n, nrestype val) : I(I_n), F(F_n), s(0), n(0)
 {
-    s = static_cast<stype>(value >> (I_n + F_n));
-    n = static_cast<ntype>(((static_cast<ntype>(1) << (I_n + F_n)) - 1) & value);
+    s = static_cast<stype>(val >> (I_n + F_n));
+    n = static_cast<ntype>(((static_cast<ntype>(1) << (I_n + F_n)) - 1) & val);
 
     if (!is_valid())
     {
@@ -74,7 +74,7 @@ void Flexfixed::mult(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
     }
     else
     {
-        res_n = res_n << abs(delta_f);
+        res_n = res_n << std::abs(delta_f);
     }
 
     res_n = check_ovf(res_n, res.I, res.F);
@@ -150,32 +150,32 @@ void Flexfixed::sub(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
     Flexfixed::sum(lhs, rhs_temp, res);
 }
 
-void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
+void Flexfixed::inv(const Flexfixed &val, Flexfixed &res)
 {
 #ifndef NDEBUG
     CLOG(trace) << "Number inv";
-    check_fxs({value, res});
-    CLOG(trace) << "Value: " << value;
+    check_fxs({val, res});
+    CLOG(trace) << "val: " << val;
 #endif
 
-    res.s = value.s;
+    res.s = val.s;
 
     // overflow
-    if (value.n == 0)
+    if (val.n == 0)
     {
         res.n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
 #ifndef NDEBUG
         CLOG(trace) << "IS_OVERFLOW: TRUE";
-        CLOG(trace) << "Result of value inv: " << res;
+        CLOG(trace) << "Result of val inv: " << res;
 #endif
         return;
     }
 
-    wtype L = msb(value);
+    wtype L = msb(val);
 
     wtype R = L + 1;
 
-    nrestype res_n = ((static_cast<ntype>(1) << L) + (static_cast<ntype>(1) << R) - value.n) << (value.F + res.F);
+    nrestype res_n = ((static_cast<ntype>(1) << L) + (static_cast<ntype>(1) << R) - val.n) << (val.F + res.F);
 
 #ifdef LSB
     uint8_t lsb = (res_n >> (L + R - 1)) % 2;
@@ -194,7 +194,7 @@ void Flexfixed::inv(const Flexfixed &value, Flexfixed &res)
     res.n = static_cast<ntype>(res_n);
 
 
-    $(CLOG(trace) << "Result of value inv: " << res << std::endl);
+    $(CLOG(trace) << "Result of val inv: " << res << std::endl);
 }
 
 Flexfixed::wtype Flexfixed::msb(const Flexfixed &val)
@@ -223,7 +223,6 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
 }
 
 
-
 Flexfixed Flexfixed::from_float(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, float flt)
 {
 #ifndef NDEBUG
@@ -248,6 +247,55 @@ Flexfixed Flexfixed::from_float(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, floa
 
     return result;
 }
+
+void Flexfixed::min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
+{
+#ifdef EN_LOGS
+    CLOG(trace) << "min";
+    Flexfloat::check_ffs({lhs, rhs, res});
+    CLOG(trace) << "first: " << lhs;
+    CLOG(trace) << "second: " << rhs;
+#endif
+    if (lhs > rhs)
+        res = rhs;
+    else
+        res = lhs;
+
+}
+
+void Flexfixed::max(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
+{
+#ifdef EN_LOGS
+    CLOG(trace) << "max";
+    Flexfloat::check_ffs({lhs, rhs, res});
+    CLOG(trace) << "first: " << lhs;
+    CLOG(trace) << "second: " << rhs;
+#endif
+    if (lhs < rhs)
+        res = rhs;
+    else
+        res = lhs;
+}
+
+void Flexfixed::clip(const Flexfixed &a, const Flexfixed &x, const Flexfixed &b, Flexfixed &out)
+{
+#ifdef EN_LOGS
+    CLOG(trace) << "clip";
+    Flexfixed::check_fxs({a, x, b, out});
+    CLOG(trace) << "a: " << a;
+    CLOG(trace) << "x: " << x;
+    CLOG(trace) << "b: " << b;
+#endif
+
+    min(x, b, out);
+    max(a, out, out);
+}
+
+
+// todo 
+// void to_flexfixed(const Flexfloat &val, Flexfixed& res){
+
+// }
 
 
 Flexfixed Flexfixed::from_float(const Flexfixed& hyperparams, float flt)
@@ -330,6 +378,77 @@ bool operator==(const Flexfixed &lhs, const Flexfixed &rhs){
 
 bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs){
     return !(lhs == rhs);
+}
+
+bool operator>=(const Flexfixed &lhs, const Flexfixed &rhs){
+    assert(lhs.I == rhs.I);
+    assert(lhs.F == rhs.F);
+
+    return lhs > rhs || lhs == rhs;
+}
+
+// todo: write without to_float
+bool operator<(const Flexfixed & lhs, const Flexfixed & rhs){
+    assert(lhs.I == rhs.I);
+    assert(lhs.F == rhs.F);
+
+    #ifndef DEPRECATED_OPERATORS
+    // the same sign
+    if(lhs.s == rhs.s)
+        // sign is zero
+        return lhs.s == 0? lhs.n < rhs.n: lhs.n > rhs.n;
+
+    return lhs.s == 0?true:false;
+    #endif
+
+    #ifdef DEPRECATED_OPERATORS
+    return lhs.to_float() > rhs.to_float();
+    #endif
+}
+
+bool operator<=(const Flexfixed &lhs, const Flexfixed &rhs){
+    return lhs < rhs || lhs == rhs;
+}
+
+bool operator==(const Flexfixed &lhs, const Flexfixed &rhs){
+    return lhs.n == rhs.n && lhs.s == rhs.s;
+}
+
+bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs){
+    return !(lhs == rhs);
+}
+
+void Flexfixed::abs(const Flexfixed& val, Flexfixed &res){
+#ifdef EN_LOGS
+    CLOG(trace) << "abs";
+    Flexfloat::check_ffs({val,res});
+    CLOG(trace) << "Value: " << val;
+    CLOG(trace) << "Result: " << res;
+#endif
+
+    assert(val.I == res.I);
+    assert(val.F == res.F);
+
+    res.n = val.n;
+    res.s = 0;
+    $(CLOG(trace) << "res: " << res);
+}
+
+
+void Flexfixed::negative(const Flexfixed &val,Flexfixed &res){
+#ifdef EN_LOGS
+    CLOG(trace) << "negative";
+    Flexfloat::check_ffs({val,res});
+    CLOG(trace) << "Value: " << val;
+    CLOG(trace) << "Result: " << res;
+#endif
+
+    assert(val.I == res.I);
+    assert(val.F == res.F);
+
+    res.n = val.n;
+    res.s = val.s >= 1?0:1;
+    $(CLOG(trace) << "res: " << res);
 }
 
 

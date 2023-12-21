@@ -1,9 +1,13 @@
 #pragma once
 #include "Flexfixed.hpp"
+#include "Flexfloat.hpp"
 #include "common.hpp"
 
 namespace clib
 {
+
+class Flexfloat;
+
 /*!
  * \brief Число с фиксированной запятой.
  *
@@ -48,8 +52,8 @@ class Flexfixed
     /// @brief Конструктор для создания Flexfixed по целочисленному значению
     /// @param I_n Ширина целочисленной части
     /// @param F_n Ширина дробной части
-    /// @param value Целочисленное значение для отображения в виде Flexfixed
-    Flexfixed(Itype I_n, Ftype F_n, nrestype value);
+    /// @param val Целочисленное значение для отображения в виде Flexfixed
+    Flexfixed(Itype I_n, Ftype F_n, nrestype val);
 
     /*! @brief Создает Flexfixed
      *
@@ -69,16 +73,16 @@ class Flexfixed
 
     /*! @brief Умножение Flexfixed
      *
-     * \param[in] left Левый операнд
-     * \param[in] right Правый операнд
+     * \param[in] lhs Левый операнд
+     * \param[in] rhs Правый операнд
      * \param[in] res Результат
      */
-    static void mult(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void mult(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
 
     /// @brief Взятие обратного элемента (1/x)
-    /// @param value Операнд
+    /// @param val Операнд
     /// @param res Результат
-    static void inv(const Flexfixed &value, Flexfixed &res);
+    static void inv(const Flexfixed &val, Flexfixed &res);
 
     /// @brief Нахождение Most Significant Bit (самый крайний ненулевой бит) для
     /// n
@@ -90,19 +94,21 @@ class Flexfixed
 
     /*! @brief Сложение Flexfixed
      *
-     * \param[in] left Левый операнд
-     * \param[in] right Правый операнд
+     * \param[in] lhs Левый операнд
+     * \param[in] rhs Правый операнд
      * \param[in] res Результат
      */
-    static void sum(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void sum(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
 
     /*! @brief Вычитание Flexfixed
      *
-     * \param[in] left Левый операнд
-     * \param[in] right Правый операнд
+     * \param[in] lhs Левый операнд
+     * \param[in] rhs Правый операнд
      * \param[in] res Результат
      */
-    static void sub(const Flexfixed &left, const Flexfixed &right, Flexfixed &res);
+    static void sub(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
+
+    static void log2(const Flexfixed &val, const Flexfixed &res);
 
     static nrestype check_ovf(nrestype n, Itype I, Ftype F);
 
@@ -123,8 +129,8 @@ class Flexfixed
     std::string bits(const Flexfixed &fx) const;
 
     /// @brief Сравнивает два Flexfixed значения
-    /// @param left Левый операнд
-    /// @param right Правый операнд
+    /// @param lhs Левый операнд
+    /// @param rhs Правый операнд
     /// @return Возвращает true, если левое значение больше первого, иначе
     /// false.
     friend bool operator>(const Flexfixed &lhs, const Flexfixed &rhs);
@@ -138,6 +144,14 @@ class Flexfixed
     friend bool operator==(const Flexfixed &lhs, const Flexfixed &rhs);
 
     friend bool operator!=(const Flexfixed &lhs,const Flexfixed &rhs);
+
+    static void negative(const Flexfixed &val,Flexfixed &res);
+    
+    static void min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
+    
+    static void max(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res);
+
+    static void clip(const Flexfixed &a, const Flexfixed &x, const Flexfixed &b, Flexfixed &out);
 
     /// @brief Перегруженный оператор вывода << для представления экземпляра
     /// Flexfixed в виде строки
@@ -183,6 +197,8 @@ class Flexfixed
         return n >> F;
     }
 
+    static void abs(const Flexfixed& val, Flexfixed& res);
+
     //! \return Возвращает последние F бит от n - дробные биты числа.
     inline ntype get_frac() const
     {
@@ -212,7 +228,7 @@ class Flexfixed
     }
 
     // todo
-    // static void convert_ff_to_fx(const Flexfloat& value, Flexfixed& res);
+    friend void to_flexfixed(const Flexfloat &val, Flexfixed& res);
 
     static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
 

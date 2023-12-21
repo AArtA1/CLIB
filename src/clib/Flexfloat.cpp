@@ -609,6 +609,7 @@ bool operator>(const Flexfloat &lhs, const Flexfloat &rhs)
         return lhs.s == 1;
 
     assert(0);
+    return 0;
 }
 bool operator==(const Flexfloat &lhs, const Flexfloat &rhs)
 {
@@ -674,6 +675,38 @@ void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b,
     max(a, out, out);
 }
 
+
+void to_flexfloat(const Flexfixed &value, Flexfloat& res){
+#ifdef EN_LOGS
+    CLOG(trace) << "from_fx_to_ff";
+    Flexfloat::check_ffs({value,res});
+    CLOG(trace) << "value: " << value;
+#endif
+
+    Flexfixed::wtype msb = Flexfixed::msb(value);
+
+    assert(res.max_exp() > static_cast<Flexfloat::etype>(msb + res.B - value.get_F()));
+    res.e = static_cast<Flexfloat::etype>(msb + res.B - value.get_F());
+
+    assert(res.e < res.max_exp());
+
+    Flexfixed::wtype delta = msb - res.M;
+
+    if(delta >= 0){
+        assert(res.max_mant() > (value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) >> delta);
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) >> delta);
+    }
+    else {
+        assert(res.max_mant() > (value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) << -delta);
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) << -delta);
+    }
+
+    assert(res.m < res.max_mant());
+
+    $(CLOG(trace) << "res: " << res);
+}
+
+
 //
 // See
 // gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_normalize.pdf
@@ -720,8 +753,8 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
         cur_exp = 0;
     };
 
-    eexttype delta_m = (cur_mant > 0) ? abs<eexttype>(msb(cur_mant) - curM) : 0;
-    eexttype delta_e = abs<eexttype>(cur_exp - max_exp(res.E));
+    eexttype delta_m = (cur_mant > 0) ? std::abs(msb(cur_mant) - curM) : 0;
+    eexttype delta_e = std::abs(cur_exp - max_exp(res.E));
 
     if (cur_exp <= 0)
     {
@@ -810,6 +843,23 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
     return Flexfloat(res.E, res.M, res.B, cur_sign, exp, mant);
 }
 
+void Flexfloat::negative(const Flexfloat &val, Flexfloat &res){
+#ifdef EN_LOGS
+    CLOG(trace) << "negative";
+    Flexfloat::check_ffs({val,res});
+    CLOG(trace) << "Value: " << val;
+    CLOG(trace) << "Result: " << res;
+#endif
+
+    assert(val.E == res.E);
+    assert(val.M == res.M);
+
+    res.e = val.e;
+    res.m = val.m;
+    res.s = val.s >= 1?0:1;
+    $(CLOG(trace) << "res: " << res);
+}
+
 // if e > 0  -> normalized value   -> m' = 2^M + m
 // if e == 0 -> denormalized value -> m' = 2*m
 Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype curM, Mtype reqM)
@@ -846,6 +896,25 @@ Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype curM, Mty
     assert(ext_mant <= max_mant(reqM));
     return static_cast<mtype>(ext_mant);
 }
+
+
+void Flexfloat::abs(const Flexfloat& val, Flexfloat &res){
+#ifdef EN_LOGS
+    CLOG(trace) << "abs";
+    Flexfloat::check_ffs({val,res});
+    CLOG(trace) << "Value: " << val;
+    CLOG(trace) << "Result: " << res;
+#endif
+
+    assert(val.E == res.E);
+    assert(val.M == res.M);
+
+    res.e = val.e;
+    res.m = val.m;
+    res.s = 0;
+    $(CLOG(trace) << "res: " << res);
+}
+
 
 // if e > 0  -> normalized value   -> m' = 2^M + m
 // if e == 0 -> denormalized value -> m' = 2*m
