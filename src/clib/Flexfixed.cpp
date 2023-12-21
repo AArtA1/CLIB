@@ -399,15 +399,13 @@ void Flexfixed::log2(const Flexfixed &val, Flexfixed &res)
 
     wtype L = msb(val);
 
-    wtype R = L + 1;
-
     nrestype res_n = (val.get_n() - (static_cast<nrestype>(1) << L)) << res.F;
 
 #ifdef LSB
     uint8_t lsb = (res_n >> (L - 1)) % 2;
 #endif
 
-    res_n = res_n >> (L + R);
+    res_n = res_n >> L;
 
 #ifdef LSB
     res_n += lsb;
@@ -416,12 +414,12 @@ void Flexfixed::log2(const Flexfixed &val, Flexfixed &res)
     if (L >= val.F)
     {
         res.s = 0;
-        res_n = res_n + ((L - val.F) << res.F);
+        res_n = res_n + (static_cast<nrestype>(L - val.F) << res.F);
     }
     else
     {
         res.s = 1;
-        res_n = ((val.F - L) << res.F) - res_n;
+        res_n = (static_cast<nrestype>(val.F - L) << res.F) - res_n;
     }
 
     res_n = check_ovf(res_n, res.I, res.F);
