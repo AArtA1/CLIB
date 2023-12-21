@@ -44,7 +44,7 @@ template <typename T> class video
             [&](idx_t st_fr, idx_t en_fr, idx_t rows, idx_t cols) {
                 for (idx_t fr = st_fr; fr < en_fr; ++fr)
                 {
-                    auto cur_img = img_rgb<T>(prototype, rows, cols, 0);
+                    auto cur_img = img_rgb<T>(prototype, rows, cols, 1);
                     for (idx_t clr = 0; clr < 3; ++clr)
                         for (idx_t i = 0; i < rows; ++i)
                             for (idx_t j = 0; j < cols; ++j)
