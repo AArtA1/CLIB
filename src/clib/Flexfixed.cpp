@@ -378,51 +378,59 @@ bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs)
     return !(lhs == rhs);
 }
 
-// void Flexfixed::log2(const Flexfixed &val, Flexfixed &res)
-// {
-// #ifndef EN_LOGS
-//     CLOG(trace) << "Number inv";
-//     Flexfixed::check_fxs({val, res});
-//     CLOG(trace) << "val: " << val;
-// #endif
+void Flexfixed::log2(const Flexfixed &val, Flexfixed &res)
+{
+#ifndef EN_LOGS
+    CLOG(trace) << "Number inv";
+    Flexfixed::check_fxs({val, res});
+    CLOG(trace) << "val: " << val;
+#endif
 
-//     res.s = val.s;
+    // overflow
+    if (val.n == 0)
+    {
+        res.n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
+#ifndef EN_LOGS
+        CLOG(trace) << "IS_OVERFLOW: TRUE";
+        CLOG(trace) << "Result of val inv: " << res;
+#endif
+        return;
+    }
 
-//     // overflow
-//     if (val.n == 0)
-//     {
-//         res.n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
-// #ifndef EN_LOGS
-//         CLOG(trace) << "IS_OVERFLOW: TRUE";
-//         CLOG(trace) << "Result of val inv: " << res;
-// #endif
-//         return;
-//     }
+    wtype L = msb(val);
 
-//     wtype L = msb(val);
+    wtype R = L + 1;
 
-//     wtype R = L + 1;
+    nrestype res_n = (val.get_n() - (static_cast<nrestype>(1) << L)) << res.F;
 
-//     nrestype res_n = ((static_cast<ntype>(1) << L) + (static_cast<ntype>(1) << R) - val.n) << (val.F + res.F);
+#ifdef LSB
+    uint8_t lsb = (res_n >> (L - 1)) % 2;
+#endif
 
-// #ifdef LSB
-//     uint8_t lsb = (res_n >> (L + R - 1)) % 2;
-// #endif
+    res_n = res_n >> (L + R);
 
-//     res_n = res_n >> (L + R);
+#ifdef LSB
+    res_n += lsb;
+#endif
 
-// #ifdef LSB
-//     res_n += lsb;
-// #endif
+    if (L >= val.F)
+    {
+        res.s = 0;
+        res_n = res_n + ((L - val.F) << res.F);
+    }
+    else
+    {
+        res.s = 1;
+        res_n = ((val.F - L) << res.F) - res_n;
+    }
 
-//     // overflow
-//     res_n = check_ovf(res_n, res.I, res.F);
+    res_n = check_ovf(res_n, res.I, res.F);
 
-//     assert(res_n <= std::numeric_limits<ntype>::max());
-//     res.n = static_cast<ntype>(res_n);
+    assert(res_n <= std::numeric_limits<ntype>::max());
+    res.n = static_cast<ntype>(res_n);
 
-//     $(CLOG(trace) << "Result of val inv: " << res << std::endl);
-// }
+    $(CLOG(trace) << "Result of val inv: " << res << std::endl);
+}
 
 void Flexfixed::abs(const Flexfixed &val, Flexfixed &res)
 {
