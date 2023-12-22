@@ -8,11 +8,6 @@
 #include "common.hpp"
 #include "logs.hpp"
 
-#ifdef PYBIND
-namespace py = pybind11;
-#include "pybind11/numpy.h"
-#endif
-
 namespace clib
 {
 /*!
@@ -23,14 +18,16 @@ namespace clib
 using std::vector;
 using pixel_t = ImgView::pixel_t;
 using idx_t = ImgView::idx_t;
-#pragma GCC diagnostic ignored "-Wattributes"
 template <typename T> class img final
 {
     idx_t rows_ = 0; // height of image
     idx_t cols_ = 0; // width of image
-    vector<vector<T>> vv_;
+    
 
   public:
+
+    vector<vector<T>> vv_;
+
     img &operator=(const img &in)
     {
         rows_ = in.rows_;
@@ -39,6 +36,9 @@ template <typename T> class img final
 
         return *this;
     }
+
+
+    img() = default;
 
     /*! @brief Инициализации изображения из другого изображения
      */
@@ -109,25 +109,6 @@ template <typename T> class img final
 
         _ctor_implt(rows, cols, get_val, req_threads);
     }
-
-#ifdef PYBIND
-    img(const py::array &base) : vv_()
-    {
-        assert(base.ndim() == 2);
-        assert(base.shape(0) > 0);
-        assert(base.shape(1) > 0);
-        assert(base.dtype().num() == 7); // int
-
-        auto rows = base.shape(0);
-        auto cols = base.shape(1);
-        auto get_val = [&base](idx_t, idx_t) {
-            float val = static_cast<float>(*(reinterpret_cast<const int *>(base.data(i, j))));
-            vv_[i].push_back(T::from_float(8, 23, 127, val));
-        };
-
-        _ctor_implt(rows, cols, get_val, req_threads);
-    }
-#endif
 
     const vector<vector<T>> vv() const
     {
@@ -459,7 +440,7 @@ template <typename T> class img final
                 view.set(vv_[i][j].to_float(), i, j, clr);
     }
 
-  private:
+
     template <typename Func> void _ctor_implt(idx_t rows, idx_t cols, Func get_val, idx_t req_threads = 0)
     {
         assert(cols > 0);
@@ -487,7 +468,6 @@ template <typename T> class img final
             }
         });
     }
-
     // Выполняет func для каждого элемента в матрице, размерами rows и cols. Работа разделяется по потокам
     // Пример использования в operator+
     template <typename Func> static void for_each(idx_t rows, idx_t cols, Func func)
@@ -506,6 +486,8 @@ template <typename T> class img final
 
         work(nthreads, rows, do_func);
     }
+
+private:
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
     template <typename Func, typename... Args> static void work(idx_t nthreads, idx_t rows, Func func, Args... args)
@@ -907,5 +889,5 @@ template <typename T> img_rgb<T> operator-(const T &lhs, const img_rgb<T> &rhs)
 
     return res;
 }
-#pragma GCC diagnostic warning "-Wattributes"
+
 } // namespace clib

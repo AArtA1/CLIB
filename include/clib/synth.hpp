@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Flexfloat.hpp"
 #include "common.hpp"
 #include "image.hpp"

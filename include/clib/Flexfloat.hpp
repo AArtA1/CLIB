@@ -14,7 +14,6 @@ class Flexfixed;
  *
  * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
  */
-#pragma GCC diagnostic ignored "-Wattributes"
 class Flexfloat
 {
   public:
@@ -334,5 +333,4 @@ class Flexfloat
     bool is_valid() const;
     void static check_ffs(std::initializer_list<Flexfloat> list);
 };
-#pragma GCC diagnostic warning "-Wattributes"
 } // namespace clib
