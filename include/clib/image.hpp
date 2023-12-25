@@ -23,7 +23,6 @@ template <typename T> class img final
     idx_t rows_ = 0; // height of image
     idx_t cols_ = 0; // width of image
     
-
   public:
 
     vector<vector<T>> vv_;
@@ -93,6 +92,19 @@ template <typename T> class img final
         _ctor_implt(rows, cols, get_val, req_threads);
     }
 
+
+    img(vector<vector<T>> && base) : vv_()
+    {
+        assert(base.size() > 0);
+        assert(base[0].size() > 0);
+
+        rows_ = static_cast<idx_t>(base.size());
+        cols_ = static_cast<idx_t>(base[0].size());
+
+        vv_ = base;
+    }
+
+
     /*! @brief Инициализации изображения массивом
      *
      * TODO
@@ -151,7 +163,24 @@ template <typename T> class img final
      */
     T sum(idx_t req_threads = 0) const
     {
+        assert(cols_ != 0);
+        assert(rows_ != 0);
+        
         const idx_t modulus = 3;
+        
+        #ifndef SUM_FIX
+        // brute calculating of sum
+        if(cols_ < modulus || rows_ < modulus){
+            T sum = T::from_float(vv_[0][0],0.0f);
+            for(idx_t i = 0; i < rows_; ++i){
+                for(idx_t j = 0; j < cols_;++j){
+                    T::sum(sum,vv_[i][j],sum);
+                }
+            }
+            return sum;
+        }
+        #endif
+
         auto modulus_sum = [modulus](const vector<T> &line) {
             vector<T> part_sums(line.begin(), line.begin() + modulus);
             // for (idx_t j = 0; j < modulus; ++j)
@@ -209,7 +238,7 @@ template <typename T> class img final
         summ = T::from_float(summ, summ.to_float() /
                                        static_cast<float>(rows_ * cols_)); // comment this if INVERSION works correctly
 
-#ifndef NDEBUG
+#ifdef EN_LOGS
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
         CLOG(debug) << "Volume:" << (rows_ * cols_);
         CLOG(debug) << "Volume inv_value: " << summ;
