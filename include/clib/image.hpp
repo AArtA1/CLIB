@@ -262,15 +262,15 @@ template <typename T> class img final
     }
     static void add(const img<T> &lhs, const T &rhs, img<T> &res)
     {
-        assert(rhs.rows_ == res.rows_);
-        assert(rhs.cols_ == res.cols_);
+        assert(lhs.rows_ == res.rows_);
+        assert(lhs.cols_ == res.cols_);
 
         for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sum(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
     }
     static void add(const T &lhs, const img<T> &rhs, img<T> &res)
     {
-        assert(lhs.rows_ == res.rows_);
-        assert(lhs.cols_ == res.cols_);
+        assert(rhs.rows_ == res.rows_);
+        assert(rhs.cols_ == res.cols_);
 
         for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sum(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
     }
@@ -291,15 +291,15 @@ template <typename T> class img final
     }
     static void mult(const img<T> &lhs, const T &rhs, img<T> &res)
     {
-        assert(rhs.rows_ == res.rows_);
-        assert(rhs.cols_ == res.cols_);
+        assert(lhs.rows_ == res.rows_);
+        assert(lhs.cols_ == res.cols_);
 
         for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::mult(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
     }
     static void mult(const T &lhs, const img<T> &rhs, img<T> &res)
     {
-        assert(lhs.rows_ == res.rows_);
-        assert(lhs.cols_ == res.cols_);
+        assert(rhs.rows_ == res.rows_);
+        assert(rhs.cols_ == res.cols_);
 
         for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::mult(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
     }
@@ -321,15 +321,15 @@ template <typename T> class img final
     }
     static void sub(const img<T> &lhs, const T &rhs, img<T> &res)
     {
-        assert(rhs.rows_ == res.rows_);
-        assert(rhs.cols_ == res.cols_);
+        assert(lhs.rows_ == res.rows_);
+        assert(lhs.cols_ == res.cols_);
 
         for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sub(lhs.vv_[i][j], rhs, res.vv_[i][j]); });
     }
     static void sub(const T &lhs, const img<T> &rhs, img<T> &res)
     {
-        assert(lhs.rows_ == res.rows_);
-        assert(lhs.cols_ == res.cols_);
+        assert(rhs.rows_ == res.rows_);
+        assert(rhs.cols_ == res.cols_);
 
         for_each(res.rows(), res.cols(), [&](idx_t i, idx_t j) { T::sub(lhs, rhs.vv_[i][j], res.vv_[i][j]); });
     }

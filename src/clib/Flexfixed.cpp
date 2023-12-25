@@ -246,7 +246,7 @@ void Flexfixed::min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
 #ifdef EN_LOGS
     CLOG(trace) << "min";
-    Flexfixed::check_ffs({lhs, rhs, res});
+    Flexfixed::check_fxs({lhs, rhs, res});
     CLOG(trace) << "first: " << lhs;
     CLOG(trace) << "second: " << rhs;
 #endif
@@ -260,7 +260,7 @@ void Flexfixed::max(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
 #ifdef EN_LOGS
     CLOG(trace) << "max";
-    Flexfixed::check_ffs({lhs, rhs, res});
+    Flexfixed::check_fxs({lhs, rhs, res});
     CLOG(trace) << "first: " << lhs;
     CLOG(trace) << "second: " << rhs;
 #endif
@@ -434,7 +434,7 @@ void Flexfixed::abs(const Flexfixed &val, Flexfixed &res)
 {
 #ifdef EN_LOGS
     CLOG(trace) << "abs";
-    Flexfloat::check_ffs({val, res});
+    Flexfixed::check_fxs({val, res});
     CLOG(trace) << "Value: " << val;
     CLOG(trace) << "Result: " << res;
 #endif
@@ -451,7 +451,7 @@ void Flexfixed::negative(const Flexfixed &val, Flexfixed &res)
 {
 #ifdef EN_LOGS
     CLOG(trace) << "negative";
-    Flexfloat::check_ffs({val, res});
+    Flexfixed::check_fxs({val, res});
     CLOG(trace) << "Value: " << val;
     CLOG(trace) << "Result: " << res;
 #endif

@@ -685,7 +685,7 @@ void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b,
 void to_flexfloat(const Flexfixed &value, Flexfloat& res){
 #ifdef EN_LOGS
     CLOG(trace) << "from_fx_to_ff";
-    Flexfloat::check_ffs({value,res});
+    Flexfloat::check_ffs({res});
     CLOG(trace) << "value: " << value;
 #endif
 
