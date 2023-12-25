@@ -36,11 +36,10 @@ py::array numpy_img_ff_get(const img<Flexfloat> &base)
     res.resize({base.rows(), base.cols()});
     
     auto set_val = [&base, &res](idx_t i, idx_t j) {
-        *(res.mutable_data(i, j)) = static_cast<int>(base.vv_[i][j].to_float());
+        *(res.mutable_data(i, j)) = static_cast<int>(base(i, j).to_float());
     };
 
     img<Flexfloat>::for_each(base.rows(), base.cols(), set_val);
-
     return res;
 }
 
