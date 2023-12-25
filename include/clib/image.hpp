@@ -23,9 +23,9 @@ template <typename T> class img final
     idx_t rows_ = 0; // height of image
     idx_t cols_ = 0; // width of image
     
-  public:
-
     vector<vector<T>> vv_;
+
+  public:
 
     img &operator=(const img &in)
     {
@@ -444,13 +444,13 @@ template <typename T> class img final
         return res;
     }
 
-    T &operator()(idx_t i, idx_t j)
+    inline T &operator()(idx_t i, idx_t j)
     {
         assert(i < vv_.size());
         assert(j < vv_[0].size());
         return vv_[i][j];
     }
-    const T &operator()(idx_t i, idx_t j) const
+    inline const T &operator()(idx_t i, idx_t j) const
     {
         assert(i < vv_.size());
         assert(j < vv_[0].size());
