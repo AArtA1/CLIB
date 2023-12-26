@@ -1,10 +1,12 @@
 #pragma once
 #include "common.hpp"
 
-#include <boost/log/trivial.hpp>
+#ifdef EN_LOGS
 #include <boost/log/attributes/scoped_attribute.hpp>
+#include <boost/log/trivial.hpp>
 
-namespace clib {
+namespace clib
+{
 
 // We define our own severity levels
 enum severity_level
@@ -20,19 +22,15 @@ enum severity_level
 //
 // global logger
 //
-#ifdef EN_LOGS
-extern boost::log::sources::severity_logger< severity_level > slg;
-#endif
+extern boost::log::sources::severity_logger<severity_level> slg;
 
-// 
+//
 // The operator puts a human-friendly representation of the severity level to the stream
 //
-std::ostream& operator<< (std::ostream& strm, severity_level level);
+std::ostream &operator<<(std::ostream &strm, severity_level level);
 
-#ifdef EN_LOGS
-    #define CLOG(lvl) BOOST_LOG_SEV(slg, lvl)
-    #define LOG(lvl)  BOOST_LOG_SEV(clib::slg, clib::lvl)
-#endif
+#define CLOG(lvl) BOOST_LOG_SEV(slg, lvl)
+#define LOG(lvl) BOOST_LOG_SEV(clib::slg, clib::lvl)
 
 void init_logs();
 
@@ -48,4 +46,6 @@ void turn_logs_off();
 
 void turn_logs_on();
 
-}
+} // namespace clib
+
+#endif
