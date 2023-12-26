@@ -294,6 +294,11 @@ Flexfixed Flexfixed::from_float(const Flexfixed &hyperparams, float flt)
     return from_float(hyperparams.I, hyperparams.F, flt);
 }
 
+void Flexfixed::from_float(float flt, const Flexfixed &in, Flexfixed &out)
+{
+    out = from_float(in, flt);
+}
+
 float Flexfixed::to_float() const
 {
 #ifdef EN_LOGS
@@ -313,6 +318,8 @@ float Flexfixed::to_float() const
 
     return res;
 }
+
+
 
 bool operator>(const Flexfixed &lhs, const Flexfixed &rhs)
 {
