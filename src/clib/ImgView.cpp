@@ -8,7 +8,7 @@ namespace clib{
     void CImgView::init(idx_t rows, idx_t cols, idx_t clrs)
     {
         image_ = cimg_library::CImg<pixel_t>(cols, rows, 1, clrs);
-        img_was_readed_ = true;
+        img_created_ = true;
     }
 
     idx_t CImgView::rows() const
@@ -62,7 +62,7 @@ namespace clib{
         else
             throw std::invalid_argument("Unknown format. Please check again" + path);
 
-        img_was_readed_ = true;
+        img_created_ = true;
     }
 
     void CImgView::write_img(const std::string &path) 
@@ -88,7 +88,7 @@ namespace clib{
 
     void CImgView::check_created() const
     {
-        if (!img_was_readed_)
+        if (!img_created_)
             throw std::runtime_error{"image was not readed"};
     }
 

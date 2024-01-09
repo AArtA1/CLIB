@@ -71,7 +71,7 @@ template <typename T> class img final
     img(const T &prototype, const ImgView &view, idx_t clr = 0, idx_t req_threads = 0) : vv_()
     {
         auto get_val = [&prototype, &view, clr](idx_t i, idx_t j) {
-            return T::from_float(prototype, view.get(i, j, clr));
+            return T::from_float(prototype, static_cast<float>(view.get(i, j, clr)));
         };
         _ctor_implt(view.rows(), view.cols(), get_val, req_threads);
     }
@@ -261,12 +261,14 @@ template <typename T> class img final
     /// @brief Обрезает все числа в двумерном массиве между minn и maxx
     img clip(pixel_t minn = 0, pixel_t maxx = 255) const
     {
+        float minn_f = static_cast<float>(minn);
+        float maxx_f = static_cast<float>(maxx);
         img res(*this);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) {
-            if (vv_[i][j].to_float() < minn)
-                res.vv_[i][j] = T::from_float(vv_[i][j], minn);
-            else if (vv_[i][j].to_float() > maxx)
-                res.vv_[i][j] = T::from_float(vv_[i][j], maxx);
+            if (vv_[i][j].to_float() < minn_f)
+                res.vv_[i][j] = T::from_float(vv_[i][j], minn_f);
+            else if (vv_[i][j].to_float() > maxx_f)
+                res.vv_[i][j] = T::from_float(vv_[i][j], maxx_f);
             else
                 res.vv_[i][j] = vv_[i][j];
         });
@@ -466,7 +468,7 @@ template <typename T> class img final
     {
         for (idx_t i = 0; i < rows_; ++i)
             for (idx_t j = 0; j < cols_; ++j)
-                view.set(vv_[i][j].to_float(), i, j, clr);
+                view.set(static_cast<ImgView::pixel_t>(vv_[i][j].to_float()), i, j, clr);
     }
 
 

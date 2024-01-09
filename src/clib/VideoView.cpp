@@ -7,8 +7,11 @@ namespace clib
 using idx_t = VideoView::idx_t;
 using pixel_t = VideoView::pixel_t;
 
-
-
+void CVideoView::init(idx_t rows, idx_t cols, idx_t colors, idx_t frames)
+{
+    video_ = cimg_library::CImg<pixel_t>(cols, rows, frames, colors);
+    video_created_ = true;
+}
 
 idx_t CVideoView::rows() const
 {
@@ -78,7 +81,7 @@ void CVideoView::write_video(const std::string &path)
         throw std::invalid_argument("Unknown format: " + path);
 }
 
-bool CVideoView::check_ext(const std::string &s, const std::vector<std::string> &exts)
+bool check_ext(const std::string &s, const std::vector<std::string> &exts)
 {
     for (auto ext : exts)
         if (s.substr(s.find_last_of(".") + 1) == ext)

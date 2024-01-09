@@ -21,19 +21,19 @@ namespace clib
 
 const std::vector<std::string> video_extensions = {"mp4","mkv"};
 
-
-
 /*!
  * \brief Обёртка над классом для работы с видео
  *
  * \details Абстрагирует любую библиотеку в набор методов
  */
-struct VideoView
+class VideoView
 {
-    using pixel_t = float;
-    using idx_t = unsigned;
-
+protected:
     size_t fps_;
+
+public:
+    using pixel_t = int;
+    using idx_t = unsigned;
 
     // colors number
     enum spectrum
@@ -42,6 +42,8 @@ struct VideoView
         G = 1,
         B = 2
     };
+
+    virtual void init(idx_t rows, idx_t cols, idx_t colors, idx_t frames) = 0;
 
     virtual idx_t rows() const = 0;   // height
     virtual idx_t cols() const = 0;   // width
@@ -56,18 +58,19 @@ struct VideoView
     virtual void write_video(const std::string &path) = 0;
 
     virtual ~VideoView()
-    {
+    {   
     }
 };
 
-struct CVideoView : VideoView
+class CVideoView : public VideoView
 {
-
-  private:
     cimg_library::CImg<pixel_t> video_;
     bool video_created_ = false;
 
-  public:
+public:
+
+    void init(idx_t rows, idx_t cols, idx_t colors, idx_t frames) override;
+
     idx_t rows() const override;
     
     idx_t cols() const override;
@@ -86,14 +89,12 @@ struct CVideoView : VideoView
 
     void write_video(const std::string &path);
 
-  private:
-    static bool check_ext(const std::string &s, const std::vector<std::string> &exts);
-
+private:
     void check_created() const;
 };
 
 
 size_t get_fps(const std::string& path);
-
+bool check_ext(const std::string &s, const std::vector<std::string> &exts);
 
 } // namespace clib

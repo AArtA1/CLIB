@@ -24,7 +24,7 @@ const std::vector<std::string> image_extensions = {"jpg","jpeg","png"};
  */
 struct ImgView
 {
-    using pixel_t = float;
+    using pixel_t = int;
     using idx_t = unsigned;
 
     // colors number
@@ -34,6 +34,8 @@ struct ImgView
         G = 1,
         B = 2
     };
+
+    virtual void init(idx_t cols, idx_t rows, idx_t colors) = 0;
 
     virtual idx_t rows() const = 0; // height
     virtual idx_t cols() const = 0; // width
@@ -54,13 +56,12 @@ struct ImgView
 struct CImgView : ImgView
 {
 
-  private:
+private:
     cimg_library::CImg<pixel_t> image_;
-    bool img_was_readed_ = false;
+    bool img_created_ = false;
 
-  public:
-    // TODO virtual?????
-    void init(idx_t rows, idx_t cols, idx_t clrs);
+public:
+    void init(idx_t rows, idx_t cols, idx_t colors) override;
     
     idx_t rows() const override;
     
@@ -79,7 +80,7 @@ struct CImgView : ImgView
     
     static bool check_ext(const std::string &s, const std::vector<std::string> &exts);
   
-  private:
+private:
 
     void check_created() const;
 };
