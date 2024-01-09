@@ -22,16 +22,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
-# By default - debug
-if (NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
-    set(CMAKE_BUILD_TYPE "Debug")
-endif()
-
-message("BOOST_LOGS = ${BOOST_LOGS}")
-
 message(STATUS "Текущая операционная система: ${LSB_RELEASE_ID_SHORT}")
-
 
 ###################################################################################################
 ##
@@ -96,9 +87,6 @@ set(MY_SOURCES
 ##
 ###################################################################################################
 
-# add_compile_options(
-#     -fPIC
-# )
 set(MY_FLAGS
 
     -fPIC
@@ -136,6 +124,10 @@ set(MY_FLAGS
     -Wunused-result
 )
 
+if(BOOST_LOGS STREQUAL "ON")
+    list(APPEND MY_FLAGS -DEN_LOGS)
+endif()
+
 if(NOT CMAKE_CXX_EXTENSIONS)
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
@@ -146,7 +138,7 @@ endif()
 ##
 ###################################################################################################
 
-
+message("BOOST_LOGS = ${BOOST_LOGS}")
 if(BOOST_LOGS STREQUAL "ON")
     set(Boost_USE_STATIC_LIBS OFF) 
     set(Boost_USE_MULTITHREADED ON)  
@@ -179,24 +171,18 @@ target_include_directories(clib_headers INTERFACE
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
+target_include_directories(clib_headers SYSTEM INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cimg>
+    ${Boost_INCLUDE_DIRS}
+    ${X11_INCLUDE_DIR}
+    ${PNG_INCLUDE_DIR}
+    ${JPEG_INCLUDE_DIR}
+    ${AVFORMAT_INCLUDE_DIR}
+)
 
 if(BOOST_LOGS STREQUAL "ON")
     target_include_directories(clib_headers SYSTEM INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cimg>
         ${Boost_INCLUDE_DIRS}
-        ${X11_INCLUDE_DIR}
-        ${PNG_INCLUDE_DIR}
-        ${JPEG_INCLUDE_DIR}
-        ${AVFORMAT_INCLUDE_DIR}
-    )
-else()
-    target_include_directories(clib_headers SYSTEM INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cimg>
-        ${X11_INCLUDE_DIR}
-        ${PNG_INCLUDE_DIR}
-        ${JPEG_INCLUDE_DIR}
-        ${AVFORMAT_INCLUDE_DIR}
     )
 endif()
 
@@ -212,28 +198,20 @@ add_library(clib::headers ALIAS clib_headers)
 
 add_library(clib_library ${MY_SOURCES})
 target_compile_options(clib_library PRIVATE ${MY_FLAGS})
-
+target_link_libraries(clib_library 
+    PRIVATE 
+        ${X11_LIBRARIES}
+        ${PNG_LIBRARY}
+        ${JPEG_LIBRARY}
+        ${AVFORMAT_LIBRARY}
+    PUBLIC
+        clib_headers
+)
 
 if(BOOST_LOGS STREQUAL "ON")
     target_link_libraries(clib_library 
-    PRIVATE 
-    ${X11_LIBRARIES}
-    ${PNG_LIBRARY}
-    ${JPEG_LIBRARY}
-    ${AVFORMAT_LIBRARY}
-    PUBLIC
-    ${Boost_LIBRARIES}
-    clib_headers
-    )
-else()
-    target_link_libraries(clib_library 
-    PRIVATE 
-    ${X11_LIBRARIES}
-    ${PNG_LIBRARY}
-    ${JPEG_LIBRARY}
-    ${AVFORMAT_LIBRARY}
-    PUBLIC
-    clib_headers
+        PUBLIC
+            ${Boost_LIBRARIES}
     )
 endif()
 

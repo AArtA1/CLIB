@@ -2,6 +2,8 @@
 #include <clib/Flexfloat.hpp>
 #include "clib/logs.hpp"
 
+#ifdef EN_LOGS
+
 TEST_CASE("Test Flexfloat helpful functions")
 {
     BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Flexfloat helpful functions");
@@ -281,3 +283,4 @@ TEST_CASE("Test Flexfloat mean")
 
     CHECK(1);
 }
+#endif

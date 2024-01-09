@@ -47,5 +47,4 @@ void turn_logs_off();
 void turn_logs_on();
 
 } // namespace clib
-
 #endif
