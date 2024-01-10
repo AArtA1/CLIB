@@ -196,6 +196,7 @@ add_library(clib::headers ALIAS clib_headers)
 
 add_library(clib_library ${MY_SOURCES})
 target_compile_options(clib_library PRIVATE ${MY_FLAGS})
+target_link_options(clib_library PUBLIC -lpthread)
 target_compile_definitions(clib_library PRIVATE ${MY_DEFS})
 target_link_libraries(clib_library 
     PRIVATE 

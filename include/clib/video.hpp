@@ -49,7 +49,7 @@ template <typename T> class video
                         for (idx_t i = 0; i < rows; ++i)
                             for (idx_t j = 0; j < cols; ++j)
                             {
-                                auto val = T::from_float(prototype, view.get(i, j, clr, fr));
+                                auto val = T::from_float(prototype, static_cast<float>(view.get(i, j, clr, fr)));
                                 cur_img(i, j, clr) = val;
                             }
                     frames_[fr] = std::move(cur_img);
@@ -97,7 +97,7 @@ template <typename T> class video
                             for (idx_t j = 0; j < cols; ++j)
                             {
                                 auto val = frames_[fr](i, j, clr).to_float();
-                                view.set(val, i, j, clr, fr);
+                                view.set(static_cast<pixel_t>(val), i, j, clr, fr);
                             }
             },
             view.rows(), view.cols());
@@ -144,7 +144,7 @@ template <typename T> class video
 
         if (nthreads == 1)
         {
-            std::invoke(func, 0, frames, args...);
+            func(0, frames, args...);
             return;
         }
 
@@ -160,7 +160,7 @@ template <typename T> class video
         // Обрабатываем остаток работ
         auto remainder = frames - bsize * tidx;
         if (remainder > 0)
-            std::invoke(func, last_fr, frames, args...);
+            func(last_fr, frames, args...);
 
         // Ждем потоки
         for (idx_t th = 0; th < tidx; ++th)
