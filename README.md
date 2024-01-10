@@ -5,7 +5,7 @@
 ### Before start 
 
 '''
-
+sudo apt-get install libavformat-dev ffmpeg libx11-dev doxygen libboost-all-dev libpng-dev libjpeg-dev
 '''
 
 

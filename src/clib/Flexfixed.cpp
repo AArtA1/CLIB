@@ -110,7 +110,7 @@ void Flexfixed::sum(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 
     nrestype res_n = lhs.s == rhs.s ? lhs_n + rhs_n : lhs_n - rhs_n;
 
-    wtype delta_F = static_cast<wtype>(max_F) - res.F;
+    wtype delta_F = static_cast<wtype>(max_F - res.F);
 
     $(CLOG(trace) << "DELTA_F: " << delta_F);
 
@@ -169,7 +169,7 @@ void Flexfixed::inv(const Flexfixed &val, Flexfixed &res)
 
     wtype L = msb(val);
 
-    wtype R = L + 1;
+    wtype R = static_cast<wtype>(L + static_cast<wtype>(1));
 
     nrestype res_n = ((static_cast<ntype>(1) << L) + (static_cast<ntype>(1) << R) - val.n) << (val.F + res.F);
 
@@ -307,7 +307,7 @@ float Flexfixed::to_float() const
     CLOG(trace) << *this;
 #endif
 
-    float res = static_cast<float>(n) / (static_cast<ntype>(1) << F);
+    float res = static_cast<float>(n) / static_cast<float>((static_cast<ntype>(1) << F));
 
     if (s == 1)
     {

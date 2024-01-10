@@ -528,7 +528,7 @@ private:
 
         if (nthreads == 1)
         {
-            std::invoke(func, 0, rows, args...);
+            func(0, rows, args...);
             return;
         }
 
@@ -544,7 +544,7 @@ private:
         // Обрабатываем остаток работ
         auto remainder = rows - bsize * tidx;
         if (remainder > 0)
-            std::invoke(func, last_row, rows, args...);
+            func(last_row, rows, args...);
 
         // Ждем потоки
         for (idx_t th = 0; th < nthreads; ++th)

@@ -1,14 +1,11 @@
 ## clib
-
 cmake_minimum_required(VERSION 3.14)
-
 
 ##################################################################################################
 ##
 ##      Проверка системы
 ##
 ##################################################################################################
-
 
 message("-- CMAKE_SYSTEM_INFO_FILE: ${CMAKE_SYSTEM_INFO_FILE}")
 message("-- CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}")
@@ -30,14 +27,13 @@ message(STATUS "Текущая операционная система: ${LSB_RE
 ##
 ###################################################################################################
 
-
-# Работает только с g++-12
-find_program(CMAKE_COMPILER NAMES "g++-12")
+# Работает только с g++-8
+find_program(CMAKE_COMPILER NAMES "g++-8")
 if (NOT CMAKE_COMPILER)
-    message(FATAL_ERROR "Установите GCC версии 12.3.0:\
-                         \nsudo apt install g++-12 gcc-12")
+    message(FATAL_ERROR "Установите GCC версии 8.3.0:\
+                         \nsudo apt install g++-8 gcc-8")
 endif()
-set(CXX "g++-12")
+set(CXX "g++-8")
 
 # By default - debug
 if (NOT DEFINED CMAKE_BUILD_TYPE)
@@ -79,7 +75,6 @@ set(MY_SOURCES
     src/clib/VideoView.cpp
     src/clib/synth.cpp
 )
-
 
 ###################################################################################################
 ##
@@ -124,8 +119,10 @@ set(MY_FLAGS
     -Wunused-result
 )
 
+set(MY_DEFS)
+
 if(BOOST_LOGS STREQUAL "ON")
-    list(APPEND MY_FLAGS -DEN_LOGS)
+    list(APPEND MY_DEFS -DBOOST_LOG_DYN_LINK -DEN_LOGS)
 endif()
 
 if(NOT CMAKE_CXX_EXTENSIONS)
@@ -147,7 +144,9 @@ if(BOOST_LOGS STREQUAL "ON")
     set(Boost_INCLUDE_LIBRARIES log log_setup)
     set(BOOST_ENABLE_CMAKE ON)
 
-    find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES}) 
+    find_package(Boost COMPONENTS ${Boost_INCLUDE_LIBRARIES})
+    message("Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
+    message("Boost_LIBRARIES = ${Boost_LIBRARIES}")
 endif()
 
 find_package(PNG REQUIRED)
@@ -157,7 +156,6 @@ find_package(X11 REQUIRED)
 # AVFORMAT Library 
 find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
 find_library(AVFORMAT_LIBRARY avformat REQUIRED)
-
 
 ###################################################################################################
 ##
@@ -186,7 +184,7 @@ if(BOOST_LOGS STREQUAL "ON")
     )
 endif()
 
-target_compile_features(clib_headers INTERFACE cxx_std_17)
+#target_compile_features(clib_headers INTERFACE cxx_std_17)
 
 add_library(clib::headers ALIAS clib_headers)
 
@@ -198,6 +196,7 @@ add_library(clib::headers ALIAS clib_headers)
 
 add_library(clib_library ${MY_SOURCES})
 target_compile_options(clib_library PRIVATE ${MY_FLAGS})
+target_compile_definitions(clib_library PRIVATE ${MY_DEFS})
 target_link_libraries(clib_library 
     PRIVATE 
         ${X11_LIBRARIES}

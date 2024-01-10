@@ -4,6 +4,8 @@ target_link_libraries(clib-unit-tests
     PRIVATE
         clib::library
 )
+target_compile_definitions(clib-unit-tests PRIVATE ${MY_DEFS})
+
 target_include_directories(clib-unit-tests PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clib>

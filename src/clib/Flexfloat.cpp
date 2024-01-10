@@ -124,19 +124,19 @@ Flexfloat Flexfloat::max_norm() const
 
 Flexfloat::etype Flexfloat::max_exp() const
 {
-    return (static_cast<etype>(1) << E) - 1;
+    return (1u << E) - 1;
 }
 Flexfloat::mtype Flexfloat::max_mant() const
 {
-    return (static_cast<mtype>(1) << M) - 1;
+    return (1u << M) - 1;
 }
 Flexfloat::etype Flexfloat::max_exp(Etype E)
 {
-    return (static_cast<etype>(1) << E) - 1;
+    return (1u << E) - 1;
 }
 Flexfloat::mtype Flexfloat::max_mant(Mtype M)
 {
-    return (static_cast<mtype>(1) << M) - 1;
+    return (1u << M) - 1;
 }
 
 Flexfloat::Mtype Flexfloat::msb(mexttype val)
@@ -151,7 +151,7 @@ Flexfloat::Mtype Flexfloat::msb(mexttype val)
         msb++;
     }
 
-    return msb - 1;
+    return static_cast<Mtype>(msb - 1);
 }
 
 bool Flexfloat::is_zero(const Flexfloat &val)
@@ -343,10 +343,10 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
         ext_mant = 1;
 
     auto N = msb(ext_mant);
-    auto n = ext_mant - (1 << msb(ext_mant));
+    auto n = ext_mant - static_cast<mexttype>(1 << msb(ext_mant));
     auto delta_N = denorm.M - N;
 
-    eexttype ext_exp = static_cast<eexttype>(1) - delta_N;
+    eexttype ext_exp = 1 - delta_N;
     ext_mant = n << delta_N;
 
 #ifdef EN_LOGS
@@ -390,7 +390,7 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
     // (1-x)/(1+x) = 1 - x
     if (precision == 0)
     {
-        nexp = -nexp + (x.B + res.B - static_cast<eexttype>(1));
+        nexp = -nexp + (x.B + res.B - 1);
         nmant = static_cast<mexttype>(1 << LM) - nmant - 1;
 
         // normalise expects extended mantissa
@@ -423,7 +423,7 @@ Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n)
 
     Mtype N = msb(static_cast<mexttype>(n));
     mexttype mant = 0;
-    mexttype delta_N = static_cast<mexttype>(n) - (1 << N);
+    mexttype delta_N = static_cast<mexttype>(n - (1 << N));
     if (N > M)
         mant = delta_N >> (N - M);
     else
@@ -450,15 +450,15 @@ int Flexfloat::ceil() const
         return s == 0 ? 1 : -1;
     else if (eps <= M)
     {
-        assert(m / (1 << (M - eps)) < std::numeric_limits<int>::max());
-        int m0 = static_cast<int>(m / (1 << (M - eps)));
+        assert(m / static_cast<mtype>(1 << (M - eps)) < std::numeric_limits<int>::max());
+        int m0 = static_cast<int>(m) / (1 << (M - eps));
         int ceiled = (1 << eps) + m0;
         return s > 0 ? ceiled : -ceiled;
     }
     else
     {
-        size_t shift = static_cast<size_t>(eps - M);
-        int ceiled = static_cast<int>(1 << shift * ((1 << M) + m));
+        int shift = eps - M;
+        int ceiled = 1 << shift * ((1 << M) + static_cast<int>(m));
         return s > 0 ? ceiled : -ceiled;
     }
 }
@@ -485,9 +485,9 @@ float Flexfloat::to_float() const
     // CONVERAION
     nexp = nexp - B + B_FLOAT;
     if (M_FLOAT > M)
-        nmant = nmant * (1 << (M_FLOAT - M));
+        nmant = nmant * static_cast<mexttype>(1 << (M_FLOAT - M));
     else
-        nmant = nmant / (1 << (M - M_FLOAT));
+        nmant = nmant / static_cast<mexttype>(1 << (M - M_FLOAT));
 
 #ifdef EN_LOGS
     CLOG(trace) << std::endl;
@@ -530,9 +530,9 @@ Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
     // CONVERAION
     nexp = nexp - B_FLOAT + B;
     if (M_FLOAT > M)
-        nmant = nmant / (1 << (M_FLOAT - M));
+        nmant = nmant / static_cast<mexttype>(1 << (M_FLOAT - M));
     else
-        nmant = nmant * (1 << (M - M_FLOAT));
+        nmant = nmant * static_cast<mexttype>(1 << (M - M_FLOAT));
 
 #ifdef EN_LOGS
     CLOG(trace) << std::endl;
@@ -695,15 +695,15 @@ void to_flexfloat(const Flexfixed &value, Flexfloat& res){
 
     assert(res.e < res.max_exp());
 
-    Flexfixed::wtype delta = msb - res.M;
+    Flexfixed::wtype delta = static_cast<Flexfixed::wtype>(msb - res.M);
 
     if(delta >= 0){
-        assert(res.max_mant() > (value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) >> delta);
-        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) >> delta);
+        assert(res.max_mant() > (value.get_n() - (1u << msb)) >> delta);
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1u << msb)) >> delta);
     }
     else {
-        assert(res.max_mant() > (value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) << -delta);
-        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (static_cast<Flexfixed::ntype>(1) << msb)) << -delta);
+        assert(res.max_mant() > (value.get_n() - (1u << msb)) << -delta);
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1u << msb)) << -delta);
     }
 
     assert(res.m < res.max_mant());
@@ -749,7 +749,7 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
 
     auto ovf = [&cur_exp, &cur_mant, curM, res]() {
         $(CLOG(trace) << "overflow");
-        cur_mant = max_mant(curM + 1);
+        cur_mant = max_mant(static_cast<Mtype>(curM + 1));
         cur_exp = max_exp(res.E);
     };
     auto unf = [&cur_exp, &cur_mant, curM, res]() {
@@ -950,14 +950,14 @@ Flexfloat::mexttype Flexfloat::unzip(etype exp, mtype mant, Mtype M)
     if (exp == 0)
         return (2 * static_cast<mexttype>(mant));
     else
-        return ((1 << M) + static_cast<mexttype>(mant));
+        return ((1u << M) + static_cast<mexttype>(mant));
 }
 Flexfloat::mexttype Flexfloat::unzip(const Flexfloat &ff)
 {
     if (ff.e == 0)
         return (2 * static_cast<mexttype>(ff.m));
     else
-        return ((1 << ff.M) + static_cast<mexttype>(ff.m));
+        return ((1u << ff.M) + static_cast<mexttype>(ff.m));
 }
 
 bool Flexfloat::is_valid() const
