@@ -1,5 +1,6 @@
 #include "clib/VideoView.hpp"
 #include <limits>
+#include <iostream>
 
 namespace clib
 {
@@ -7,9 +8,10 @@ namespace clib
 using idx_t = VideoView::idx_t;
 using pixel_t = VideoView::pixel_t;
 
-void CVideoView::init(idx_t rows, idx_t cols, idx_t colors, idx_t frames)
+void CVideoView::init(idx_t rows, idx_t cols, idx_t colors, idx_t frames, size_t fps)
 {
     video_ = cimg_library::CImg<pixel_t>(cols, rows, frames, colors);
+    fps_ = fps;
     video_created_ = true;
 }
 

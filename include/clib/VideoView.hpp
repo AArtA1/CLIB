@@ -43,7 +43,7 @@ public:
         B = 2
     };
 
-    virtual void init(idx_t rows, idx_t cols, idx_t colors, idx_t frames) = 0;
+    virtual void init(idx_t rows, idx_t cols, idx_t colors, idx_t frames, size_t fps) = 0;
 
     virtual idx_t rows() const = 0;   // height
     virtual idx_t cols() const = 0;   // width
@@ -69,7 +69,7 @@ class CVideoView : public VideoView
 
 public:
 
-    void init(idx_t rows, idx_t cols, idx_t colors, idx_t frames) override;
+    void init(idx_t rows, idx_t cols, idx_t colors, idx_t frames, size_t fps) override;
 
     idx_t rows() const override;
     
