@@ -130,6 +130,8 @@ template <typename T> class img final
     {
         return vv_;
     }
+
+
     idx_t rows() const
     {
         return static_cast<idx_t>(vv_.size());

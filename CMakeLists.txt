@@ -135,7 +135,7 @@ endif()
 ##
 ###################################################################################################
 
-message("BOOST_LOGS = ${BOOST_LOGS}")
+message(STATUS "BOOST_LOGS = ${BOOST_LOGS}")
 if(BOOST_LOGS STREQUAL "ON")
     set(Boost_USE_STATIC_LIBS OFF) 
     set(Boost_USE_MULTITHREADED ON)  
