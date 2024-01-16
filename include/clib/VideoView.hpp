@@ -33,7 +33,7 @@ protected:
 
 public:
     using pixel_t = int;
-    using idx_t = unsigned;
+    using idx_t = size_t;
 
     // colors number
     enum spectrum

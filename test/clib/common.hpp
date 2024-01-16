@@ -9,13 +9,13 @@
 #include <iomanip> // std::setprecision, std::setw
 #include <iostream>
 #include <iostream> // LOG(clib::debug), std::fixed
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #endif
 
-#ifndef EN_LOGS
+#ifndef BOOST_LOGS
 extern boost::log::sources::severity_logger<clib::severity_level> slg;
 #endif
 

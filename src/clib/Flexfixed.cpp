@@ -5,7 +5,7 @@
 namespace clib
 {
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
 #define $(...) __VA_ARGS__
 #else
 #define $(...) ;
@@ -29,7 +29,7 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n) : I(I_n), F(F_n), s(0), n(0)
 Flexfixed::Flexfixed(Itype I_n, Ftype F_n, nrestype val) : I(I_n), F(F_n), s(0), n(0)
 {
     s = static_cast<stype>(val >> (I_n + F_n));
-    n = static_cast<ntype>(((static_cast<ntype>(1) << (I_n + F_n)) - 1) & val);
+    n = static_cast<ntype>(((1u << (I_n + F_n)) - 1) & val);
 
     if (!is_valid())
     {
@@ -50,7 +50,7 @@ Flexfixed::Flexfixed(Itype I_n, Ftype F_n, stype s_n, ntype n_n) : I(I_n), F(F_n
 // consider we already have res parameters: I and F
 void Flexfixed::mult(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "Addition of two numbers";
     Flexfixed::check_fxs({lhs, rhs, res});
     CLOG(trace) << "lhs  operand: " << lhs;
@@ -85,7 +85,7 @@ void Flexfixed::mult(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 
 void Flexfixed::sum(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "Addition of two numbers";
     Flexfixed::check_fxs({lhs, rhs, res});
     CLOG(trace) << "lhs  operand: " << lhs;
@@ -148,7 +148,7 @@ void Flexfixed::sub(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 
 void Flexfixed::inv(const Flexfixed &val, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "Number inv";
     Flexfixed::check_fxs({val, res});
     CLOG(trace) << "val: " << val;
@@ -159,8 +159,8 @@ void Flexfixed::inv(const Flexfixed &val, Flexfixed &res)
     // overflow
     if (val.n == 0)
     {
-        res.n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
-#ifdef EN_LOGS
+        res.n = (1u << (res.I + res.F)) - 1u;
+#ifdef BOOST_LOGS
         CLOG(trace) << "IS_OVERFLOW: TRUE";
         CLOG(trace) << "Result of val inv: " << res;
 #endif
@@ -171,7 +171,7 @@ void Flexfixed::inv(const Flexfixed &val, Flexfixed &res)
 
     wtype R = L + 1;
 
-    nrestype res_n = ((static_cast<ntype>(1) << L) + (static_cast<ntype>(1) << R) - val.n) << (val.F + res.F);
+    nrestype res_n = ((1u << L) + (1u << R) - val.n) << (val.F + res.F);
 
 #ifdef LSB
     uint8_t lsb = (res_n >> (L + R - 1)) % 2;
@@ -217,34 +217,10 @@ Flexfixed::nrestype Flexfixed::check_ovf(Flexfixed::nrestype n, Flexfixed::Itype
     return n;
 }
 
-Flexfixed Flexfixed::from_float(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, float flt)
-{
-#ifdef EN_LOGS
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "Flexfixed from_float = " << flt;
-#endif
-
-    Flexfixed result(I_n, F_n);
-    result.s = flt > 0 ? 0 : 1;
-
-    nrestype res_n = static_cast<nrestype>(fabs(flt) * (static_cast<ntype>(1) << F_n));
-
-    res_n = check_ovf(res_n, I_n, F_n);
-
-    assert(res_n <= std::numeric_limits<ntype>::max());
-    result.n = static_cast<ntype>(res_n);
-
-#ifdef EN_LOGS
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "Result = " << result;
-#endif
-
-    return result;
-}
 
 void Flexfixed::min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "min";
     Flexfixed::check_fxs({lhs, rhs, res});
     CLOG(trace) << "first: " << lhs;
@@ -258,7 +234,7 @@ void Flexfixed::min(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 
 void Flexfixed::max(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "max";
     Flexfixed::check_fxs({lhs, rhs, res});
     CLOG(trace) << "first: " << lhs;
@@ -272,7 +248,7 @@ void Flexfixed::max(const Flexfixed &lhs, const Flexfixed &rhs, Flexfixed &res)
 
 void Flexfixed::clip(const Flexfixed &a, const Flexfixed &x, const Flexfixed &b, Flexfixed &out)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "clip";
     Flexfixed::check_fxs({a, x, b, out});
     CLOG(trace) << "a: " << a;
@@ -284,24 +260,99 @@ void Flexfixed::clip(const Flexfixed &a, const Flexfixed &x, const Flexfixed &b,
     max(a, out, out);
 }
 
-// todo
-// void to_flexfixed(const Flexfloat &val, Flexfixed& res){
-
-// }
-
-Flexfixed Flexfixed::from_float(const Flexfixed &hyperparams, float flt)
+Flexfixed Flexfixed::from_arithmetic_t(Flexfixed::Itype I_n, Flexfixed::Ftype F_n, float flt)
 {
-    return from_float(hyperparams.I, hyperparams.F, flt);
+#ifdef BOOST_LOGS
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "Flexfixed from float = " << flt;
+#endif
+
+    Flexfixed result(I_n, F_n);
+    result.s = flt > 0 ? 0 : 1;
+
+    nrestype res_n = static_cast<nrestype>(fabs(flt) * (static_cast<ntype>(1) << F_n));
+
+    res_n = check_ovf(res_n, I_n, F_n);
+
+    assert(res_n <= std::numeric_limits<ntype>::max());
+    result.n = static_cast<ntype>(res_n);
+
+#ifdef BOOST_LOGS
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "Result = " << result;
+#endif
+
+    return result;
+}
+Flexfixed Flexfixed::from_arithmetic_t(const Flexfixed &hyperparams, float flt)
+{
+    return from_arithmetic_t(hyperparams.I, hyperparams.F, flt);
 }
 
-void Flexfixed::from_float(float flt, const Flexfixed &in, Flexfixed &out)
+void Flexfixed::from_arithmetic_t(float flt, const Flexfixed &in, Flexfixed &out)
 {
-    out = from_float(in, flt);
+    out = from_arithmetic_t(in, flt);
+}
+
+Flexfixed Flexfixed::from_arithmetic_t(Itype I_n, Ftype F_n, long unsigned n)
+{
+#ifdef BOOST_LOGS
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "Flexfixed from long unsigned = " << n;
+#endif
+    if (n > (1 << I_n) - 1u)
+    {
+        throw std::runtime_error{"Flexfixed overflow. Can not fit long unsigned n in Flexfixed"};
+    }
+
+    Flexfixed result(I_n, F_n);
+    result.s = 0;
+    result.n = n << F_n;
+
+    return result;
+}
+Flexfixed Flexfixed::from_arithmetic_t(const Flexfixed &hyperparams, long unsigned n)
+{
+    return from_arithmetic_t(hyperparams.I, hyperparams.F, n);
+}
+void Flexfixed::from_arithmetic_t(long unsigned n, const Flexfixed &in, Flexfixed &out)
+{
+    out = from_arithmetic_t(in, n);
+}
+
+Flexfixed Flexfixed::from_arithmetic_t(Itype I_n, Ftype F_n, int n)
+{
+#ifdef BOOST_LOGS
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "Flexfixed from int = " << n;
+#endif
+    stype sign = n > 0 ? 0 : 1;
+    n = (n < 0) ? -n : n;
+    unsigned n_uns = static_cast<unsigned>(n);
+
+    if (n_uns > (1 << I_n) - 1u)
+    {
+        throw std::runtime_error{"Flexfixed overflow. Can not fit int n in Flexfixed"};
+    }
+
+    Flexfixed result(I_n, F_n);
+    result.s = sign;
+    result.n = n_uns << F_n;
+
+    return result;
+}
+Flexfixed Flexfixed::from_arithmetic_t(const Flexfixed &hyperparams, int n)
+{
+    return from_arithmetic_t(hyperparams.I, hyperparams.F, n);
+}
+void Flexfixed::from_arithmetic_t(int n, const Flexfixed &in, Flexfixed &out)
+{
+    out = from_arithmetic_t(in, n);
 }
 
 float Flexfixed::to_float() const
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Flexfixed to_float";
     CLOG(trace) << *this;
@@ -387,7 +438,7 @@ bool operator!=(const Flexfixed &lhs, const Flexfixed &rhs)
 
 void Flexfixed::log2(const Flexfixed &val, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "Number inv";
     Flexfixed::check_fxs({val, res});
     CLOG(trace) << "val: " << val;
@@ -397,7 +448,7 @@ void Flexfixed::log2(const Flexfixed &val, Flexfixed &res)
     if (val.n == 0)
     {
         res.n = (static_cast<ntype>(1) << (res.I + res.F)) - 1;
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
         CLOG(trace) << "IS_OVERFLOW: TRUE";
         CLOG(trace) << "Result of val inv: " << res;
 #endif
@@ -439,7 +490,7 @@ void Flexfixed::log2(const Flexfixed &val, Flexfixed &res)
 
 void Flexfixed::abs(const Flexfixed &val, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "abs";
     Flexfixed::check_fxs({val, res});
     CLOG(trace) << "Value: " << val;
@@ -456,7 +507,7 @@ void Flexfixed::abs(const Flexfixed &val, Flexfixed &res)
 
 void Flexfixed::negative(const Flexfixed &val, Flexfixed &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "negative";
     Flexfixed::check_fxs({val, res});
     CLOG(trace) << "Value: " << val;

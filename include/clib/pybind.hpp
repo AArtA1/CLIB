@@ -20,8 +20,8 @@ img<Flexfloat> numpy_img_ff_set(const py::array &base)
     auto cols = base.shape(1);
     
     auto get_val = [&base](idx_t i, idx_t j) {
-        float val = static_cast<float>(*(reinterpret_cast<const int *>(base.data(i, j))));
-        return Flexfloat::from_float(8, 23, 127, val);
+        auto val = *(reinterpret_cast<const int *>(base.data(i, j)));
+        return Flexfloat::from_arithmetic_t(8, 23, 127, val);
     };
 
     img<Flexfloat> res{};
@@ -36,7 +36,7 @@ py::array numpy_img_ff_get(const img<Flexfloat> &base)
     res.resize({base.rows(), base.cols()});
     
     auto set_val = [&base, &res](idx_t i, idx_t j) {
-        *(res.mutable_data(i, j)) = static_cast<int>(base(i, j).to_float());
+        *(res.mutable_data(i, j)) = base(i, j).to_int();
     };
 
     img<Flexfloat>::for_each(base.rows(), base.cols(), set_val);

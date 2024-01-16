@@ -1,6 +1,7 @@
 #include "clib/VideoView.hpp"
-#include <limits>
+#include <cassert>
 #include <iostream>
+#include <limits>
 
 namespace clib
 {
@@ -10,7 +11,13 @@ using pixel_t = VideoView::pixel_t;
 
 void CVideoView::init(idx_t rows, idx_t cols, idx_t colors, idx_t frames, size_t fps)
 {
-    video_ = cimg_library::CImg<pixel_t>(cols, rows, frames, colors);
+    assert(rows <= std::numeric_limits<unsigned>::max());
+    assert(cols <= std::numeric_limits<unsigned>::max());
+    assert(frames <= std::numeric_limits<unsigned>::max());
+    assert(colors <= std::numeric_limits<unsigned>::max());
+
+    video_ = cimg_library::CImg<pixel_t>(static_cast<unsigned>(cols), static_cast<unsigned>(rows),
+                                         static_cast<unsigned>(frames), static_cast<unsigned>(colors));
     fps_ = fps;
     video_created_ = true;
 }
@@ -45,7 +52,8 @@ pixel_t CVideoView::get(idx_t i, idx_t j, idx_t clr, idx_t frame) const
     assert(frame < frames());
 
     check_created();
-    return video_(j, i, frame, clr);
+    return video_(static_cast<unsigned>(j), static_cast<unsigned>(i), static_cast<unsigned>(frame),
+                  static_cast<unsigned>(clr));
 }
 
 // CImg stores data as [width,height]. Therefore, the data in cimg are transposed
@@ -57,7 +65,8 @@ void CVideoView::set(pixel_t val, idx_t i, idx_t j, idx_t clr, idx_t frame)
     assert(frame < frames());
 
     check_created();
-    video_(j, i, frame, clr) = val;
+    video_(static_cast<unsigned>(j), static_cast<unsigned>(i), static_cast<unsigned>(frame),
+           static_cast<unsigned>(clr)) = val;
 }
 
 void CVideoView::read_video(const std::string &path)
@@ -110,7 +119,6 @@ size_t get_fps(const std::string &path)
     // Retrieve stream information
     if (avformat_find_stream_info(formatContext, nullptr) < 0)
         throw std::runtime_error("Error finding stream information");
-            
 
     // Find the first video stream
     int videoStreamIndex = -1;
