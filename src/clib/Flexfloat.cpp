@@ -7,7 +7,7 @@
 namespace clib
 {
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
 #define $(...) __VA_ARGS__
 #else
 #define $(...) ;
@@ -22,7 +22,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
 {
     if (!is_valid())
     {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -36,15 +36,17 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
     }
 }
 
-Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) : B(B_n), E(E_n), M(M_n), s(0), e(0), m(0)
+Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, uint32_t value) : B(B_n), E(E_n), M(M_n), s(0), e(0), m(0)
 {
-    m = static_cast<mtype>((value >> 0) & ((1u << M) - 1u));
+    m = (value >> 0) & ((1u << M) - 1u);
+    
+    assert(msb(value) + 1 <= M + B + S);
     e = static_cast<etype>((value >> M) & ((1u << E) - 1u));
     s = static_cast<stype>((value >> (M + E)) & ((1u << S) - 1u));
 
     if (!is_valid())
     {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -57,19 +59,21 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value) : B(B_n), E(E
     }
 }
 
-Flexfloat::Flexfloat(const Flexfloat &hyperparams, mtype value) : B(0), E(0), M(0), s(0), e(0), m(0)
+Flexfloat::Flexfloat(const Flexfloat &hyperparams, uint32_t value) : B(0), E(0), M(0), s(0), e(0), m(0)
 {
     B = hyperparams.get_B();
     E = hyperparams.get_E();
     M = hyperparams.get_M();
 
-    m = static_cast<mtype>((value >> 0) & ((1u << M) - 1u));
+    m = (value >> 0) & ((1u << M) - 1u);
+
+    assert(msb(value) + 1 <= M + B + S);
     e = static_cast<etype>((value >> M) & ((1u << E) - 1u));
     s = static_cast<stype>((value >> (M + E)) & ((1u << S) - 1u));
 
     if (!is_valid())
     {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
         CLOG(error) << "Can not create object. Invalid parameters";
         CLOG(error) << "E = " << E;
         CLOG(error) << "M = " << M;
@@ -124,19 +128,19 @@ Flexfloat Flexfloat::max_norm() const
 
 Flexfloat::etype Flexfloat::max_exp() const
 {
-    return (1u << E) - 1;
+    return (1 << E) - 1;
 }
 Flexfloat::mtype Flexfloat::max_mant() const
 {
-    return (1u << M) - 1;
+    return (1 << M) - 1u;
 }
 Flexfloat::etype Flexfloat::max_exp(Etype E)
 {
-    return (1u << E) - 1;
+    return (1 << E) - 1;
 }
 Flexfloat::mtype Flexfloat::max_mant(Mtype M)
 {
-    return (1u << M) - 1;
+    return (1 << M) - 1u;
 }
 
 Flexfloat::Mtype Flexfloat::msb(mexttype val)
@@ -151,7 +155,7 @@ Flexfloat::Mtype Flexfloat::msb(mexttype val)
         msb++;
     }
 
-    return static_cast<Mtype>(msb - 1);
+    return msb - 1;
 }
 
 bool Flexfloat::is_zero(const Flexfloat &val)
@@ -198,7 +202,7 @@ void Flexfloat::check_ffs(std::initializer_list<Flexfloat> list)
 
 void Flexfloat::mult(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Multiplication of two numbers";
     check_ffs({lhs, rhs, res});
@@ -209,13 +213,15 @@ void Flexfloat::mult(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
     // Corner cases
     if (is_zero(lhs) || is_zero(rhs))
     {
-        res.e = res.m = 0;
+        res.e = 0;
+        res.m = 0;
         res.s = lhs.s ^ rhs.s;
         return;
     }
 
-    uint8_t nsign = lhs.s ^ rhs.s;
-    eexttype nexp = +static_cast<eexttype>(lhs.e) + rhs.e + res.B - lhs.B - rhs.B;
+    // rhs.s and lhs.s can only be 0 or 1
+    stype nsign = static_cast<stype>(lhs.s ^ rhs.s);
+    eexttype nexp = lhs.e + rhs.e + res.B - lhs.B - rhs.B;
 
     // Largest M. All calculations will be with the largest mantissa
     Mtype LM = std::max({lhs.M, rhs.M, res.M});
@@ -246,7 +252,7 @@ std::ostream &operator<<(std::ostream &oss, const Flexfloat &num)
 
 void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Sum of two numbers";
     check_ffs({lhs, rhs, res});
@@ -268,7 +274,7 @@ void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
     eexttype lhs_e = lhs.e;
 
     // Casting inputs to maximum exponent
-    etype nexp = 0;
+    eexttype nexp = 0;
     if (lhs_e - lhs.B > rhs_e - rhs.B)
     {
         auto delta_e = lhs_e - rhs_e - lhs.B + rhs.B;
@@ -276,7 +282,7 @@ void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
         rhs_m >>= delta_e;
 
         assert(lhs_e - lhs.B + res.B >= 0);
-        nexp = static_cast<etype>(lhs_e - lhs.B + res.B);
+        nexp = lhs_e - lhs.B + res.B;
     }
     else
     {
@@ -285,10 +291,10 @@ void Flexfloat::sum(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
         lhs_m >>= delta_e;
 
         assert(rhs_e - rhs.B + res.B >= 0);
-        nexp = static_cast<etype>(rhs_e - rhs.B + res.B);
+        nexp = rhs_e - rhs.B + res.B;
     }
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "=================== Values after casting ====================";
     CLOG(trace) << "lhs_e:  " << clib::bits(lhs_e);
     CLOG(trace) << "lhs_m:  " << clib::bits(lhs_m);
@@ -330,7 +336,7 @@ void Flexfloat::sub(const Flexfloat &lhs, const Flexfloat &rhs, Flexfloat &res)
 
 Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "Getting normal value of denormal";
     check_ffs({denorm});
     CLOG(trace) << "Value " << denorm;
@@ -343,13 +349,13 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
         ext_mant = 1;
 
     auto N = msb(ext_mant);
-    auto n = ext_mant - static_cast<mexttype>(1 << msb(ext_mant));
+    auto n = ext_mant - (1 << msb(ext_mant));
     auto delta_N = denorm.M - N;
 
     eexttype ext_exp = 1 - delta_N;
     ext_mant = n << delta_N;
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "Extended exp  = " << clib::bits(ext_exp);
     CLOG(trace) << "Extended mant = " << clib::bits(ext_mant);
 #endif
@@ -360,7 +366,7 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
 void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
 {
     size_t precision = 0; // TODO
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Inv: 1/x";
     check_ffs({x, res});
@@ -391,10 +397,10 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
     if (precision == 0)
     {
         nexp = -nexp + (x.B + res.B - 1);
-        nmant = static_cast<mexttype>(1 << LM) - nmant - 1;
+        nmant = (1 << LM) - nmant - 1;
 
         // normalise expects extended mantissa
-        nmant += static_cast<mexttype>(1 << LM);
+        nmant += 1 << LM;
         Flexfloat norm_ans = normalise(x.s, nexp, nmant, LM, {res.E, res.M, res.B});
         res = norm_ans;
     }
@@ -405,7 +411,160 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
     }
 }
 
-Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n)
+int Flexfloat::ceil() const
+{
+#ifdef BOOST_LOGS
+    CLOG(trace) << "ceil";
+    check_ffs({*this});
+    CLOG(trace) << "ff: " << *this;
+#endif
+
+    int sign = (s == 1) ? -1 : 1;
+    int nexp = e + B - M;
+    mexttype nmant = m;
+
+    // denormal Flexfloat
+    if (e == 0)
+        nmant *= 2;
+    else
+        nmant += (1 << M);
+    
+    auto nval = nmant;
+    if (nexp < 0)
+        // Округление вниз
+        nval = (nmant >> -nexp);
+    if (nexp > 0)
+        nval = (nmant << nexp);
+    
+    if (nval > std::numeric_limits<int>::max())
+    {
+        std::cout << *this << std::endl;
+        throw std::runtime_error{"Flexlfloat can not fit to int: ff > max(int)"};
+        return std::numeric_limits<int>::max() * sign;
+    }
+    return static_cast<int>(nval) * sign;
+}
+
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+float Flexfloat::to_float() const
+{
+    eexttype nexp = e;
+    mexttype nmant = m;
+    if (e == 0)
+    {
+        ext_ff normal = get_normalized(*this);
+        nexp = normal.exp;
+        nmant = normal.mant;
+    }
+    // get extended mantissa
+    nmant += 1 << M;
+
+    // CONVERAION
+    nexp = nexp - B + B_FLOAT;
+    if (M_FLOAT > M)
+        nmant = nmant * (1 << (M_FLOAT - M));
+    else
+        nmant = nmant / (1 << (M - M_FLOAT));
+
+#ifdef BOOST_LOGS
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "FlexFloat to_float";
+    CLOG(trace) << *this;
+    CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
+    CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
+#endif
+
+    Flexfloat ans = normalise(s, nexp, nmant, M_FLOAT, {E_FLOAT, M_FLOAT, B_FLOAT});
+
+    ieee754_float fc;
+    assert(ans.e <= 1 << E_FLOAT);
+    assert(ans.s <= 1);
+    assert(ans.m <= 1 << M_FLOAT);
+
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
+    fc.ieee.negative = ans.s;
+    fc.ieee.exponent = ans.e;
+    fc.ieee.mantissa = ans.m;
+#pragma GCC diagnostic warning "-Wconversion"
+#pragma GCC diagnostic warning "-Wsign-conversion"
+
+    return fc.f;
+}
+#pragma GCC diagnostic warning "-Wstrict-overflow"
+
+int Flexfloat::to_int() const
+{
+    int sign = (s == 1) ? -1 : 1;
+    auto nexp = e - B - M;
+    mexttype nmant = m;
+
+    // denormal Flexfloat
+    if (e == 0)
+        nmant *= 2;
+    else
+        nmant += (1 << M);
+    
+    auto nval = nmant;
+    if (nexp < 0)
+    {
+        nval = (nmant >> -nexp);
+        // Округление по математическим законами
+        if ((nmant >> -(nexp+1)) % 2 == 1)
+            nval += 1;
+    }
+    if (nexp > 0)
+        nval = (nmant << nexp);
+    
+    if (nval > std::numeric_limits<int>::max())
+    {
+        throw std::runtime_error{"Flexlfloat can not fit to int: ff > max(int)"};
+        return std::numeric_limits<int>::max() * sign;
+    }
+    return static_cast<int>(nval) * sign;
+}
+
+Flexfloat Flexfloat::from_arithmetic_t(Etype E, Mtype M, Btype B, float flt)
+{
+    ieee754_float fc;
+    fc.f = flt;
+
+#pragma GCC diagnostic ignored "-Wconversion"
+    stype nsign = fc.ieee.negative;
+    eexttype nexp = fc.ieee.exponent;
+    mexttype nmant = fc.ieee.mantissa;
+#pragma GCC diagnostic warning "-Wconversion"
+    // get extended mantissa
+    nmant += 1 << M_FLOAT;
+
+    // CONVERAION
+    nexp = nexp - B_FLOAT + B;
+    if (M_FLOAT > M)
+        nmant = nmant / (1 << (M_FLOAT - M));
+    else
+        nmant = nmant * (1 << (M - M_FLOAT));
+
+#ifdef BOOST_LOGS
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "FlexFloat from_float = " << flt;
+    CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
+    CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
+#endif
+
+    return normalise(nsign, nexp, nmant, M, {E, M, B});
+}
+
+Flexfloat Flexfloat::from_arithmetic_t(const Flexfloat &hyperparams, float flt)
+{
+    return from_arithmetic_t(hyperparams.E, hyperparams.M, hyperparams.B, flt);
+}
+
+void Flexfloat::from_arithmetic_t(float flt, const Flexfloat &in, Flexfloat &out)
+{
+    out = from_arithmetic_t(in.E, in.M, in.B, flt);
+}
+
+Flexfloat Flexfloat::from_arithmetic_t(Etype E, Mtype M, Btype B, int n)
 {
     $(CLOG(trace) << "FlexFloat from int = " << n);
 
@@ -420,138 +579,59 @@ Flexfloat Flexfloat::ff_from_int(Etype E, Mtype M, Btype B, int n)
         n = -n;
         s = 1;
     }
+    unsigned n_uns = static_cast<unsigned>(n);
 
-    Mtype N = msb(static_cast<mexttype>(n));
+    Mtype N = msb(n_uns);
     mexttype mant = 0;
-    mexttype delta_N = static_cast<mexttype>(n - (1 << N));
+    mexttype delta_N = n_uns - (1 << N);
     if (N > M)
         mant = delta_N >> (N - M);
     else
         mant = delta_N << (M - N);
 
     // normalise expects extended mantissa
-    mant += static_cast<mexttype>(1 << M);
+    mant += 1 << M;
     return normalise(s, N + B, mant, M, {E, M, B});
 }
-
-int Flexfloat::ceil() const
+Flexfloat Flexfloat::from_arithmetic_t(const Flexfloat &hyperparams, int n)
 {
-#ifdef EN_LOGS
-    CLOG(trace) << "ceil";
-    check_ffs({*this});
-    CLOG(trace) << "ff: " << *this;
-#endif
+    return from_arithmetic_t(hyperparams.E, hyperparams.M, hyperparams.B, n);
+}
+void Flexfloat::from_arithmetic_t(int n, const Flexfloat &in, Flexfloat &out)
+{
+    out = from_arithmetic_t(in.E, in.M, in.B, n);
+}
 
-    assert(e < std::numeric_limits<Btype>::max());
-    Btype eps = static_cast<Btype>(e) - B;
-    if (eps < 0)
-        return 0;
-    else if (eps == 0)
-        return s == 0 ? 1 : -1;
-    else if (eps <= M)
+Flexfloat Flexfloat::from_arithmetic_t(Etype E, Mtype M, Btype B, long unsigned n)
+{
+    $(CLOG(trace) << "FlexFloat from long unsigned = " << n);
+
+    if (n == 0)
     {
-        assert(m / static_cast<mtype>(1 << (M - eps)) < std::numeric_limits<int>::max());
-        int m0 = static_cast<int>(m) / (1 << (M - eps));
-        int ceiled = (1 << eps) + m0;
-        return s > 0 ? ceiled : -ceiled;
+        return Flexfloat(E, M, B, 0);
     }
+
+    stype s = 0;
+
+    Mtype N = msb(n);
+    mexttype mant = 0;
+    mexttype delta_N = n - (1 << N);
+    if (N > M)
+        mant = delta_N >> (N - M);
     else
-    {
-        int shift = eps - M;
-        int ceiled = 1 << shift * ((1 << M) + static_cast<int>(m));
-        return s > 0 ? ceiled : -ceiled;
-    }
+        mant = delta_N << (M - N);
+
+    // normalise expects extended mantissa
+    mant += 1 << M;
+    return normalise(s, N + B, mant, M, {E, M, B});
 }
-
-// double Flexfloat::to_double() const
-// {
-//     return 0;
-// } TODO
-
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-float Flexfloat::to_float() const
+Flexfloat Flexfloat::from_arithmetic_t(const Flexfloat &hyperparams, long unsigned n)
 {
-    eexttype nexp = e;
-    mexttype nmant = m;
-    if (e == 0)
-    {
-        ext_ff normal = get_normalized(*this);
-        nexp = normal.exp;
-        nmant = normal.mant;
-    }
-    // get extended mantissa
-    nmant += static_cast<mexttype>(1 << M);
-
-    // CONVERAION
-    nexp = nexp - B + B_FLOAT;
-    if (M_FLOAT > M)
-        nmant = nmant * static_cast<mexttype>(1 << (M_FLOAT - M));
-    else
-        nmant = nmant / static_cast<mexttype>(1 << (M - M_FLOAT));
-
-#ifdef EN_LOGS
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "FlexFloat to_float";
-    CLOG(trace) << *this;
-    CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
-    CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
-#endif
-
-    Flexfloat ans = normalise(s, nexp, nmant, M_FLOAT, {E_FLOAT, M_FLOAT, B_FLOAT});
-
-    ieee754_float fc;
-    assert(ans.e <= static_cast<etype>(1 << E_FLOAT));
-    assert(ans.s <= 1);
-    assert(ans.m <= static_cast<mtype>(1 << M_FLOAT));
-
-#pragma GCC diagnostic ignored "-Wconversion"
-    fc.ieee.negative = ans.s;
-    fc.ieee.exponent = ans.e;
-    fc.ieee.mantissa = ans.m;
-#pragma GCC diagnostic warning "-Wconversion"
-
-    return fc.f;
+    return from_arithmetic_t(hyperparams.E, hyperparams.M, hyperparams.B, n);
 }
-#pragma GCC diagnostic warning "-Wstrict-overflow"
-
-Flexfloat Flexfloat::from_float(Etype E, Mtype M, Btype B, float flt)
+void Flexfloat::from_arithmetic_t(long unsigned n, const Flexfloat &in, Flexfloat &out)
 {
-    ieee754_float fc;
-    fc.f = flt;
-
-#pragma GCC diagnostic ignored "-Wconversion"
-    stype nsign = fc.ieee.negative;
-    eexttype nexp = fc.ieee.exponent;
-    mexttype nmant = fc.ieee.mantissa;
-#pragma GCC diagnostic warning "-Wconversion"
-    // get extended mantissa
-    nmant += static_cast<mexttype>(1 << M_FLOAT);
-
-    // CONVERAION
-    nexp = nexp - B_FLOAT + B;
-    if (M_FLOAT > M)
-        nmant = nmant / static_cast<mexttype>(1 << (M_FLOAT - M));
-    else
-        nmant = nmant * static_cast<mexttype>(1 << (M - M_FLOAT));
-
-#ifdef EN_LOGS
-    CLOG(trace) << std::endl;
-    CLOG(trace) << "FlexFloat from_float = " << flt;
-    CLOG(trace) << "exp after conversion  = " << clib::bits(nexp);
-    CLOG(trace) << "mant after conversion = " << clib::bits(nmant);
-#endif
-
-    return normalise(nsign, nexp, nmant, M, {E, M, B});
-}
-
-Flexfloat Flexfloat::from_float(const Flexfloat &hyperparams, float flt)
-{
-    return from_float(hyperparams.E, hyperparams.M, hyperparams.B, flt);
-}
-
-void Flexfloat::from_float(float flt, const Flexfloat &in, Flexfloat &out)
-{
-    out = from_float(in.E, in.M, in.B, flt);
+    out = from_arithmetic_t(in.E, in.M, in.B, n);
 }
 
 std::string Flexfloat::bits() const
@@ -575,7 +655,7 @@ std::string Flexfloat::bits(const Flexfloat &ff) const
 bool operator>(const Flexfloat &lhs, const Flexfloat &rhs)
 {
     assert(lhs.E == rhs.E && lhs.B == rhs.B && lhs.M == rhs.M);
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "operator>";
     Flexfloat::check_ffs({lhs, rhs});
     CLOG(trace) << "lhs: " << lhs;
@@ -595,8 +675,8 @@ bool operator>(const Flexfloat &lhs, const Flexfloat &rhs)
     lhs_m <<= (LM - lhs.M);
     rhs_m <<= (LM - rhs.M);
 
-    auto lhs_e = static_cast<Flexfloat::eexttype>(lhs.e) + Flexfloat::msb(lhs_m) - lhs.B;
-    auto rhs_e = static_cast<Flexfloat::eexttype>(rhs.e) + Flexfloat::msb(rhs_m) - rhs.B;
+    auto lhs_e = lhs.e + Flexfloat::msb(lhs_m) - lhs.B;
+    auto rhs_e = rhs.e + Flexfloat::msb(rhs_m) - rhs.B;
 
     if (lhs_e > rhs_e)
         return lhs.s == 0;
@@ -641,7 +721,7 @@ bool operator!=(const Flexfloat &lhs, const Flexfloat &rhs)
 
 void Flexfloat::min(const Flexfloat &first, const Flexfloat &second, Flexfloat &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "min";
     Flexfloat::check_ffs({first, second, res});
     CLOG(trace) << "first: " << first;
@@ -654,7 +734,7 @@ void Flexfloat::min(const Flexfloat &first, const Flexfloat &second, Flexfloat &
 }
 void Flexfloat::max(const Flexfloat &first, const Flexfloat &second, Flexfloat &res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "max";
     Flexfloat::check_ffs({first, second, res});
     CLOG(trace) << "first: " << first;
@@ -668,7 +748,7 @@ void Flexfloat::max(const Flexfloat &first, const Flexfloat &second, Flexfloat &
 
 void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b, Flexfloat &out)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "clip";
     Flexfloat::check_ffs({a, x, b, out});
     CLOG(trace) << "a: " << a;
@@ -682,7 +762,7 @@ void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b,
 
 
 void to_flexfloat(const Flexfixed &value, Flexfloat& res){
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "from_fx_to_ff";
     Flexfloat::check_ffs({res});
     CLOG(trace) << "value: " << value;
@@ -690,20 +770,20 @@ void to_flexfloat(const Flexfixed &value, Flexfloat& res){
 
     Flexfixed::wtype msb = Flexfixed::msb(value);
 
-    assert(res.max_exp() > static_cast<Flexfloat::etype>(msb + res.B - value.get_F()));
-    res.e = static_cast<Flexfloat::etype>(msb + res.B - value.get_F());
+    assert(res.max_exp() > msb + res.B - value.get_F());
+    res.e = msb + res.B - value.get_F();
 
     assert(res.e < res.max_exp());
 
-    Flexfixed::wtype delta = static_cast<Flexfixed::wtype>(msb - res.M);
+    Flexfixed::wtype delta = msb - res.M;
 
     if(delta >= 0){
-        assert(res.max_mant() > (value.get_n() - (1u << msb)) >> delta);
-        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1u << msb)) >> delta);
+        assert(res.max_mant() > (value.get_n() - (1 << msb)) >> delta);
+        res.m = (value.get_n() - (1 << msb)) >> delta;
     }
     else {
-        assert(res.max_mant() > (value.get_n() - (1u << msb)) << -delta);
-        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1u << msb)) << -delta);
+        assert(res.max_mant() > (value.get_n() - (1 << msb)) << -delta);
+        res.m = (value.get_n() - (1 << msb)) << -delta;
     }
 
     assert(res.m < res.max_mant());
@@ -718,7 +798,7 @@ void to_flexfloat(const Flexfixed &value, Flexfloat& res){
 //
 Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_mant, Mtype curM, hyper_params res)
 {
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "============== Values before normalisation ==================";
     CLOG(trace) << "exp:  " << clib::bits(cur_exp);
     CLOG(trace) << "mant: " << clib::bits(cur_mant);
@@ -749,7 +829,7 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
 
     auto ovf = [&cur_exp, &cur_mant, curM, res]() {
         $(CLOG(trace) << "overflow");
-        cur_mant = max_mant(static_cast<Mtype>(curM + 1));
+        cur_mant = max_mant(curM + 1);
         cur_exp = max_exp(res.E);
     };
     auto unf = [&cur_exp, &cur_mant, curM, res]() {
@@ -827,14 +907,15 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
 
     assert(res.E < sizeof(etype) * 8);
     assert(curM < sizeof(mtype) * 8);
-    assert(cur_exp >= 0);
-    assert(cur_exp <= max_exp(res.E));
     assert(msb(cur_mant) <= sizeof(mtype) * 8);
 
     mtype mant = zip(cur_exp, cur_mant, curM, res.M);
+
+    assert(cur_exp >= 0);
+    assert(cur_exp <= max_exp(res.E));
     etype exp = static_cast<etype>(cur_exp);
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "================ Values after normalisation =================";
     CLOG(trace) << "exp:  " << clib::bits(cur_exp);
     CLOG(trace) << "mant: " << clib::bits(cur_mant);
@@ -849,7 +930,7 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
 }
 
 void Flexfloat::negative(const Flexfloat &val, Flexfloat &res){
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "negative";
     Flexfloat::check_ffs({val,res});
     CLOG(trace) << "Value: " << val;
@@ -904,7 +985,7 @@ Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype curM, Mty
 
 
 void Flexfloat::abs(const Flexfloat& val, Flexfloat &res){
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
     CLOG(trace) << "abs";
     Flexfloat::check_ffs({val,res});
     CLOG(trace) << "Value: " << val;
@@ -948,16 +1029,16 @@ Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype M)
 Flexfloat::mexttype Flexfloat::unzip(etype exp, mtype mant, Mtype M)
 {
     if (exp == 0)
-        return (2 * static_cast<mexttype>(mant));
+        return (2 * mant);
     else
-        return ((1u << M) + static_cast<mexttype>(mant));
+        return ((1 << M) + mant);
 }
 Flexfloat::mexttype Flexfloat::unzip(const Flexfloat &ff)
 {
     if (ff.e == 0)
-        return (2 * static_cast<mexttype>(ff.m));
+        return (2 * ff.m);
     else
-        return ((1u << ff.M) + static_cast<mexttype>(ff.m));
+        return ((1 << ff.M) + ff.m);
 }
 
 bool Flexfloat::is_valid() const
@@ -977,14 +1058,14 @@ bool Flexfloat::is_valid() const
         $(CLOG(error) << "s > 1");
         return false;
     }
-    if (e > static_cast<etype>((1 << E) - 1))
+    if (e > (1 << E) - 1)
     {
-        $(CLOG(error) << "e > static_cast<etype>((1 << E) - 1)");
+        $(CLOG(error) << "e > ((1 << E) - 1)");
         return false;
     }
-    if (m > static_cast<mtype>((1 << M) - 1))
+    if (m > (1u << M) - 1u)
     {
-        $(CLOG(error) << "m > static_cast<mtype>((1 << M) - 1)");
+        $(CLOG(error) << "m > ((1 << M) - 1)");
         return false;
     }
 

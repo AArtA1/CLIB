@@ -18,11 +18,8 @@ namespace vsim
  * \details
  */
 using std::vector;
-using idx_t = int;
-using pixel_t = int;
-
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wconversion"
+using idx_t = clib::VideoView::idx_t;
+using pixel_t = clib::VideoView::pixel_t;
 
 /*!
  * \brief General media class. Can contain video and image
@@ -201,28 +198,40 @@ class Video
     /// Number of frames
     idx_t frames() const
     {
-        return video_.size();
+        // static_cast due to different
+        // Cimg library index size = unsigned 
+        //         and vector size = long unsigned
+        return static_cast<unsigned>(video_.size());
     }
 
     /// Height
     idx_t rows() const
     {
+        // static_cast due to different
+        // Cimg library index size = unsigned 
+        //         and vector size = long unsigned
         assert(video_.size() > 0);
-        return video_[0].size();
+        return static_cast<unsigned>(video_[0].size());
     }
 
     /// Width
     idx_t cols() const
     {
+        // static_cast due to different
+        // Cimg library index size = unsigned 
+        //         and vector size = long unsigned
         assert(video_.size() > 0);
-        return video_[0][0].size();
+        return static_cast<unsigned>(video_[0][0].size());
     }
 
     /// Number of colors
     idx_t clrs() const
     {
+        // static_cast due to different
+        // Cimg library index size = unsigned 
+        //         and vector size = long unsigned
         assert(video_.size() > 0);
-        return video_[0][0][0].size();
+        return static_cast<unsigned>(video_[0][0][0].size());
     }
 
     /// Number of fps
@@ -248,9 +257,8 @@ class Serializer
 {
     Video video_;
 
-    /// Points to the current pixel that popped out
-    /// At the beginning points to the pixel BEFORE the first one
-    /// Because at the beginning not a single pixel has popped out
+    /// Points to the pixel that will be popped out
+    /// At the beginning points to the first pixel
     idx_t cur_frame_;
     idx_t cur_row_;
     idx_t cur_col_;
@@ -269,10 +277,10 @@ class Serializer
     void init(const std::string &path)
     {
         video_ = Video(path);
-        cur_frame_ = -1;
-        cur_row_ = video_.rows() - 1;
-        cur_col_ = video_.cols() - 1;
-        cur_clr_ = video_.clrs() - 1;
+        cur_frame_ = 0;
+        cur_row_ = 0;
+        cur_col_ = 0;
+        cur_clr_ = 0;
 
         is_inited_ = true;
     }
@@ -286,10 +294,10 @@ class Serializer
     void init(idx_t frames, idx_t rows, idx_t cols, idx_t clrs, size_t fps = 0)
     {
         video_ = Video(frames, rows, cols, clrs, fps);
-        cur_frame_ = -1;
-        cur_row_ = rows - 1;
-        cur_col_ = cols - 1;
-        cur_clr_ = clrs - 1;
+        cur_frame_ = 0;
+        cur_row_ = 0;
+        cur_col_ = 0;
+        cur_clr_ = 0;
 
         is_inited_ = true;
     }
@@ -332,6 +340,16 @@ class Serializer
     {
         assert(is_inited_);
 
+        if (cur_frame_ >= video_.frames())
+        {
+            std::cerr << "frames() = " << frames() << "; cur_frame = " << cur_frame_ << std::endl;
+            std::cerr << "rows() =   " << rows() << "; cur_row   = " << cur_row_ << std::endl;
+            std::cerr << "cols() =   " << cols() << "; cur_col   = " << cur_col_ << std::endl;
+            std::cerr << "clrs() =   " << clrs() << "; cur_clr   = " << cur_clr_ << std::endl;
+            throw std::runtime_error{"pop: index out of range"};
+        }
+        pixel_t pix = video_.get(cur_frame_, cur_row_, cur_col_, cur_clr_);
+
         cur_clr_++;
         if (cur_clr_ >= video_.clrs())
         {
@@ -348,16 +366,8 @@ class Serializer
             cur_row_ = 0;
             cur_frame_ += 1;
         }
-        if (cur_frame_ >= video_.frames())
-        {
-            std::cerr << "frames() = " << frames() << "; cur_frame = " << cur_frame_ << std::endl;
-            std::cerr << "rows() =   " << rows() << "; cur_row   = " << cur_row_ << std::endl;
-            std::cerr << "cols() =   " << cols() << "; cur_col   = " << cur_col_ << std::endl;
-            std::cerr << "clrs() =   " << clrs() << "; cur_clr   = " << cur_clr_ << std::endl;
-            throw std::runtime_error{"pop: index out of range"};
-        }
 
-        return video_.get(cur_frame_, cur_row_, cur_col_, cur_clr_);
+        return pix;
     }
 };
 
@@ -365,9 +375,8 @@ class Deserializer
 {
     Video video_;
 
-    /// Points to the current pixel that pushed in
-    /// At the beginning points to the pixel BEFORE the first one
-    /// Because at the beginning not a single pixel has pushed in
+    /// Points to the pixel that will be pushed in
+    /// At the beginning points to the first pixel
     idx_t cur_frame_;
     idx_t cur_row_;
     idx_t cur_col_;
@@ -390,10 +399,10 @@ class Deserializer
     void init(idx_t frames, idx_t rows, idx_t cols, idx_t clrs, size_t fps = 0)
     {
         video_ = Video(frames, rows, cols, clrs, fps);
-        cur_frame_ = -1;
-        cur_row_ = rows - 1;
-        cur_col_ = cols - 1;
-        cur_clr_ = clrs - 1;
+        cur_frame_ = 0;
+        cur_row_ = 0;
+        cur_col_ = 0;
+        cur_clr_ = 0;
 
         is_inited_ = true;
     }
@@ -403,10 +412,10 @@ class Deserializer
     void init(const std::string &path)
     {
         video_ = Video(path);
-        cur_frame_ = -1;
-        cur_row_ = video_.rows() - 1;
-        cur_col_ = video_.cols() - 1;
-        cur_clr_ = video_.clrs() - 1;
+        cur_frame_ = 0;
+        cur_row_ = 0;
+        cur_col_ = 0;
+        cur_clr_ = 0;
 
         is_inited_ = true;
     }
@@ -457,6 +466,16 @@ class Deserializer
     {
         assert(is_inited_);
 
+        if (cur_frame_ >= video_.frames())
+        {
+            std::cerr << "frames() = " << frames() << "; cur_frame = " << cur_frame_ << std::endl;
+            std::cerr << "rows() =   " << rows() << "; cur_row   = " << cur_row_ << std::endl;
+            std::cerr << "cols() =   " << cols() << "; cur_col   = " << cur_col_ << std::endl;
+            std::cerr << "clrs() =   " << clrs() << "; cur_clr   = " << cur_clr_ << std::endl;
+            throw std::runtime_error{"pop: index out of range"};
+        }
+        video_.set(pixel, cur_frame_, cur_row_, cur_col_, cur_clr_);
+
         cur_clr_++;
         if (cur_clr_ >= video_.clrs())
         {
@@ -473,16 +492,6 @@ class Deserializer
             cur_row_ = 0;
             cur_frame_ += 1;
         }
-        if (cur_frame_ >= video_.frames())
-        {
-            std::cerr << "frames() = " << frames() << "; cur_frame = " << cur_frame_ << std::endl;
-            std::cerr << "rows() =   " << rows() << "; cur_row   = " << cur_row_ << std::endl;
-            std::cerr << "cols() =   " << cols() << "; cur_col   = " << cur_col_ << std::endl;
-            std::cerr << "clrs() =   " << clrs() << "; cur_clr   = " << cur_clr_ << std::endl;
-            throw std::runtime_error{"push: index out of range"};
-        }
-
-        video_.set(pixel, cur_frame_, cur_row_, cur_col_, cur_clr_);
     }
 };
 
@@ -507,7 +516,5 @@ struct VideoInterface
         target.push(pixel);
     }
 };
-#pragma GCC diagnostic warning "-Wsign-conversion"
-#pragma GCC diagnostic warning "-Wconversion"
 
 } // namespace vsim

@@ -22,9 +22,9 @@ class Flexfloat
     using Mtype = uint8_t;
     using Btype = int;
 
-    using etype = uint32_t;
+    using etype = int;
     using mtype = uint32_t;
-    using stype = uint8_t;
+    using stype = uint32_t;
 
     // type for storing multiplication of mantissa
     using mexttype = uint64_t;
@@ -66,7 +66,7 @@ class Flexfloat
      * \param[in] e_n Exponent
      * \param[in] m_n Mantissa
      */
-    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
+    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, uint32_t m_n);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
      *
@@ -75,14 +75,14 @@ class Flexfloat
      * \param[in] B_n Bias
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, mtype value);
+    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, uint32_t value);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
      *
      * \param[in] hyperparams Число содержит E, M, B для нового Flexfloat
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    Flexfloat(const Flexfloat &hyperparams, mtype value);
+    Flexfloat(const Flexfloat &hyperparams, uint32_t value);
 
     // /*! @brief Создает Flexfloat из double
     // *
@@ -220,15 +220,6 @@ class Flexfloat
     };
     static ext_ff get_normalized(const Flexfloat &denorm);
 
-    /*! @brief Конвертация целого числа в FlexFloat
-     *
-     * \param[in] x целое число
-     * \return FlexFloat
-     *
-     * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/src/flexfloat_nonlinear.ipynb
-     */
-    static Flexfloat ff_from_int(Etype E, Mtype M, Btype B, int x);
-
     /*! @brief Округление FlexFloat до ближайшего целого числа вниз
      *
      * \return ближайшее целое число меньшее FlexFloat
@@ -244,28 +235,36 @@ class Flexfloat
      */
     float to_float() const;
 
+    /*! @brief Преобразует Flexfloat в int
+     *
+     * \return ближайшее float число
+     *
+     */
+    int to_int() const;
+
     /*! @brief Конвертация float числа в FlexFloat
      *
      * \param[in] flt float число
      * \return FlexFloat
      */
-    static Flexfloat from_float(Etype E, Mtype M, Btype B, float flt);
+    static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, float flt);
+    static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, float flt);
+    static void      from_arithmetic_t(float flt, const Flexfloat &in, Flexfloat &out);
 
-    /*! @brief Конвертация float числа в FlexFloat
+    /*! @brief Конвертация int числа в FlexFloat
      *
-     * \param[in] flt float число
+     * \param[in] n целое число
      * \return FlexFloat
+     * 
+     * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/src/flexfloat_nonlinear.ipynb
      */
-    static Flexfloat from_float(const Flexfloat &hyperparams, float flt);
+    static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, int n);
+    static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, int n);
+    static void      from_arithmetic_t(int n, const Flexfloat &in, Flexfloat &out);
 
-    static void from_float(float flt, const Flexfloat &in, Flexfloat &out);
-
-    // /*! @brief Преобразует Flexfloat в double
-    // *
-    // * \return ближайшее double число
-    // *
-    // */
-    // double to_double() const;  //TODO
+    static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, long unsigned n);
+    static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, long unsigned n);
+    static void      from_arithmetic_t(long unsigned n, const Flexfloat &in, Flexfloat &out);
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
@@ -278,7 +277,9 @@ class Flexfloat
 
     inline std::string to_string_e() const
     {
-        return std::bitset<sizeof(etype) * 8>(get_e()).to_string().substr(sizeof(etype) * 8 - E);
+        assert(get_e() >= 0);
+        auto uns_e = static_cast<unsigned>(get_e());
+        return std::bitset<sizeof(etype) * 8>(uns_e).to_string().substr(sizeof(etype) * 8 - E);
     }
 
     inline std::string to_string_m() const

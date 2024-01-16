@@ -1,6 +1,6 @@
 #include "clib/logs.hpp"
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
 
 #include <boost/core/null_deleter.hpp>
 #include <boost/log/attributes.hpp>
@@ -24,10 +24,10 @@ std::ostream &operator<<(std::ostream &strm, severity_level level)
 {
     static const char *strings[] = {"trace", "debug", "info", "warning", "error", "fatal"};
 
-    if (static_cast<std::size_t>(level) < sizeof(strings) / sizeof(*strings))
+    if (level < sizeof(strings) / sizeof(*strings))
         strm << strings[level];
     else
-        strm << static_cast<int>(level);
+        strm << level;
 
     return strm;
 }

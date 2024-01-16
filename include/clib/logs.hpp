@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
 #include <boost/log/attributes/scoped_attribute.hpp>
 #include <boost/log/trivial.hpp>
 

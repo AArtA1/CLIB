@@ -6,7 +6,7 @@ namespace clib
 void Synth::Flexfloat_Const(float value, const img<Flexfloat> &in, img<Flexfloat> &out)
 {
     Flexfloat prototype;
-    Flexfloat::from_float(value, in.vv()[0][0], prototype);
+    Flexfloat::from_arithmetic_t(value, in.vv()[0][0], prototype);
 
     out = std::move(img<Flexfloat>(prototype, in.rows(), in.cols()));
 }
@@ -46,7 +46,7 @@ void Synth::Flexfloat_Inv(const img<Flexfloat> &x, img<Flexfloat> &res)
 void Synth::Flexfixed_Const(float value, const img<Flexfixed> &in, img<Flexfixed> &out)
 {
     Flexfixed prototype;
-    Flexfixed::from_float(value, in.vv()[0][0], prototype);
+    Flexfixed::from_arithmetic_t(value, in.vv()[0][0], prototype);
 
     out = std::move(img<Flexfixed>(prototype, in.rows(), in.cols()));
 }

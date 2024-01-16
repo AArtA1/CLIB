@@ -49,7 +49,7 @@ template <typename T> class video
                         for (idx_t i = 0; i < rows; ++i)
                             for (idx_t j = 0; j < cols; ++j)
                             {
-                                auto val = T::from_float(prototype, static_cast<float>(view.get(i, j, clr, fr)));
+                                auto val = T::from_arithmetic_t(prototype, view.get(i, j, clr, fr));
                                 cur_img(i, j, clr) = val;
                             }
                     frames_[fr] = std::move(cur_img);
@@ -96,8 +96,8 @@ template <typename T> class video
                         for (idx_t i = 0; i < rows; ++i)
                             for (idx_t j = 0; j < cols; ++j)
                             {
-                                auto val = frames_[fr](i, j, clr).to_float();
-                                view.set(static_cast<pixel_t>(val), i, j, clr, fr);
+                                auto val = frames_[fr](i, j, clr).to_int();
+                                view.set(val, i, j, clr, fr);
                             }
             },
             view.rows(), view.cols());
@@ -117,7 +117,7 @@ template <typename T> class video
 
     idx_t frames() const
     {
-        return static_cast<idx_t>(frames_.size());
+        return frames_.size();
     }
 
     const img_rgb<T> &operator()(idx_t i) const
@@ -149,7 +149,7 @@ template <typename T> class video
         }
 
         vector<std::thread> threads(nthreads);
-        idx_t bsize = std::max(frames / nthreads, 1u);
+        idx_t bsize = std::max(frames / nthreads, 1lu);
 
         /////////////////// Создаем потоки ///////////////////
         idx_t tidx = 0;
@@ -172,7 +172,7 @@ template <typename T> class video
     {
         assert(req_threads > 0);
 
-        idx_t hard_conc = static_cast<idx_t>(std::thread::hardware_concurrency());
+        idx_t hard_conc = std::thread::hardware_concurrency();
         return std::min(hard_conc != 0 ? hard_conc : 2, req_threads);
     }
     void measure_time(const std::string &msg)
@@ -185,93 +185,5 @@ template <typename T> class video
         last_time = std::chrono::steady_clock::now();
     }
 };
-
-#ifdef OLD_VERSION_VIDEO
-cimg_library::CImg<pixel_t> read_video(const std::string &path);
-void write_video(const cimg_library::CImg<pixel_t> &video, const std::string &path);
-using pixel_t = ImgView::pixel_t;
-using idx_t = ImgView::idx_t;
-template <typename T> class video
-{
-    std::vector<img_rgb<T>> frames_;
-
-  public:
-    video(const T &prototype, const std::string &video_path)
-    {
-        cimg_library::CImg video_view = read_video(video_path);
-        frames_.reserve(static_cast<idx_t>(video_view.depth()));
-
-        auto view_r = clib::CImgView{};
-        auto view_g = clib::CImgView{};
-        auto view_b = clib::CImgView{};
-
-        for (idx_t i = 0; i < static_cast<idx_t>(video_view.depth()); ++i)
-        {
-            view_r.load(video_view.get_shared_slice(i, ImgView::R));
-            view_g.load(video_view.get_shared_slice(i, ImgView::G));
-            view_b.load(video_view.get_shared_slice(i, ImgView::B));
-
-            // std::cout << i << std::endl;
-            auto r = img<T>(prototype, view_r);
-            auto g = img<T>(prototype, view_g);
-            auto b = img<T>(prototype, view_b);
-
-            frames_.push_back(img_rgb(r, g, b));
-        }
-    }
-
-    video(const std::vector<img_rgb<T>> &frames) : frames_(frames)
-    {
-    }
-
-    void write(const std::string &video_path)
-    {
-        cimg_library::CImg<pixel_t> video_view(cols(), rows(), static_cast<idx_t>(frames_.size()), 3);
-
-        auto view = clib::CImgView{};
-        view.init(rows(), cols(), 3);
-        for (idx_t i = 0; i < depth(); ++i)
-        {
-            frames_[i].write(view);
-            video_view.get_shared_slice(i, 0) = view.unload().get_shared_slice(0, 0);
-            video_view.get_shared_slice(i, 1) = view.unload().get_shared_slice(0, 1);
-            video_view.get_shared_slice(i, 2) = view.unload().get_shared_slice(0, 2);
-        }
-
-        write_video(video_view, video_path);
-    }
-
-    // rows - height of image
-    idx_t rows() const
-    {
-        return frames_[0].rows();
-    }
-
-    // cols - width of image
-    idx_t cols() const
-    {
-        return frames_[0].cols();
-    }
-
-    idx_t depth() const
-    {
-        return static_cast<idx_t>(frames_.size());
-    }
-
-    const img_rgb<T> &operator()(idx_t i) const
-    {
-        assert(i < frames_.size());
-
-        return frames_[i];
-    }
-
-    img_rgb<T> &operator()(idx_t i)
-    {
-        assert(i < frames_.size());
-
-        return frames_[i];
-    }
-};
-#endif
 
 } // namespace clib

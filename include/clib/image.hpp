@@ -22,11 +22,10 @@ template <typename T> class img final
 {
     idx_t rows_ = 0; // height of image
     idx_t cols_ = 0; // width of image
-    
+
     vector<vector<T>> vv_;
 
   public:
-
     img &operator=(const img &in)
     {
         rows_ = in.rows_;
@@ -35,7 +34,6 @@ template <typename T> class img final
 
         return *this;
     }
-
 
     img() = default;
 
@@ -71,7 +69,7 @@ template <typename T> class img final
     img(const T &prototype, const ImgView &view, idx_t clr = 0, idx_t req_threads = 0) : vv_()
     {
         auto get_val = [&prototype, &view, clr](idx_t i, idx_t j) {
-            return T::from_float(prototype, static_cast<float>(view.get(i, j, clr)));
+            return T::from_arithmetic_t(prototype, view.get(i, j, clr));
         };
         _ctor_implt(view.rows(), view.cols(), get_val, req_threads);
     }
@@ -85,25 +83,23 @@ template <typename T> class img final
     {
         assert(base.size() > 0);
 
-        auto rows = static_cast<idx_t>(base.size());
-        auto cols = static_cast<idx_t>(base[0].size());
+        auto rows = base.size();
+        auto cols = base[0].size();
         auto get_val = [&base](idx_t i, idx_t j) { return base[i][j]; };
 
         _ctor_implt(rows, cols, get_val, req_threads);
     }
 
-
-    img(vector<vector<T>> && base) : vv_()
+    img(vector<vector<T>> &&base) : vv_()
     {
         assert(base.size() > 0);
         assert(base[0].size() > 0);
 
-        rows_ = static_cast<idx_t>(base.size());
-        cols_ = static_cast<idx_t>(base[0].size());
+        rows_ = base.size();
+        cols_ = base[0].size();
 
         vv_ = base;
     }
-
 
     /*! @brief Инициализации изображения массивом
      *
@@ -113,11 +109,9 @@ template <typename T> class img final
     {
         assert(base.vv_.size() > 0);
 
-        auto rows = static_cast<idx_t>(base.vv_.size());
-        auto cols = static_cast<idx_t>(base.vv_[0].size());
-        auto get_val = [&base, &params](idx_t i, idx_t j) {
-            return clib::Flexfloat::pack(base.vv_[i][j], params);
-        };
+        auto rows = base.vv_.size();
+        auto cols = base.vv_[0].size();
+        auto get_val = [&base, &params](idx_t i, idx_t j) { return clib::Flexfloat::pack(base.vv_[i][j], params); };
 
         _ctor_implt(rows, cols, get_val, req_threads);
     }
@@ -132,11 +126,11 @@ template <typename T> class img final
     }
     idx_t rows() const
     {
-        return static_cast<idx_t>(vv_.size());
+        return vv_.size();
     }
     idx_t cols() const
     {
-        return vv_.empty() ? 0 : static_cast<idx_t>(vv_[0].size());
+        return vv_.empty() ? 0 : vv_[0].size();
     }
 
     /*! @brief Подсчет суммы двумерного массива
@@ -165,21 +159,24 @@ template <typename T> class img final
     {
         assert(cols_ != 0);
         assert(rows_ != 0);
-        
+
         const idx_t modulus = 3;
-        
-        #ifndef SUM_FIX
+
+#ifndef SUM_FIX
         // brute calculating of sum
-        if(cols_ < modulus || rows_ < modulus){
-            T sum = T::from_float(vv_[0][0],0.0f);
-            for(idx_t i = 0; i < rows_; ++i){
-                for(idx_t j = 0; j < cols_;++j){
-                    T::sum(sum,vv_[i][j],sum);
+        if (cols_ < modulus || rows_ < modulus)
+        {
+            T sum = T::from_arithmetic_t(vv_[0][0], 0.0f);
+            for (idx_t i = 0; i < rows_; ++i)
+            {
+                for (idx_t j = 0; j < cols_; ++j)
+                {
+                    T::sum(sum, vv_[i][j], sum);
                 }
             }
             return sum;
         }
-        #endif
+#endif
 
         auto modulus_sum = [modulus](const vector<T> &line) {
             vector<T> part_sums(line.begin(), line.begin() + modulus);
@@ -230,15 +227,15 @@ template <typename T> class img final
 
         // The code below only works with correct implemented INVERSION function
 
-        // T volume = T::from_float(summ, static_cast<float>(rows_ * cols_));
-        // T inv_volume = T::from_float(summ, 0);
-        // T::inv(volume, inv_volume);
-        // T::mult(summ, inv_volume, summ);
+        T volume = T::from_arithmetic_t(summ, rows_ * cols_);
+        T inv_volume = T::from_arithmetic_t(summ, 0lu);
+        T::inv(volume, inv_volume);
+        T::mult(summ, inv_volume, summ);
 
-        summ = T::from_float(summ, summ.to_float() /
-                                       static_cast<float>(rows_ * cols_)); // comment this if INVERSION works correctly
+        // comment this if INVERSION works correctly
+        //summ = T::from_arithmetic_t(summ,  / (rows_ * cols_));
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
         CLOG(debug) << "Volume:" << (rows_ * cols_);
         CLOG(debug) << "Volume inv_value: " << summ;
@@ -261,14 +258,12 @@ template <typename T> class img final
     /// @brief Обрезает все числа в двумерном массиве между minn и maxx
     img clip(pixel_t minn = 0, pixel_t maxx = 255) const
     {
-        float minn_f = static_cast<float>(minn);
-        float maxx_f = static_cast<float>(maxx);
         img res(*this);
         for_each(rows_, cols_, [&](idx_t i, idx_t j) {
-            if (vv_[i][j].to_float() < minn_f)
-                res.vv_[i][j] = T::from_float(vv_[i][j], minn_f);
-            else if (vv_[i][j].to_float() > maxx_f)
-                res.vv_[i][j] = T::from_float(vv_[i][j], maxx_f);
+            if (vv_[i][j].to_int() < minn)
+                res.vv_[i][j] = T::from_arithmetic_t(vv_[i][j], minn);
+            else if (vv_[i][j].to_int() > maxx)
+                res.vv_[i][j] = T::from_arithmetic_t(vv_[i][j], maxx);
             else
                 res.vv_[i][j] = vv_[i][j];
         });
@@ -373,7 +368,7 @@ template <typename T> class img final
         // T inv_rhs(rhs);
         // T::inv(rhs, inv_rhs);
 
-        const T inv_rhs = T::from_float(rhs, 1.0f / rhs.to_float()); // comment this if INVERSION works correctly
+        const T inv_rhs = T::from_arithmetic_t(rhs, 1.0f / rhs.to_float()); // comment this if INVERSION works correctly
 
         for_each(rows_, cols_, [&](idx_t i, idx_t j) { T::mult(res.vv_[i][j], inv_rhs, res.vv_[i][j]); });
         return res;
@@ -437,7 +432,7 @@ template <typename T> class img final
         for_each(rows_, cols_, [&](idx_t i, idx_t j) {
             // T::inv(rhs.vv_[i][j], inverted);
 
-            const T inverted = T::from_float(
+            const T inverted = T::from_arithmetic_t(
                 rhs.vv_[i][j], 1.0f / rhs.vv_[i][j].to_float()); // comment this if INVERSION works correctly
 
             T::mult(res.vv_[i][j], inverted, res.vv_[i][j]);
@@ -468,9 +463,8 @@ template <typename T> class img final
     {
         for (idx_t i = 0; i < rows_; ++i)
             for (idx_t j = 0; j < cols_; ++j)
-                view.set(static_cast<ImgView::pixel_t>(vv_[i][j].to_float()), i, j, clr);
+                view.set(vv_[i][j].to_int(), i, j, clr);
     }
-
 
     template <typename Func> void _ctor_implt(idx_t rows, idx_t cols, Func get_val, idx_t req_threads = 0)
     {
@@ -518,7 +512,7 @@ template <typename T> class img final
         work(nthreads, rows, do_func);
     }
 
-private:
+  private:
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
     template <typename Func, typename... Args> static void work(idx_t nthreads, idx_t rows, Func func, Args... args)
@@ -533,7 +527,7 @@ private:
         }
 
         vector<std::thread> threads(nthreads);
-        idx_t bsize = std::max(rows / nthreads, 1u);
+        idx_t bsize = std::max(rows / nthreads, 1lu);
 
         /////////////////// Создаем потоки ///////////////////
         idx_t tidx = 0;
@@ -557,10 +551,10 @@ private:
         assert(rows != 0);
         assert(cols != 0);
 
-        idx_t rows_per_thread = std::max(min_thread_work / cols, 1u);
-        idx_t det_threads = std::max(rows / rows_per_thread, 1u);
+        idx_t rows_per_thread = std::max(min_thread_work / cols, 1lu);
+        idx_t det_threads = std::max(rows / rows_per_thread, 1lu);
 
-        idx_t hard_conc = static_cast<idx_t>(std::thread::hardware_concurrency());
+        idx_t hard_conc = std::thread::hardware_concurrency();
         return std::min(hard_conc != 0 ? hard_conc : 2, det_threads);
     }
     idx_t determine_threads(idx_t min_thread_work) const
@@ -569,55 +563,55 @@ private:
     }
 
     // Вспомогательная функция для определения оптимального количество потоков для параллелизма
-    static void determine_work_number(const T &prototype)
-    {
-        struct test_res
-        {
-            long int t_init;
-            long int t_calc;
-            float mean;
-        };
-        auto calc = [&prototype](idx_t req_threads, idx_t rows, idx_t cols) {
-            auto s_begin = std::chrono::steady_clock::now();
+    // static void determine_work_number(const T &prototype)
+    // {
+    //     struct test_res
+    //     {
+    //         long long t_init;
+    //         long long t_calc;
+    //         float mean;
+    //     };
+    //     auto calc = [&prototype](idx_t req_threads, idx_t rows, idx_t cols) {
+    //         auto s_begin = std::chrono::steady_clock::now();
 
-            auto one = T::from_float(prototype, 1);
-            img im(one, rows, cols, req_threads);
+    //         auto one = T::from_arithmetic_t(prototype, 1);
+    //         img im(one, rows, cols, req_threads);
 
-            auto s_init = std::chrono::steady_clock::now();
-            auto mean = im.mean();
-            auto s_end = std::chrono::steady_clock::now();
+    //         auto s_init = std::chrono::steady_clock::now();
+    //         auto mean = im.mean();
+    //         auto s_end = std::chrono::steady_clock::now();
 
-            auto t_init = std::chrono::duration_cast<std::chrono::microseconds>(s_init - s_begin).count();
-            auto t_calc = std::chrono::duration_cast<std::chrono::microseconds>(s_end - s_init).count();
+    //         auto t_init = std::chrono::duration_cast<std::chrono::microseconds>(s_init - s_begin).count();
+    //         auto t_calc = std::chrono::duration_cast<std::chrono::microseconds>(s_end - s_init).count();
 
-            test_res tr = {t_init, t_calc, mean.to_float()};
-            return tr;
-        };
+    //         test_res tr = {t_init, t_calc, mean.to_float()};
+    //         return tr;
+    //     };
 
-        const idx_t tests_num = 33;
-        const idx_t means_num = 40;
-        const idx_t rows = 500;
-        const idx_t cols = 500;
+    //     const idx_t tests_num = 33;
+    //     const idx_t means_num = 40;
+    //     const idx_t rows = 500;
+    //     const idx_t cols = 500;
 
-        // Прогреваем кэши
-        for (idx_t i = 0; i < tests_num; i += 4)
-            calc(i, rows, cols);
+    //     // Прогреваем кэши
+    //     for (idx_t i = 0; i < tests_num; i += 4)
+    //         calc(i, rows, cols);
 
-        std::vector<test_res> results;
-        for (idx_t i = 0; i < tests_num; ++i)
-        {
-            // усреднение
-            test_res cur_res = {0, 0, 0};
-            for (idx_t j = 0; j < means_num; ++j)
-            {
-                test_res temp_res = calc(i, rows, cols);
-                cur_res.t_init += temp_res.t_init;
-                cur_res.t_calc += temp_res.t_calc;
-                cur_res.mean = temp_res.mean;
-            }
-            results.push_back({cur_res.t_init / means_num, cur_res.t_calc / means_num, cur_res.mean});
-        }
-    }
+    //     std::vector<test_res> results;
+    //     for (idx_t i = 0; i < tests_num; ++i)
+    //     {
+    //         // усреднение
+    //         test_res cur_res = {0, 0, 0};
+    //         for (idx_t j = 0; j < means_num; ++j)
+    //         {
+    //             test_res temp_res = calc(i, rows, cols);
+    //             cur_res.t_init += temp_res.t_init;
+    //             cur_res.t_calc += temp_res.t_calc;
+    //             cur_res.mean = temp_res.mean;
+    //         }
+    //         results.push_back({cur_res.t_init / means_num, cur_res.t_calc / means_num, cur_res.mean});
+    //     }
+    // }
 };
 
 template <typename T> img<T> operator+(const T &lhs, const img<T> &rhs)

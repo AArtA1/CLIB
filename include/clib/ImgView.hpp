@@ -25,7 +25,7 @@ const std::vector<std::string> image_extensions = {"jpg","jpeg","png"};
 struct ImgView
 {
     using pixel_t = int;
-    using idx_t = unsigned;
+    using idx_t = size_t;
 
     // colors number
     enum spectrum
