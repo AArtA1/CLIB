@@ -779,11 +779,11 @@ void to_flexfloat(const Flexfixed &value, Flexfloat& res){
 
     if(delta >= 0){
         assert(res.max_mant() > (value.get_n() - (1 << msb)) >> delta);
-        res.m = (value.get_n() - (1 << msb)) >> delta;
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1 << msb)) >> delta);
     }
     else {
         assert(res.max_mant() > (value.get_n() - (1 << msb)) << -delta);
-        res.m = (value.get_n() - (1 << msb)) << -delta;
+        res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1 << msb)) << -delta);
     }
 
     assert(res.m < res.max_mant());

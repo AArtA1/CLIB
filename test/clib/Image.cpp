@@ -1,6 +1,8 @@
-#include <clib/image.hpp>
-#include <clib/Flexfloat.hpp>
+#include "clib/image.hpp"
+#include "clib/Flexfloat.hpp"
 #include "clib/logs.hpp"
+#include "clib/img_algorithms.hpp"
+#include <algorithm>
 
 using ff = clib::Flexfloat;
 using img = clib::img<ff>;
@@ -39,5 +41,43 @@ TEST_CASE("Test Image Max")
 
 }
 
+
+TEST_CASE("Test Window")
+{
+    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Window");
+    
+
+    std::vector<std::vector<ff>> arr(4,std::vector<ff>(4));
+    
+    for(int i = 0; i < vv.size();++i){
+        for(int j = 0; j < vv[0].size();++j){
+            arr[i][j] = ff::from_float(i + j + 1);
+        }
+    }
+
+    img vv(arr);
+
+    // test case 1
+    auto test_1 = get_window(vv,{0,0},{3,3});
+    auto right_1 = std::vector<std::vector<ff>>{{6,5,6},{2,1,2},{6,5,6}}; 
+    if(test_1 != right_1){
+        return false;
+    }
+
+    // test case 2
+    auto test_2 = get_window(vv,{3,0},{3,3});
+    auto right_2 = std::vector<std::vector<ff>>{{10,9,10},{14,13,14},{10,9,10}}; 
+    if(test_2 != right_2){
+        return false;
+    }
+
+    // test case 3
+    auto test_3 = get_window(vv,{1,1},{3,3});
+    auto right_3 = std::vector<std::vector<ff>>{{1,2,3},{5,6,7},{9,10,11}}; 
+    if(test_3 != right_3){
+        return false;
+    }
+
+}
 
 #undef from_float_(value)
