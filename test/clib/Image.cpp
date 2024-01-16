@@ -77,7 +77,7 @@ TEST_CASE("Test Window")
     if(test_3 != right_3){
         return false;
     }
-
+    return true;
 }
 
 #undef from_float_(value)
