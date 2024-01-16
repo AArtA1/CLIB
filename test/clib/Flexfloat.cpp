@@ -2,7 +2,7 @@
 #include <clib/Flexfloat.hpp>
 #include "clib/logs.hpp"
 
-#ifdef EN_LOGS
+#ifdef BOOST_LOGS
 
 TEST_CASE("Test Flexfloat helpful functions")
 {
@@ -277,7 +277,7 @@ TEST_CASE("Test Flexfloat mean")
     // vector<vector<ff>> img(SIZE, vector<ff>(SIZE, ff(E, M, B, 0)));
     // for (size_t i = 0; i < SIZE; ++i)
     //     for (size_t j = 0; j < SIZE; ++j)
-    //         img[i][j] = ff::from_float(E, M, B, static_cast<float>(i * j)) ;
+    //         img[i][j] = ff::from_arithmetic_t(E, M, B, i * j) ;
     
     // LOG(debug) << "mean = " << clib::mean<ff>(img).to_float();
 

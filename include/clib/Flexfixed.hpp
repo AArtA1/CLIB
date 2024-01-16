@@ -179,7 +179,7 @@ class Flexfixed
     /// @return I бит значения n, начиная с last - f
     inline std::string to_string_int() const
     {
-        return std::bitset<sizeof(ntype) * 8>(get_int()).to_string().substr(sizeof(ntype) * 8 - I, I);
+        return std::bitset<sizeof(ntype) * 8>(get_integer_part()).to_string().substr(sizeof(ntype) * 8 - I, I);
     }
 
     /// @brief Метод для получения строкового представления дробной части только
@@ -187,21 +187,31 @@ class Flexfixed
     /// @return Последние F бит значения n
     inline std::string to_string_frac() const
     {
-        return std::bitset<sizeof(ntype) * 8>(get_frac()).to_string().substr(sizeof(ntype) * 8 - F, F);
+        return std::bitset<sizeof(ntype) * 8>(get_fractional_part()).to_string().substr(sizeof(ntype) * 8 - F, F);
     }
 
     //! \return Возвращает первые I бит от n - целые биты числа.
-    inline ntype get_int() const
+    inline int to_int() const
     {
-        return n >> F;
+        if (n >> F > std::numeric_limits<int>::max())
+            throw std::runtime_error{"int overflow. Can not fit Flexfixed in int"};
+        int res = static_cast<int>(n >> F);
+        int sign = (s == 1) ? -1 : 0;
+
+        return sign * res;
     }
 
     static void abs(const Flexfixed &val, Flexfixed &res);
 
-    //! \return Возвращает последние F бит от n - дробные биты числа.
-    inline ntype get_frac() const
+    inline ntype get_integer_part() const
     {
-        return ((static_cast<ntype>(1) << F) - 1) & n;
+        return ((1u << F) - 1) & n;
+    }
+
+    //! \return Возвращает последние F бит от n - дробные биты числа.
+    inline ntype get_fractional_part() const
+    {
+        return ((1u << F) - 1) & n;
     }
 
     /// @brief Getter для общего доступа к знаку экземпляра класса
@@ -229,11 +239,17 @@ class Flexfixed
     // todo
     friend void to_flexfixed(const Flexfloat &val, Flexfixed &res);
 
-    static Flexfixed from_float(Itype I_n, Ftype F_n, float flt);
+    static Flexfixed from_arithmetic_t(Itype I_n, Ftype F_n, float flt);
+    static Flexfixed from_arithmetic_t(const Flexfixed &hyperparams, float flt);
+    static void from_arithmetic_t(float flt, const Flexfixed &in, Flexfixed &out);
 
-    static Flexfixed from_float(const Flexfixed &hyperparams, float flt);
+    static Flexfixed from_arithmetic_t(Itype I_n, Ftype F_n, long unsigned n);
+    static Flexfixed from_arithmetic_t(const Flexfixed &hyperparams, long unsigned n);
+    static void from_arithmetic_t(long unsigned n, const Flexfixed &in, Flexfixed &out);
 
-    static void from_float(float flt, const Flexfixed &in, Flexfixed &out);
+    static Flexfixed from_arithmetic_t(Itype I_n, Ftype F_n, int n);
+    static Flexfixed from_arithmetic_t(const Flexfixed &hyperparams, int n);
+    static void from_arithmetic_t(int n, const Flexfixed &in, Flexfixed &out);
 
   private:
     /// @brief Принимает список значений Flexfixed, которые нужно проверить на
@@ -248,7 +264,7 @@ class Flexfixed
     /// @return Возвращает максимально возможное значение n
     static ntype get_max_n(Itype I_n, Ftype F_n)
     {
-        return ((static_cast<ntype>(1) << (I_n + F_n)) - 1);
+        return ((1u << (I_n + F_n)) - 1);
     }
 
     /// @brief Проверяет корректность числа. Значение n должно быть меньше
