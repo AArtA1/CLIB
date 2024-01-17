@@ -15,7 +15,7 @@
 #include <boost/log/utility/setup/console.hpp>
 #endif
 
-#ifndef BOOST_LOGS
+#ifdef BOOST_LOGS
 extern boost::log::sources::severity_logger<clib::severity_level> slg;
 #endif
 

@@ -1,5 +1,16 @@
 add_executable(clib-unit-tests test_main.cpp)
-target_sources(clib-unit-tests PRIVATE clib/Flexfloat.cpp)
+
+
+
+# TESTS SOURCES
+set(MY_TESTS
+    clib/Flexfloat.cpp
+    clib/Flexfixed.cpp
+    clib/Image.cpp
+)
+
+
+target_sources(clib-unit-tests PRIVATE ${MY_TESTS})
 target_link_libraries(clib-unit-tests
     PRIVATE
         clib::library

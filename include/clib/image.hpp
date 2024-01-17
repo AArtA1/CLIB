@@ -514,6 +514,47 @@ template <typename T> class img final
         work(nthreads, rows, do_func);
     }
 
+    static std::pair<idx_t,idx_t> transform_coordinates(const vector<vector<T>>& vv_, std::pair<int,int> coordinates,std::pair<int,int> center){
+        if(coordinates.first < 0){
+            coordinates.first = 2 * center.first - coordinates.first;
+        }
+        assert(vv_.size() < std::numeric_limits<int>::max());
+        if(coordinates.first >= static_cast<int>(vv_.size())){
+            coordinates.first =  2 * center.first - coordinates.first;
+        }
+        if(coordinates.second < 0){
+            coordinates.second = 2 * center.second - coordinates.second;
+        }
+        assert(vv_[0].size() < std::numeric_limits<int>::max());
+        if(coordinates.second >= static_cast<int>(vv_[0].size())){
+            coordinates.second = 2 * center.second - coordinates.second ;
+        }
+        return coordinates;
+    }
+
+    static std::vector<std::vector<T>> get_window(const img<T>& image, std::pair<idx_t,idx_t> center, std::pair<idx_t,idx_t> shape){
+        assert(center.first < image.rows());
+        assert(center.second < image.cols());
+
+        assert(shape.first < image.rows() && shape.first % 2 == 0);
+        assert(shape.second < image.cols() && shape.second % 2 == 0);
+
+        int top = static_cast<int>(center.first - shape.first / 2);
+        int left = static_cast<int>(center.second - shape.second / 2);
+
+        vector<vector<T>> res_window(shape.first, vector<T>(shape.second));
+
+        // Copy elements from the original matrix to the new one
+        for (size_t i = 0; i < shape.first; ++i) {
+            for (size_t j = 0; j < shape.second; ++j) {
+                // auto res_coord = transform_coordinates(image.vv_,{top + static_cast<int>(i), left + static_cast<int>(j)},{center.first,center.second});
+                // res_window[i][j] = image.vv_[res_coord.first][res_coord.second];
+            }
+        }
+
+        return res_window;
+    }
+
   private:
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
@@ -563,6 +604,7 @@ template <typename T> class img final
     {
         return determine_threads(rows_, cols_, min_thread_work);
     }
+
 
     // Вспомогательная функция для определения оптимального количество потоков для параллелизма
     // static void determine_work_number(const T &prototype)
