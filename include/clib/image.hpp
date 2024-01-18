@@ -532,12 +532,14 @@ template <typename T> class img final
         return coordinates;
     }
 
-    static std::vector<std::vector<T>> get_window(const img<T>& image, std::pair<idx_t,idx_t> center, std::pair<idx_t,idx_t> shape){
+    static img<T> get_window(const img<T>& image, std::pair<idx_t,idx_t> center, std::pair<idx_t,idx_t> shape){
         assert(center.first < image.rows());
         assert(center.second < image.cols());
 
-        assert(shape.first < image.rows() && shape.first % 2 == 0);
-        assert(shape.second < image.cols() && shape.second % 2 == 0);
+        assert(shape.first < image.rows());
+        assert(shape.first % 2 == 1);
+        assert(shape.second < image.cols());
+        assert(shape.second % 2 == 1);
 
         int top = static_cast<int>(center.first - shape.first / 2);
         int left = static_cast<int>(center.second - shape.second / 2);
@@ -547,12 +549,20 @@ template <typename T> class img final
         // Copy elements from the original matrix to the new one
         for (size_t i = 0; i < shape.first; ++i) {
             for (size_t j = 0; j < shape.second; ++j) {
-                // auto res_coord = transform_coordinates(image.vv_,{top + static_cast<int>(i), left + static_cast<int>(j)},{center.first,center.second});
-                // res_window[i][j] = image.vv_[res_coord.first][res_coord.second];
+                auto res_coord = transform_coordinates(image.vv_,{top + static_cast<int>(i), left + static_cast<int>(j)},{center.first,center.second});
+                res_window[i][j] = image.vv_[res_coord.first][res_coord.second];
             }
         }
 
-        return res_window;
+        return img<T>(res_window);
+    }
+
+
+    static img<T> convolution(const img<T>& image, std::pair<idx_t,idx_t> shape, std::function<T(const img<T>&)> func){
+        assert(image.rows() != 0 && image.cols() != 0);
+        img<T> res(image(0,0),image.rows(),image.cols());
+        img<T>::for_each(image.rows(), image.cols(), [&](idx_t i, idx_t j) { res.vv_[i][j] = func(get_window(image,std::make_pair(i,j),shape));});
+        return res;
     }
 
   private:
