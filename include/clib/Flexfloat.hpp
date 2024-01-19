@@ -24,7 +24,7 @@ class Flexfloat
 
     using etype = int;
     using mtype = uint32_t;
-    using stype = uint32_t;
+    using stype = uint8_t;
 
     // type for storing multiplication of mantissa
     using mexttype = uint64_t;
@@ -95,8 +95,7 @@ class Flexfloat
 
     Flexfloat(const Flexfloat &) = default;
 
-    static Flexfloat pack(const Flexfloat& in, hyper_params req_hyperparams);
-
+    static Flexfloat pack(const Flexfloat &in, hyper_params req_hyperparams);
 
     //! Generate Overflow number with s = 1; e = 2^E - 1; m = 2^M - 1
     static Flexfloat ovf(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
@@ -152,13 +151,6 @@ class Flexfloat
     //! \return 2^M - 1
     static mtype max_mant(Mtype M);
 
-    /*! @brief Ищет MSB в числе
-     *
-     * Пример, для val = 0b000001 вернет 0.
-     * Пример, для val = 0b000010 вернет 1.
-     */
-    static Mtype msb(mexttype val);
-
     static bool is_zero(const Flexfloat &val);
 
     /*! @brief Обрезает мантиссу и экспоненту числа other до
@@ -203,12 +195,9 @@ class Flexfloat
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
      */
-    static void inv(const Flexfloat &x, Flexfloat &res);
+    static void inv(const Flexfloat &x, Flexfloat &res, size_t precision = 0);
 
     /*! @brief Получение нормализованного числа из денормализованного
-     *
-     * \param[in] x Число для инвертирования
-     * \param[in] res Результат
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat.pdf
      * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/src/flexfloat_nonlinear.ipynb
@@ -242,6 +231,22 @@ class Flexfloat
      */
     int to_int() const;
 
+    /*! @brief Возвращает целую часть Flexfloat
+     *
+     * \throw runtime_error, если число не умещается в uint32_t
+     */
+    uint64_t integer_part() const;
+
+    /*! @brief Преобразует Flexfloat в Flexfixed
+     */
+    Flexfixed to_flexfixed(uint8_t I, uint8_t F) const;
+
+    /*! @brief Возвращает дробную часть Flexfloat в целочисленном представлении
+     *
+     * \param[in] F Битовая ширина дробной части
+     */
+    uint32_t fractional_part(uint8_t F) const;
+
     /*! @brief Конвертация float числа в FlexFloat
      *
      * \param[in] flt float число
@@ -249,27 +254,27 @@ class Flexfloat
      */
     static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, float flt);
     static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, float flt);
-    static void      from_arithmetic_t(float flt, const Flexfloat &in, Flexfloat &out);
+    static void from_arithmetic_t(float flt, const Flexfloat &in, Flexfloat &out);
 
     /*! @brief Конвертация int числа в FlexFloat
      *
      * \param[in] n целое число
      * \return FlexFloat
-     * 
+     *
      * \see https://gitlab.inviewlab.com/synthesizer/documents/-/blob/master/src/flexfloat_nonlinear.ipynb
      */
     static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, int n);
     static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, int n);
-    static void      from_arithmetic_t(int n, const Flexfloat &in, Flexfloat &out);
+    static void from_arithmetic_t(int n, const Flexfloat &in, Flexfloat &out);
 
     static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, long unsigned n);
     static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, long unsigned n);
-    static void      from_arithmetic_t(long unsigned n, const Flexfloat &in, Flexfloat &out);
+    static void from_arithmetic_t(long unsigned n, const Flexfloat &in, Flexfloat &out);
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);
-    
-    friend void to_flexfloat(const Flexfixed& value, Flexfloat& res);
+
+    friend void to_flexfloat(const Flexfixed &value, Flexfloat &res);
 
     /// Выводит Flexfloat в битовом виде
     std::string bits() const;
@@ -296,7 +301,7 @@ class Flexfloat
 
     static void negative(const Flexfloat &val, Flexfloat &res);
 
-    static void abs(const Flexfloat& val, Flexfloat &res);
+    static void abs(const Flexfloat &val, Flexfloat &res);
 
     static void min(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);
     static void max(const Flexfloat &first, const Flexfloat &second, Flexfloat &res);

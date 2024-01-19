@@ -1,6 +1,6 @@
-#include <clib/Flexfloat.hpp>
-
 #include "clib/logs.hpp"
+#include "clib/polyfit.hpp"
+#include <clib/Flexfloat.hpp>
 
 #include <ieee754.h>
 
@@ -39,7 +39,7 @@ Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtyp
 Flexfloat::Flexfloat(Etype E_n, Mtype M_n, Btype B_n, uint32_t value) : B(B_n), E(E_n), M(M_n), s(0), e(0), m(0)
 {
     m = (value >> 0) & ((1u << M) - 1u);
-    
+
     assert(msb(value) + 1 <= M + B + S);
     e = static_cast<etype>((value >> M) & ((1u << E) - 1u));
     s = static_cast<stype>((value >> (M + E)) & ((1u << S) - 1u));
@@ -86,7 +86,7 @@ Flexfloat::Flexfloat(const Flexfloat &hyperparams, uint32_t value) : B(0), E(0),
     }
 }
 
-Flexfloat Flexfloat::pack(const Flexfloat& in, hyper_params req_hyperparams)
+Flexfloat Flexfloat::pack(const Flexfloat &in, hyper_params req_hyperparams)
 {
     mexttype in_m = unzip(in);
     return normalise(in.s, in.e, in_m, in.M, req_hyperparams);
@@ -141,21 +141,6 @@ Flexfloat::etype Flexfloat::max_exp(Etype E)
 Flexfloat::mtype Flexfloat::max_mant(Mtype M)
 {
     return (1 << M) - 1u;
-}
-
-Flexfloat::Mtype Flexfloat::msb(mexttype val)
-{
-    if (val == 0)
-        return 0;
-
-    Mtype msb = 0;
-    while (val > 0)
-    {
-        val >>= 1;
-        msb++;
-    }
-
-    return msb - 1;
 }
 
 bool Flexfloat::is_zero(const Flexfloat &val)
@@ -363,9 +348,8 @@ Flexfloat::ext_ff Flexfloat::get_normalized(const Flexfloat &denorm)
     return ext_ff{ext_exp, ext_mant};
 }
 
-void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
+void Flexfloat::inv(const Flexfloat &x, Flexfloat &res, size_t precision)
 {
-    size_t precision = 0; // TODO
 #ifdef BOOST_LOGS
     CLOG(trace) << std::endl;
     CLOG(trace) << "Inv: 1/x";
@@ -373,16 +357,17 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
     CLOG(trace) << "x: " << x;
 #endif
 
-    if (x.m == 0 && x.e == 0)
+    eexttype nexp = x.e;
+    mexttype nmant = x.m;
+
+    if (nmant == 0 && nexp == 0)
     {
         res = res.max_norm();
         res.s = x.s;
         return;
     }
 
-    eexttype nexp = x.e;
-    mexttype nmant = x.m;
-    if (x.e == 0)
+    if (nexp == 0)
     {
         ext_ff normal = get_normalized(x);
         nexp = normal.exp;
@@ -390,25 +375,35 @@ void Flexfloat::inv(const Flexfloat &x, Flexfloat &res)
     }
 
     // Largest M. All calculations will be with the largest mantissa
-    Mtype LM = std::max({x.M, res.M});
-    nmant <<= (LM - x.M);
+    Mtype LM = 0;
+    if (res.M > x.M)
+    {
+        nmant <<= (res.M - x.M);
+        LM = res.M;
+    }
+    else
+        LM = x.M;
 
-    // (1-x)/(1+x) = 1 - x
-    if (precision == 0)
+    if (nmant == 0)
+    {
+        nexp = -nexp + x.B + res.B;
+        nmant = 0;
+    }
+    else if (precision == 0)
     {
         nexp = -nexp + (x.B + res.B - 1);
         nmant = (1 << LM) - nmant - 1;
-
-        // normalise expects extended mantissa
-        nmant += 1 << LM;
-        Flexfloat norm_ans = normalise(x.s, nexp, nmant, LM, {res.E, res.M, res.B});
-        res = norm_ans;
     }
-    // Lagrange polinomials
     else
     {
-        assert(0);
+        nexp = -nexp + (x.B + res.B - 1);
+        nmant = polyfit::get()->calc("inv", nmant, LM);
     }
+
+    // normalise expects extended mantissa
+    nmant += 1 << LM;
+    Flexfloat norm_ans = normalise(x.s, nexp, nmant, LM, {res.E, res.M, res.B});
+    res = norm_ans;
 }
 
 int Flexfloat::ceil() const
@@ -428,14 +423,14 @@ int Flexfloat::ceil() const
         nmant *= 2;
     else
         nmant += (1 << M);
-    
+
     auto nval = nmant;
     if (nexp < 0)
         // Округление вниз
         nval = (nmant >> -nexp);
     if (nexp > 0)
         nval = (nmant << nexp);
-    
+
     if (nval > std::numeric_limits<int>::max())
     {
         std::cout << *this << std::endl;
@@ -504,24 +499,87 @@ int Flexfloat::to_int() const
         nmant *= 2;
     else
         nmant += (1 << M);
-    
+
     auto nval = nmant;
     if (nexp < 0)
     {
         nval = (nmant >> -nexp);
         // Округление по математическим законами
-        if ((nmant >> -(nexp+1)) % 2 == 1)
+        if ((nmant >> -(nexp + 1)) % 2 == 1)
             nval += 1;
     }
     if (nexp > 0)
         nval = (nmant << nexp);
-    
+
     if (nval > std::numeric_limits<int>::max())
     {
         throw std::runtime_error{"Flexlfloat can not fit to int: ff > max(int)"};
         return std::numeric_limits<int>::max() * sign;
     }
     return static_cast<int>(nval) * sign;
+}
+
+uint64_t Flexfloat::integer_part() const
+{
+    $(CLOG(trace) << "integer_part");
+    eexttype nexp = e;
+    mexttype nmant = m;
+
+    if (nexp == 0)
+    {
+        ext_ff normal = get_normalized(*this);
+        nexp = normal.exp;
+        nmant = normal.mant;
+    }
+    nexp -= B;
+
+    if (nexp < 0)
+        return 0;
+    if (nexp == 0)
+        return 1;
+
+    auto m0 = m >> (M - nexp);
+
+    $(CLOG(trace) << "m0 = " << m0);
+
+    if (nexp <= M)
+    {
+        auto ans = (1 << nexp) + m0;
+        if (std::numeric_limits<uint64_t>::max() < ans)
+            throw std::runtime_error{"Can not fit Flexfloat in int"};
+        return ans;
+    }
+
+    auto ans = (1 << (nexp - M)) * ((1 << M) + nmant);
+    if (std::numeric_limits<uint64_t>::max() < ans)
+        throw std::runtime_error{"Can not fit Flexfloat in int"};
+    return static_cast<uint64_t>(ans);
+}
+
+Flexfixed Flexfloat::to_flexfixed(uint8_t I, uint8_t F) const
+{
+    auto temp_ff = *this;
+    temp_ff.e += F;
+
+    auto n = integer_part();
+    auto int_part  = n >> F; 
+    if (msb(int_part) + 1 >= (1 << I))
+        throw std::runtime_error{"Can not fit Flexfloat in Flexfixed"};
+
+    return Flexfixed(I, F, s, n);
+}
+
+uint32_t Flexfloat::fractional_part(uint8_t F) const
+{
+    $(CLOG(trace) << "fractional_part");
+    auto temp_ff = *this;
+    temp_ff.e += F;
+
+    auto n = temp_ff.integer_part();
+    auto frac_part = n & ((1u << F) - 1u);
+    assert(frac_part < std::numeric_limits<uint32_t>::max());
+
+    return static_cast<uint32_t>(frac_part);
 }
 
 Flexfloat Flexfloat::from_arithmetic_t(Etype E, Mtype M, Btype B, float flt)
@@ -675,8 +733,8 @@ bool operator>(const Flexfloat &lhs, const Flexfloat &rhs)
     lhs_m <<= (LM - lhs.M);
     rhs_m <<= (LM - rhs.M);
 
-    auto lhs_e = lhs.e + Flexfloat::msb(lhs_m) - lhs.B;
-    auto rhs_e = rhs.e + Flexfloat::msb(rhs_m) - rhs.B;
+    auto lhs_e = lhs.e + msb(lhs_m) - lhs.B;
+    auto rhs_e = rhs.e + msb(rhs_m) - rhs.B;
 
     if (lhs_e > rhs_e)
         return lhs.s == 0;
@@ -760,8 +818,8 @@ void Flexfloat::clip(const Flexfloat &a, const Flexfloat &x, const Flexfloat &b,
     max(a, out, out);
 }
 
-
-void to_flexfloat(const Flexfixed &value, Flexfloat& res){
+void to_flexfloat(const Flexfixed &value, Flexfloat &res)
+{
 #ifdef BOOST_LOGS
     CLOG(trace) << "from_fx_to_ff";
     Flexfloat::check_ffs({res});
@@ -777,11 +835,13 @@ void to_flexfloat(const Flexfixed &value, Flexfloat& res){
 
     Flexfixed::wtype delta = msb - res.M;
 
-    if(delta >= 0){
+    if (delta >= 0)
+    {
         assert(res.max_mant() > (value.get_n() - (1 << msb)) >> delta);
         res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1 << msb)) >> delta);
     }
-    else {
+    else
+    {
         assert(res.max_mant() > (value.get_n() - (1 << msb)) << -delta);
         res.m = static_cast<Flexfloat::mtype>((value.get_n() - (1 << msb)) << -delta);
     }
@@ -790,7 +850,6 @@ void to_flexfloat(const Flexfixed &value, Flexfloat& res){
 
     $(CLOG(trace) << "res: " << res);
 }
-
 
 //
 // See
@@ -929,10 +988,11 @@ Flexfloat Flexfloat::normalise(stype cur_sign, eexttype cur_exp, mexttype cur_ma
     return Flexfloat(res.E, res.M, res.B, cur_sign, exp, mant);
 }
 
-void Flexfloat::negative(const Flexfloat &val, Flexfloat &res){
+void Flexfloat::negative(const Flexfloat &val, Flexfloat &res)
+{
 #ifdef BOOST_LOGS
     CLOG(trace) << "negative";
-    Flexfloat::check_ffs({val,res});
+    Flexfloat::check_ffs({val, res});
     CLOG(trace) << "Value: " << val;
     CLOG(trace) << "Result: " << res;
 #endif
@@ -942,7 +1002,7 @@ void Flexfloat::negative(const Flexfloat &val, Flexfloat &res){
 
     res.e = val.e;
     res.m = val.m;
-    res.s = val.s >= 1?0:1;
+    res.s = val.s >= 1 ? 0 : 1;
     $(CLOG(trace) << "res: " << res);
 }
 
@@ -983,11 +1043,11 @@ Flexfloat::mtype Flexfloat::zip(eexttype exp, mexttype ext_mant, Mtype curM, Mty
     return static_cast<mtype>(ext_mant);
 }
 
-
-void Flexfloat::abs(const Flexfloat& val, Flexfloat &res){
+void Flexfloat::abs(const Flexfloat &val, Flexfloat &res)
+{
 #ifdef BOOST_LOGS
     CLOG(trace) << "abs";
-    Flexfloat::check_ffs({val,res});
+    Flexfloat::check_ffs({val, res});
     CLOG(trace) << "Value: " << val;
     CLOG(trace) << "Result: " << res;
 #endif
@@ -1000,7 +1060,6 @@ void Flexfloat::abs(const Flexfloat& val, Flexfloat &res){
     res.s = 0;
     $(CLOG(trace) << "res: " << res);
 }
-
 
 // if e > 0  -> normalized value   -> m' = 2^M + m
 // if e == 0 -> denormalized value -> m' = 2*m
