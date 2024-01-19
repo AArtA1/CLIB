@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <type_traits>
 #include <vector>
 
 namespace clib
@@ -25,6 +26,8 @@ using int128_t = __int128_t;
 
 using llu_t = long long unsigned;
 
+/*! @brief Модуль
+ */
 template <typename T> T abs(T a)
 {
     if (a < 0)
@@ -33,6 +36,8 @@ template <typename T> T abs(T a)
         return a;
 }
 
+/*! @brief Модуль разницы
+ */
 template <typename T> T delta(T a, T b)
 {
     if (a < b)
@@ -41,10 +46,31 @@ template <typename T> T delta(T a, T b)
         return a - b;
 }
 
-template <std::size_t N, typename... T> using static_switch = typename std::tuple_element<N, std::tuple<T...>>::type;
+/*! @brief Ищет MSB в числе
+ *
+ * Пример, для val = 0b000001 вернет 0.
+ * Пример, для val = 0b000010 вернет 1.
+ */
+template <typename T> uint8_t msb(T val)
+{
+    if (val == 0) return 0;
 
+    uint8_t msb = 0;
+    while (val > 0)
+    {
+        val >>= 1;
+        msb++;
+    }
+
+    return msb - 1;
+}
+
+// val < 0 -> prints integer representation of val
+// val > 0 -> prints bits    representation of val
+template <std::size_t N, typename... T> using static_switch = typename std::tuple_element<N, std::tuple<T...>>::type;
 template <typename T> std::string bits(T val)
 {
+    static_assert(std::is_integral<T>::value, "Integral required.");
     if (val < 0)
         return std::to_string(static_cast<int64_t>(val));
 
@@ -60,13 +86,5 @@ template <typename T> std::string bits(T val)
 
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
-
-// static bool check_ext(const std::string &s, const std::vector<std::string> &exts)
-// {
-//     for (auto ext : exts)
-//         if (s.substr(s.find_last_of(".") + 1) == ext)
-//             return true;
-//     return false;
-// }
 
 } // namespace clib
