@@ -125,7 +125,6 @@ template <typename T> class img final
         return vv_;
     }
 
-
     idx_t rows() const
     {
         return vv_.size();
@@ -235,7 +234,7 @@ template <typename T> class img final
         T::mult(summ, inv_volume, summ);
 
         // comment this if INVERSION works correctly
-        //summ = T::from_arithmetic_t(summ,  / (rows_ * cols_));
+        // summ = T::from_arithmetic_t(summ,  / (rows_ * cols_));
 
 #ifdef BOOST_LOGS
         CLOG(debug) << "Mean:" << summ << " Float:" << summ.to_float();
@@ -514,25 +513,32 @@ template <typename T> class img final
         work(nthreads, rows, do_func);
     }
 
-    static std::pair<idx_t,idx_t> transform_coordinates(const vector<vector<T>>& vv_, std::pair<int,int> coordinates,std::pair<int,int> center){
-        if(coordinates.first < 0){
+    static std::pair<idx_t, idx_t> transform_coordinates(const vector<vector<T>> &vv_, std::pair<int, int> coordinates,
+                                                         std::pair<int, int> center)
+    {
+        if (coordinates.first < 0)
+        {
             coordinates.first = 2 * center.first - coordinates.first;
         }
         assert(vv_.size() < std::numeric_limits<int>::max());
-        if(coordinates.first >= static_cast<int>(vv_.size())){
-            coordinates.first =  2 * center.first - coordinates.first;
+        if (coordinates.first >= static_cast<int>(vv_.size()))
+        {
+            coordinates.first = 2 * center.first - coordinates.first;
         }
-        if(coordinates.second < 0){
+        if (coordinates.second < 0)
+        {
             coordinates.second = 2 * center.second - coordinates.second;
         }
         assert(vv_[0].size() < std::numeric_limits<int>::max());
-        if(coordinates.second >= static_cast<int>(vv_[0].size())){
-            coordinates.second = 2 * center.second - coordinates.second ;
+        if (coordinates.second >= static_cast<int>(vv_[0].size()))
+        {
+            coordinates.second = 2 * center.second - coordinates.second;
         }
         return coordinates;
     }
 
-    static img<T> get_window(const img<T>& image, std::pair<idx_t,idx_t> center, std::pair<idx_t,idx_t> shape){
+    static img<T> get_window(const img<T> &image, std::pair<idx_t, idx_t> center, std::pair<idx_t, idx_t> shape)
+    {
         assert(center.first < image.rows());
         assert(center.second < image.cols());
 
@@ -547,9 +553,12 @@ template <typename T> class img final
         vector<vector<T>> res_window(shape.first, vector<T>(shape.second));
 
         // Copy elements from the original matrix to the new one
-        for (size_t i = 0; i < shape.first; ++i) {
-            for (size_t j = 0; j < shape.second; ++j) {
-                auto res_coord = transform_coordinates(image.vv_,{top + static_cast<int>(i), left + static_cast<int>(j)},{center.first,center.second});
+        for (size_t i = 0; i < shape.first; ++i)
+        {
+            for (size_t j = 0; j < shape.second; ++j)
+            {
+                auto res_coord = transform_coordinates(
+                    image.vv_, {top + static_cast<int>(i), left + static_cast<int>(j)}, {center.first, center.second});
                 res_window[i][j] = image.vv_[res_coord.first][res_coord.second];
             }
         }
@@ -557,11 +566,13 @@ template <typename T> class img final
         return img<T>(res_window);
     }
 
-
-    static img<T> convolution(const img<T>& image, std::pair<idx_t,idx_t> shape, std::function<T(const img<T>&)> func){
+    static img<T> convolution(const img<T> &image, std::pair<idx_t, idx_t> shape, std::function<T(const img<T> &)> func)
+    {
         assert(image.rows() != 0 && image.cols() != 0);
-        img<T> res(image(0,0),image.rows(),image.cols());
-        img<T>::for_each(image.rows(), image.cols(), [&](idx_t i, idx_t j) { res.vv_[i][j] = func(get_window(image,std::make_pair(i,j),shape));});
+        img<T> res(image(0, 0), image.rows(), image.cols());
+        img<T>::for_each(image.rows(), image.cols(), [&](idx_t i, idx_t j) {
+            res.vv_[i][j] = func(get_window(image, std::make_pair(i, j), shape));
+        });
         return res;
     }
 
@@ -614,7 +625,6 @@ template <typename T> class img final
     {
         return determine_threads(rows_, cols_, min_thread_work);
     }
-
 
     // Вспомогательная функция для определения оптимального количество потоков для параллелизма
     // static void determine_work_number(const T &prototype)
