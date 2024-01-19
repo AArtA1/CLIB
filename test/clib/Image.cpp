@@ -42,8 +42,6 @@ const ff::Btype B = 127;
 
 TEST_CASE("Test Window")
 {
-    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Window");
-
     std::vector<std::vector<ff>> arr(4, std::vector<ff>(4));
 
     int counter = 0;
@@ -108,8 +106,6 @@ TEST_CASE("Test Window")
 
 TEST_CASE("Test Convolution")
 {
-    BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Convolution");
-
     std::vector<std::vector<ff>> arr(4, std::vector<ff>(4));
 
     int counter = 0;
