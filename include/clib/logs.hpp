@@ -11,6 +11,7 @@ namespace clib
 // We define our own severity levels
 enum severity_level
 {
+    dump,
     trace,
     debug,
     info,

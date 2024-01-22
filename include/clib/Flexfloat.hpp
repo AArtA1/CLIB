@@ -66,7 +66,7 @@ class Flexfloat
      * \param[in] e_n Exponent
      * \param[in] m_n Mantissa
      */
-    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, uint32_t m_n);
+    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, stype s_n, etype e_n, mtype m_n);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
      *
@@ -75,14 +75,14 @@ class Flexfloat
      * \param[in] B_n Bias
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, uint32_t value);
+    Flexfloat(Etype E_n, Mtype M_n, Btype B_n, uint64_t value);
 
     /*! @brief Создает Flexfloat из аналогичного битового представления
      *
      * \param[in] hyperparams Число содержит E, M, B для нового Flexfloat
      * \param[in] value Содержит знак, экспоненту и мантиссу в порядке s|e|m
      */
-    Flexfloat(const Flexfloat &hyperparams, uint32_t value);
+    Flexfloat(const Flexfloat &hyperparams, uint64_t value);
 
     // /*! @brief Создает Flexfloat из double
     // *
@@ -162,7 +162,7 @@ class Flexfloat
      *
      * \param[in] left Левый операнд
      * \param[in] right Правый операнд
-     * \param[in] res Результат
+     * \param[out] res Результат
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Mult.pdf
      */
@@ -172,7 +172,7 @@ class Flexfloat
      *
      * \param[in] left Левый операнд
      * \param[in] right Правый операнд
-     * \param[in] res Результат
+     * \param[out] res Результат
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
@@ -182,7 +182,7 @@ class Flexfloat
      *
      * \param[in] left Левый операнд
      * \param[in] right Правый операнд
-     * \param[in] res Результат
+     * \param[out] res Результат
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Add.pdf
      */
@@ -191,11 +191,42 @@ class Flexfloat
     /*! @brief Получение 1/x
      *
      * \param[in] x Число для инвертирования
-     * \param[in] res Результат
+     * \param[out] res Результат
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
      */
     static void inv(const Flexfloat &x, Flexfloat &res, size_t precision = 0);
+
+    /*! @brief Получение 2**x
+     *
+     * \param[in] F Битовая ширина дробной части 
+     * \param[out] res Результат
+     */
+    static void exp2(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
+
+    /*! @brief Получение log2(x)
+     *
+     * \param[out] res Результат
+     */
+    static void log2(const Flexfloat &x, Flexfloat &res);
+
+    /*! @brief Получение sqrt(x)
+     *
+     * \param[out] res Результат
+     */
+    static void sqrt(const Flexfloat &x, Flexfloat &res);
+
+    /*! @brief Получение cos(x)
+     *
+     * \param[out] res Результат
+     */
+    static void cos(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
+
+    /*! @brief Получение sin(x)
+     *
+     * \param[out] res Результат
+     */
+    static void sin(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
 
     /*! @brief Получение нормализованного числа из денормализованного
      *
@@ -235,7 +266,7 @@ class Flexfloat
      *
      * \throw runtime_error, если число не умещается в uint32_t
      */
-    uint64_t integer_part() const;
+    uint32_t integer_part() const;
 
     /*! @brief Преобразует Flexfloat в Flexfixed
      */
@@ -245,7 +276,7 @@ class Flexfloat
      *
      * \param[in] F Битовая ширина дробной части
      */
-    uint32_t fractional_part(uint8_t F) const;
+    uint32_t fractional_part(uint8_t F = 16) const;
 
     /*! @brief Конвертация float числа в FlexFloat
      *
@@ -270,6 +301,10 @@ class Flexfloat
     static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, long unsigned n);
     static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, long unsigned n);
     static void from_arithmetic_t(long unsigned n, const Flexfloat &in, Flexfloat &out);
+
+    static Flexfloat from_arithmetic_t(Etype E, Mtype M, Btype B, int64_t n);
+    static Flexfloat from_arithmetic_t(const Flexfloat &hyperparams, int64_t n);
+    static void from_arithmetic_t(int64_t n, const Flexfloat &in, Flexfloat &out);
 
     /// Выводит Flexfloat в информативном виде
     friend std::ostream &operator<<(std::ostream &oss, const Flexfloat &num);

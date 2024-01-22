@@ -9,6 +9,13 @@
 namespace clib
 {
 
+#ifdef BOOST_LOGS
+#define $(...) __VA_ARGS__
+#else
+#define $(...) ;
+#endif
+
+
 // Generated file with polynomials coefficients with structure:
 // {
 //      name: {
@@ -51,15 +58,21 @@ struct polyfit final
      *
      * \param[in] fname Название функции
      * \param[in] l Входное значение
-     * \param[in] L Битовая длина входного и выходного значений
+     * \param[in] L Битовая длина входного значения
+     * \param[in] K Битовая длина выходного значения
      * \param[in] L_base - Все вычисления происходит в кольце 2**L. Иначе все вычисления будут происходит
      *                     в кольце коэффициентов многочленов 2**F
      *
      * \return Результат приближения
      */
-    polyfit_t calc(const std::string &fname, polyfit_t l, unsigned L, bool L_base = false)
+    polyfit_t calc(const std::string &fname, polyfit_t l, unsigned L, unsigned K, bool L_base = true)
     {
+#ifdef BOOST_LOGS
+        CLOG(trace) << std::endl;
+        CLOG(trace) << "====== polyfit ======";
+#endif
         assert(L < sizeof(polyfit_t) * 8);
+        assert(K < sizeof(polyfit_t) * 8);
         assert(l < std::numeric_limits<coef_t>::max());
 
         coef_t lc = static_cast<coef_t>(l);
@@ -80,14 +93,15 @@ struct polyfit final
         auto segment = l >> (L - segments_bits);
 
         // Bit length of coefficients
-        auto F = COEFS[fname][segment][0];
+        assert(COEFS[fname][segment][0] > 0);
+        auto F = static_cast<unsigned>(COEFS[fname][segment][0]);
 
-        // std::cout << "l = " << l << std::endl;
-        // std::cout << "L = " << L << std::endl;
-        // std::cout << "segments_bits = " << +segments_bits << std::endl;
-        // std::cout << "segment = " << segment << std::endl;
-        // std::cout << "F = " << F << std::endl;
-
+#ifdef BOOST_LOGS
+        CLOG(trace) << "l = " << l;
+        CLOG(trace) << "L, K, F = " << L << " " << K << " " << F;
+        CLOG(trace) << "segment = " << segment;
+        CLOG(trace) << "=====================";
+#endif
         coef_t res = COEFS[fname][segment][1];
         if (L_base)
         {
@@ -114,17 +128,26 @@ struct polyfit final
                 res += COEFS[fname][segment][i];
             }
         }
+
+        $(CLOG(trace) << "res = " << res);
+
         if (res < 0)
             res = 0;
 
-        if (!L_base)
+        if (L_base)
         {
-            if (L < F)
-                return static_cast<polyfit_t>(res >> (F - L));
+            if (K > L)
+                return static_cast<polyfit_t>(res << (K - L));
             else
-                return static_cast<polyfit_t>(res << (L - F));
+                return static_cast<polyfit_t>(res >> (L - K));
         }
-        return static_cast<polyfit_t>(res);
+        else
+        {
+            if (K > F)
+                return static_cast<polyfit_t>(res << (K - F));
+            else
+                return static_cast<polyfit_t>(res >> (F - K));
+        }
     }
 
   private:
