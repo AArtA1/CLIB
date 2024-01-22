@@ -1,8 +1,8 @@
-#include <doctest.h>
 #include "clib/image.hpp"
 #include "clib/Flexfloat.hpp"
 #include "clib/logs.hpp"
 #include <algorithm>
+#include <doctest.h>
 
 using ff = clib::Flexfloat;
 using img = clib::img<ff>;
@@ -53,8 +53,10 @@ TEST_CASE("Test Window")
         }
     }
 
-    for(auto it : arr){
-        for(auto val : it){
+    for (auto it : arr)
+    {
+        for (auto val : it)
+        {
             std::cout << val.to_float() << " ";
         }
         std::cout << std::endl;
@@ -66,43 +68,44 @@ TEST_CASE("Test Window")
 
     // test case 1
     auto test_1 = img::get_window(vv, {1, 1}, {3, 3});
-    for(auto it : test_1.vv()){
-        for(auto val : it){
+    for (auto it : test_1.vv())
+    {
+        for (auto val : it)
+        {
             std::cout << val.to_float() << " ";
         }
         std::cout << std::endl;
     }
 
     auto right_1 =
-         std::vector<std::vector<ff>>{{ff_(1), ff_(2), ff_(3)}, {ff_(5), ff_(6), ff_(7)}, {ff_(9), ff_(10), ff_(11)}};
+        std::vector<std::vector<ff>>{{ff_(1), ff_(2), ff_(3)}, {ff_(5), ff_(6), ff_(7)}, {ff_(9), ff_(10), ff_(11)}};
     CHECK(test_1.vv() == right_1);
-
 
     std::cout << std::endl;
 
     // test case 2
     auto test_2 = img::get_window(vv, {0, 0}, {3, 3});
 
-    for(auto it : test_2.vv()){
-        for(auto val : it){
+    for (auto it : test_2.vv())
+    {
+        for (auto val : it)
+        {
             std::cout << val.to_float() << " ";
         }
         std::cout << std::endl;
     }
 
-    auto right_2 = std::vector<std::vector<ff>>{
-        {ff_(6), ff_(5), ff_(6)}, {ff_(2), ff_(1), ff_(2)}, {ff_(6), ff_(5), ff_(6)}};
+    auto right_2 =
+        std::vector<std::vector<ff>>{{ff_(6), ff_(5), ff_(6)}, {ff_(2), ff_(1), ff_(2)}, {ff_(6), ff_(5), ff_(6)}};
     CHECK(test_2.vv() == right_2);
 
-    
     // test case 3
-    auto test_3 = img::get_window(vv,{3,0},{3,3});
-    
+    auto test_3 = img::get_window(vv, {3, 0}, {3, 3});
+
     auto right_3 = std::vector<std::vector<ff>>{
         {ff_(10), ff_(9), ff_(10)}, {ff_(14), ff_(13), ff_(14)}, {ff_(10), ff_(9), ff_(10)}};
     CHECK(test_3.vv() == right_3);
 }
-
 
 TEST_CASE("Test Convolution")
 {
@@ -117,8 +120,10 @@ TEST_CASE("Test Convolution")
         }
     }
 
-    for(auto it : arr){
-        for(auto val : it){
+    for (auto it : arr)
+    {
+        for (auto val : it)
+        {
             std::cout << val.to_float() << " ";
         }
         std::cout << std::endl;
@@ -128,25 +133,28 @@ TEST_CASE("Test Convolution")
 
     img vv(arr);
 
-    std::function<ff(img)> func = [](img image) { 
+    std::function<ff(img)> func = [](img image) {
         auto sum = ff_(0);
-        for(auto i = 0; i < image.rows();++i){
-            for(auto j = 0; j < image.cols();++j){
-                ff::sum(image(i,j),sum,sum);
+        for (auto i = 0; i < image.rows(); ++i)
+        {
+            for (auto j = 0; j < image.cols(); ++j)
+            {
+                ff::sum(image(i, j), sum, sum);
             }
         }
         return sum;
     };
 
-    auto res = img::convolution(vv,{3,3},func);
+    auto res = img::convolution(vv, {3, 3}, func);
 
-    for(auto i = 0; i < res.rows();++i){
-        for(auto j = 0; j < res.cols();++j){
-            std::cout << res(i,j).to_float() << " ";
+    for (auto i = 0; i < res.rows(); ++i)
+    {
+        for (auto j = 0; j < res.cols(); ++j)
+        {
+            std::cout << res(i, j).to_float() << " ";
         }
         std::cout << std::endl;
-    } 
+    }
 }
-
 
 #undef ff_
