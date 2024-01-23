@@ -91,7 +91,7 @@ template <typename T> class img final
     }
 
     img(vector<vector<T>> &&base) : vv_()
-    {
+    { 
         assert(base.size() > 0);
         assert(base[0].size() > 0);
 
@@ -120,6 +120,7 @@ template <typename T> class img final
     {
         return vv_;
     }
+
     vector<vector<T>> vv()
     {
         return vv_;
@@ -563,7 +564,55 @@ template <typename T> class img final
             }
         }
 
-        return img<T>(res_window);
+        return img<T>(std::move(res_window));
+    }
+
+
+    static std::vector<std::vector<img<T>>> get_window(const img<T>& image, std::pair<idx_t,idx_t> shape){
+        assert(shape.first < image.rows());
+        assert(shape.first % 2 == 1);
+        assert(shape.second < image.cols());
+        assert(shape.second % 2 == 1);
+        
+        int h  = image.rows();
+        int w = image.cols();
+
+        int dh = shape.first - 1, dw = shape.second -  1;
+
+        int di = dh / 2, dj = dw / 2;
+
+        auto y = std::vector<std::vector<T>>(h+dh, std::vector<T>(w+dw));
+
+        auto mirror_index = [](int x, int x_max) {
+            return std::abs(std::abs(x-x_max) - x_max);
+        };
+
+        for(int i = -di; i < h + di; ++i){
+            for(int j = -dj; j < w + dj; ++j){
+                y[i+di][j + dj] = image(mirror_index(i,h-1),mirror_index(j, w-1));
+            }
+        }
+
+        auto res = std::vector<std::vector<img<T>>>(shape.first,std::vector<img<T>>(shape.second));
+
+        img<T> y_img(std::move(y)); 
+
+        for(int i = 0; i < shape.first; ++i){
+            for(int j = 0; j < shape.second;++j){
+                //res[i][j] = get_subimg(y_img,)
+            }
+        }
+
+    #ifdef BOOST_LOGS
+        // for(auto vec : y){
+        //     for(auto it : vec){
+        //         std::cout << it.to_float() << "  ";
+        //     }
+        //     std::cout << std::endl;
+        // }
+    #endif
+
+        //std::vector<std::vector<img<T>>> res(); 
     }
 
     static img<T> convolution(const img<T> &image, std::pair<idx_t, idx_t> shape, std::function<T(const img<T> &)> func)
@@ -576,7 +625,21 @@ template <typename T> class img final
         return res;
     }
 
+    // static void demosaic(img<T> r, img<T> g, img<T> b){
+
+    // }
+
+
   private:
+
+    static img<T> get_subimg(const img<T>& initial, idx_t row_start,idx_t row_end, idx_t col_start, idx_t col_end){
+        std::vector<std::vector<T>> rect(row_end - row_start, std::vector<T>(col_end - col_start));
+        for (int r = row_start; r < row_end; r++)
+            for (int c = col_start; c < col_end; c++)
+                rect[r-row_start][c-col_start] = initial(r,c);
+        return img<T>(rect);
+    }
+
     // Выполняет func над this, разделяя работу на nthreads потоков
     // Пример использования в mean
     template <typename Func, typename... Args> static void work(idx_t nthreads, idx_t rows, Func func, Args... args)

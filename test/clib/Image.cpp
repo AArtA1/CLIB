@@ -1,8 +1,9 @@
+#include <doctest.h>
 #include "clib/image.hpp"
 #include "clib/Flexfloat.hpp"
 #include "clib/logs.hpp"
 #include <algorithm>
-#include <doctest.h>
+
 
 using ff = clib::Flexfloat;
 using img = clib::img<ff>;
@@ -106,6 +107,35 @@ TEST_CASE("Test Window")
         {ff_(10), ff_(9), ff_(10)}, {ff_(14), ff_(13), ff_(14)}, {ff_(10), ff_(9), ff_(10)}};
     CHECK(test_3.vv() == right_3);
 }
+
+TEST_CASE("Test Window New"){
+    std::vector<std::vector<ff>> arr(4, std::vector<ff>(4));
+
+    int counter = 0;
+    for (int i = 0; i < arr.size(); ++i)
+    {
+        for (int j = 0; j < arr[0].size(); ++j)
+        {
+            arr[i][j] = ff_(++counter);
+        }
+    }
+
+    for (auto it : arr)
+    {
+        for (auto val : it)
+        {
+            std::cout << val.to_float() << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << std::endl;
+
+    img vv(arr);
+
+    img::get_window(vv, {3, 3});
+}
+
 
 TEST_CASE("Test Convolution")
 {
