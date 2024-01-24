@@ -219,14 +219,23 @@ class Flexfloat
     /*! @brief Получение cos(x)
      *
      * \param[out] res Результат
+     * \param[in] F Битовая ширина дробной части 
      */
     static void cos(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
 
     /*! @brief Получение sin(x)
      *
      * \param[out] res Результат
+     * \param[in] F Битовая ширина дробной части 
      */
     static void sin(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
+
+    /*! @brief Получение ctan(x)
+     *
+     * \param[out] res Результат
+     * \param[in] F Битовая ширина дробной части 
+     */
+    static void ctan(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
 
     /*! @brief Получение нормализованного числа из денормализованного
      *
