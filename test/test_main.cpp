@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 #endif
 
     doctest::Context context;
-    context.addFilter("test-case", "Test Flexfloat fractional_part");
+    context.addFilter("test-case", "Test Window New");
     context.applyCommandLine(argc, argv);
 
     // overrides

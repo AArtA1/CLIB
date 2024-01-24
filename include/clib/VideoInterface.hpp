@@ -199,7 +199,7 @@ class Video
     idx_t frames() const
     {
         // static_cast due to different
-        // Cimg library index size = unsigned 
+        // Cimg library index size = unsigned
         //         and vector size = long unsigned
         return static_cast<unsigned>(video_.size());
     }
@@ -208,7 +208,7 @@ class Video
     idx_t rows() const
     {
         // static_cast due to different
-        // Cimg library index size = unsigned 
+        // Cimg library index size = unsigned
         //         and vector size = long unsigned
         assert(video_.size() > 0);
         return static_cast<unsigned>(video_[0].size());
@@ -218,7 +218,7 @@ class Video
     idx_t cols() const
     {
         // static_cast due to different
-        // Cimg library index size = unsigned 
+        // Cimg library index size = unsigned
         //         and vector size = long unsigned
         assert(video_.size() > 0);
         return static_cast<unsigned>(video_[0][0].size());
@@ -228,7 +228,7 @@ class Video
     idx_t clrs() const
     {
         // static_cast due to different
-        // Cimg library index size = unsigned 
+        // Cimg library index size = unsigned
         //         and vector size = long unsigned
         assert(video_.size() > 0);
         return static_cast<unsigned>(video_[0][0][0].size());
@@ -333,8 +333,24 @@ class Serializer
         return video_.fps();
     }
 
+    idx_t frame() const
+    {
+        return cur_frame_;
+    }
+    idx_t row() const
+    {
+        return cur_row_;
+    }
+    idx_t col() const
+    {
+        return cur_col_;
+    }
+    idx_t clr() const
+    {
+        return cur_clr_;
+    }
     /// @brief Get pixel from Video. Starts popping out pixels from the beginning of image
-    ///        Throws an exception if all pixels are popped out
+    ///        Returns 0 if all pixels are popped out
     /// @return pixel
     pixel_t pop()
     {
@@ -346,7 +362,8 @@ class Serializer
             std::cerr << "rows() =   " << rows() << "; cur_row   = " << cur_row_ << std::endl;
             std::cerr << "cols() =   " << cols() << "; cur_col   = " << cur_col_ << std::endl;
             std::cerr << "clrs() =   " << clrs() << "; cur_clr   = " << cur_clr_ << std::endl;
-            throw std::runtime_error{"pop: index out of range"};
+
+            return 0;
         }
         pixel_t pix = video_.get(cur_frame_, cur_row_, cur_col_, cur_clr_);
 
@@ -459,8 +476,25 @@ class Deserializer
         return video_.fps();
     }
 
+    idx_t frame() const
+    {
+        return cur_frame_;
+    }
+    idx_t row() const
+    {
+        return cur_row_;
+    }
+    idx_t col() const
+    {
+        return cur_col_;
+    }
+    idx_t clr() const
+    {
+        return cur_clr_;
+    }
+
     /// @brief Set pixel in Video. Starts pushing in pixels from the beginning of image
-    ///        Throws an exception if all pixels are pushed in
+    ///        Does nothing if all pixels are pushed in
     /// @param[in] pixel
     void push(pixel_t pixel)
     {
@@ -472,7 +506,8 @@ class Deserializer
             std::cerr << "rows() =   " << rows() << "; cur_row   = " << cur_row_ << std::endl;
             std::cerr << "cols() =   " << cols() << "; cur_col   = " << cur_col_ << std::endl;
             std::cerr << "clrs() =   " << clrs() << "; cur_clr   = " << cur_clr_ << std::endl;
-            throw std::runtime_error{"pop: index out of range"};
+
+            return;
         }
         video_.set(pixel, cur_frame_, cur_row_, cur_col_, cur_clr_);
 

@@ -2,6 +2,7 @@
 #include <clib/Flexfloat.hpp>
 #include <doctest.h>
 
+
 #ifdef DEPRECATED
 
 TEST_CASE("Test Flexfloat helpful functions")
