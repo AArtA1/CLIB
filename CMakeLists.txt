@@ -82,10 +82,11 @@ set(MY_SOURCES
 ##
 ###################################################################################################
 
+if(NOT CMAKE_CXX_EXTENSIONS)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
 set(MY_FLAGS
-
-    -fPIC
-
     -Wall
     -Wextra
     -Wpedantic
@@ -120,13 +121,16 @@ set(MY_FLAGS
 )
 
 set(MY_DEFS)
+set(MY_OPTIONS -fPIC)
 
 if(BOOST_LOGS STREQUAL "ON")
     list(APPEND MY_DEFS -DBOOST_LOG_DYN_LINK -DBOOST_LOGS)
 endif()
 
-if(NOT CMAKE_CXX_EXTENSIONS)
-    set(CMAKE_CXX_EXTENSIONS OFF)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND MY_OPTIONS -ggdb3)
+else()
+    list(APPEND MY_DEFS NDEBUG)
 endif()
 
 ###################################################################################################
@@ -195,7 +199,7 @@ add_library(clib::headers ALIAS clib_headers)
 ###################################################################################################
 
 add_library(clib_library ${MY_SOURCES})
-target_compile_options(clib_library PRIVATE ${MY_FLAGS})
+target_compile_options(clib_library PRIVATE ${MY_FLAGS} ${MY_OPTIONS})
 target_link_options(clib_library PUBLIC -lpthread)
 target_compile_definitions(clib_library PRIVATE ${MY_DEFS})
 target_link_libraries(clib_library 
@@ -210,7 +214,7 @@ target_link_libraries(clib_library
 
 if(BOOST_LOGS STREQUAL "ON")
     target_link_libraries(clib_library 
-        PUBLIC
+        PRIVATE
             ${Boost_LIBRARIES}
     )
 endif()
