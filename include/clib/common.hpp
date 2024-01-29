@@ -87,4 +87,15 @@ template <typename T> std::string bits(T val)
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
 
+template<typename T>
+void debug_vecvec(std::vector<std::vector<T>> array){
+    for(auto row : array){
+        for(auto item : row)
+            std::cout << item.to_float() << " ";
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+
 } // namespace clib

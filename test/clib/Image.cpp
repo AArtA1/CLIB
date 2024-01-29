@@ -14,6 +14,17 @@ const ff::Btype B = 127;
 
 #define ff_(value) ff::from_arithmetic_t(E, M, B, value)
 
+
+void print_img(img image){
+    for(auto row : image.vv()){
+        for(auto it : row){
+            std::cout << it.to_float() << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+
 // TEST_CASE("Test Image Max")
 // {
 //     BOOST_LOG_SCOPED_THREAD_TAG("Tag", "Image Max");
@@ -108,7 +119,7 @@ TEST_CASE("Test Window")
     CHECK(test_3.vv() == right_3);
 }
 
-TEST_CASE("Test Window New"){
+TEST_CASE("Test Window Overloaded"){
     std::vector<std::vector<ff>> arr(4, std::vector<ff>(4));
 
     int counter = 0;
@@ -129,13 +140,111 @@ TEST_CASE("Test Window New"){
         std::cout << std::endl;
     }
 
+
     std::cout << std::endl;
 
-    img vv(arr);
+    auto copy = arr;
 
-    img::get_window(vv, {3, 3});
+    img vv(static_cast<std::vector<std::vector<ff>>&&>(arr));
+
+    auto val = img::get_window(vv, {3, 3});
+
+    for(auto row : val){
+        for(auto ii : row){
+            std::cout << std::endl;
+            print_img(ii);
+        }
+    }
+
+    // tested with python, works correctly
 }
 
+
+TEST_CASE("Test Convolution Overloaded"){
+    std::vector<std::vector<ff>> arr(4, std::vector<ff>(4));
+
+    int counter = 0;
+    for (int i = 0; i < arr.size(); ++i)
+    {
+        for (int j = 0; j < arr[0].size(); ++j)
+        {
+            arr[i][j] = ff_(++counter);
+        }
+    }
+
+    for (auto it : arr)
+    {
+        for (auto val : it)
+        {
+            std::cout << val.to_float() << " ";
+        }
+        std::cout << std::endl;
+    }
+
+
+    std::cout << std::endl;
+
+    img vv(static_cast<std::vector<std::vector<ff>>&&>(arr));
+
+    auto val = img::get_window(vv, {3, 3});
+ 
+    img mx({
+    {ff_(1.0f), ff_(0.0f), ff_(-1.0f)}, 
+    {ff_(2.0f), ff_(0.0f), ff_(-2.0f)}, 
+    {ff_(1.0f), ff_(0.0f), ff_(-1.0f)}});
+    
+
+    img right({
+        {ff_(0.0f), ff_(-8.0f), ff_(-8.0f), ff_(0.0f)}, 
+        {ff_(0.0f), ff_(-8.0f), ff_(-8.0f), ff_(0.0f)}, 
+        {ff_(0.0f), ff_(-8.0f), ff_(-8.0f), ff_(0.0f)},
+        {ff_(0.0f), ff_(-8.0f), ff_(-8.0f), ff_(0.0f)}
+        });
+
+    auto result_of_conv = img::convolution(mx,val);
+
+    //std::cout << ff_(0.0f) << std::endl;
+
+    //std::cout << ff_(0.0f).to_float();
+
+    print_img(result_of_conv);
+
+
+    //print_img(val[0][0] * mx(0,0) +  val[0][2] * mx(0,2) + mx(1,0) * val[1][0] + mx(1,2) * val[1][2] + val[2][0] * mx(2,0) + mx(2,2) * val[2][2]);    
+
+    //CHECK(res == right);
+}
+
+
+TEST_CASE("Test Demosaic"){
+    const img r({
+        {ff_(1.0f), ff_(2.0f), ff_(3.0f), ff_(4.0f)}, 
+        {ff_(5.0f), ff_(6.0f), ff_(7.0f), ff_(8.0f)}, 
+        {ff_(9.0f), ff_(10.0f), ff_(11.0f), ff_(12.0f)},
+        {ff_(13.0f), ff_(14.0f), ff_(15.0f), ff_(16.0f)}
+        });
+
+    const img g({
+        {ff_(17.0f), ff_(18.0f), ff_(19.0f), ff_(20.0f)}, 
+        {ff_(21.0f), ff_(22.0f), ff_(23.0f), ff_(24.0f)}, 
+        {ff_(25.0f), ff_(26.0f), ff_(27.0f), ff_(28.0f)},
+        {ff_(29.0f), ff_(30.0f), ff_(31.0f), ff_(32.0f)}
+        });
+
+    const img b({
+        {ff_(33.0f), ff_(34.0f), ff_(35.0f), ff_(36.0f)}, 
+        {ff_(37.0f), ff_(38.0f), ff_(39.0f), ff_(40.0f)}, 
+        {ff_(41.0f), ff_(42.0f), ff_(43.0f), ff_(44.0f)},
+        {ff_(45.0f), ff_(46.0f), ff_(47.0f), ff_(48.0f)}
+        });
+
+    
+    auto vec_of_res = img::demosaic(r,g,b);
+
+    print_img(vec_of_res[0]);
+    print_img(vec_of_res[1]);
+    print_img(vec_of_res[2]);
+}
 
 TEST_CASE("Test Convolution")
 {
@@ -186,5 +295,16 @@ TEST_CASE("Test Convolution")
         std::cout << std::endl;
     }
 }
+
+TEST_CASE("Test FF"){
+    auto zero = ff_(0.0f);
+    std::cout << zero << " " << zero.to_float() << std::endl;
+
+    auto zero_from_int = ff_(0);
+
+    std::cout << zero_from_int << " " << zero_from_int.to_float(); 
+}
+
+
 
 #undef ff_
