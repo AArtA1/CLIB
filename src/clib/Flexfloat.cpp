@@ -584,6 +584,69 @@ void Flexfloat::sin(const Flexfloat &x, Flexfloat &res, uint8_t F)
     to_flexfloat(fx, res);
 }
 
+void Flexfloat::ctan(const Flexfloat &x, Flexfloat &res, uint8_t F)
+{
+#ifdef BOOST_LOGS
+    CLOG(trace) << std::endl;
+    CLOG(trace) << "ctan(x)";
+    check_ffs({x, res});
+    CLOG(trace) << "x: " << x;
+#endif
+
+    const uint32_t f_pi_2 = 636619772;
+
+    auto y = x;
+    y.s = 0;
+
+    auto inv_pi = from_arithmetic_t(x, static_cast<float>(1.0 / (3.141592653589793)));
+    auto pi = from_arithmetic_t(x, static_cast<float>(3.141592653589793));
+    mult(y, inv_pi, y);
+
+    auto n = y.integer_part();
+    auto frac = y.fractional_part(F);
+
+#ifdef BOOST_LOGS
+    CLOG(trace) << "y = " << y.to_float();
+    CLOG(trace) << "integer_part = " << n;
+    CLOG(trace) << "fractional_part = " << frac;
+#endif
+
+    // if frac/F > 1/2
+    auto adj_frac = frac;
+    uint8_t ctan_sign = 0;
+    if (adj_frac > (1u << (F-1u)))
+    {
+        $(CLOG(trace) << "ctan_sign = 0 ");
+        adj_frac = (1 << F) - adj_frac;
+        ctan_sign = 1;
+    }
+    
+    // frac *= 2
+    adj_frac <<= 1;
+    
+    auto fx_val = polyfit::get()->calc("ctan", adj_frac, F, F);
+    $(CLOG(trace) << "fx_val = " << fx_val);
+
+    fx_val = (fx_val * f_pi_2) >> (msb(f_pi_2) + 1);
+    $(CLOG(trace) << "fx_val * f_pi_2 = " << fx_val);
+    
+    Flexfixed fx(1, F, 1, fx_val);
+    to_flexfloat(fx, res);
+
+    $(CLOG(trace) << "f(x) = " << res.to_float());
+
+    auto inv_x = res;
+    Flexfixed inv_fx(1, F, 0, adj_frac >> 1);
+    to_flexfloat(inv_fx, inv_x);
+    mult(pi, inv_x, inv_x);
+    inv(inv_x, inv_x, 1);
+
+    $(CLOG(trace) << "1/x = " << inv_x.to_float());
+
+    sum(res, inv_x, res);
+    res.s = x.s ^ ctan_sign;
+}
+
 int Flexfloat::ceil() const
 {
 #ifdef BOOST_LOGS

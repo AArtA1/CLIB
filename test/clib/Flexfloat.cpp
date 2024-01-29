@@ -486,3 +486,41 @@ TEST_CASE("Test Flexfloat sin")
 
     CHECK(1);
 }
+
+TEST_CASE("Test Flexfloat ctan")
+{
+    using ff = clib::Flexfloat;
+
+    auto nums = {
+        ff(8, 23, 127, 0, 0, 0),         // 0 in float
+        ff(8, 23, 127, 0, 129, 4194304), // 6 in float
+        ff(8, 23, 127, 0, 129, 6291456), // 7 in float
+        ff(8, 23, 127, 0, 130, 0),       // 8 in float
+        ff(8, 23, 127, 0, 130, 1048576), // 9 in float
+        ff(8, 23, 127, 0, 130, 2097152), // 10 in float
+        ff(8, 23, 127, 0, 130, 3145728), // 11 in float
+        ff(8, 23, 127, 1, 129, 4194304), // -6 in float
+        ff(8, 23, 127, 1, 129, 6291456), // -7 in float
+        ff(8, 23, 127, 1, 130, 0),       // -8 in float
+        ff(8, 23, 127, 1, 130, 1048576), // -9 in float
+        ff(8, 23, 127, 1, 130, 2097152), // -10 in float
+        ff(8, 23, 127, 1, 130, 3145728), // -11 in float
+        ff(8, 23, 127, 0, 127, 0),       // 1 in float
+        ff(8, 23, 127, 0, 140, 4994304), // big value 1
+        ff(8, 23, 127, 1, 140, 6004304), // big value 2
+        ff(8, 23, 127, 0, 0, 4194304),   // small value in float
+        ff(5, 10, 15,  0, 0, 1023),      // small value in float
+        ff(8, 23, 127, 0, 120, ff::max_mant(23)),
+    };
+
+    ff c(8, 23, 127, 1, 1, 1);
+    for (auto &num : nums)
+    {
+        std::cout << "x in float = " << num.to_float() << std::endl;
+        ff::ctan(num, c);
+        std::cout << "ctan(x) in float = " << c.to_float() << std::endl;
+        std::cout << "real ctan(x)     = " << 1 / std::tan(num.to_float()) << std::endl << std::endl;
+    }
+
+    CHECK(1);
+}

@@ -3,12 +3,12 @@
 #define cimg_use_png
 #define cimg_use_jpeg
 
-
 #include "CImg.h"
 #include "X11/Xlib.h"
 
-extern "C" {
-    #include <libavformat/avformat.h>
+extern "C"
+{
+#include <libavformat/avformat.h>
 }
 
 #include <cassert>
@@ -19,7 +19,7 @@ extern "C" {
 namespace clib
 {
 
-const std::vector<std::string> video_extensions = {"mp4","mkv"};
+const std::vector<std::string> video_extensions = {"mp4", "mkv"};
 
 /*!
  * \brief Обёртка над классом для работы с видео
@@ -28,11 +28,11 @@ const std::vector<std::string> video_extensions = {"mp4","mkv"};
  */
 class VideoView
 {
-protected:
+  protected:
     size_t fps_;
 
-public:
-    using pixel_t = int;
+  public:
+    using pixel_t = unsigned;
     using idx_t = size_t;
 
     // colors number
@@ -58,7 +58,7 @@ public:
     virtual void write_video(const std::string &path) = 0;
 
     virtual ~VideoView()
-    {   
+    {
     }
 };
 
@@ -67,14 +67,13 @@ class CVideoView : public VideoView
     cimg_library::CImg<pixel_t> video_;
     bool video_created_ = false;
 
-public:
-
+  public:
     void init(idx_t rows, idx_t cols, idx_t colors, idx_t frames, size_t fps) override;
 
     idx_t rows() const override;
-    
+
     idx_t cols() const override;
-    
+
     idx_t clrs() const override;
 
     idx_t frames() const override;
@@ -89,12 +88,11 @@ public:
 
     void write_video(const std::string &path);
 
-private:
+  private:
     void check_created() const;
 };
 
-
-size_t get_fps(const std::string& path);
+size_t get_fps(const std::string &path);
 bool check_ext(const std::string &s, const std::vector<std::string> &exts);
 
 } // namespace clib
