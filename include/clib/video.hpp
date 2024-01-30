@@ -13,7 +13,6 @@ namespace clib
 {
 
 using std::vector;
-using pixel_t = VideoView::pixel_t;
 using idx_t = VideoView::idx_t;
 template <typename T> class video
 {
@@ -49,7 +48,7 @@ template <typename T> class video
                         for (idx_t i = 0; i < rows; ++i)
                             for (idx_t j = 0; j < cols; ++j)
                             {
-                                auto val = T::from_arithmetic_t(prototype, view.get(i, j, clr, fr));
+                                auto val = T::from_arithmetic_t(prototype, static_cast<int>(view.get(i, j, clr, fr)));
                                 cur_img(i, j, clr) = val;
                             }
                     frames_[fr] = std::move(cur_img);

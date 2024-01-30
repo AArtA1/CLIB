@@ -29,13 +29,14 @@ using pixel_t = clib::VideoView::pixel_t;
  */
 class Video
 {
+
+
     /// video_[i][j][k][l]
     /// i - frame number
     /// j - column number
     /// k - row number
     /// l - color number
     vector<vector<vector<vector<pixel_t>>>> video_;
-
     // /Equal to 0 for image
     size_t fps_;
 

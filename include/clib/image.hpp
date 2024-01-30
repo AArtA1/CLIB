@@ -91,7 +91,7 @@ template <typename T> class img final
     }
 
     img(vector<vector<T>> &&base) : vv_()
-    { 
+    {
         assert(base.size() > 0);
         assert(base[0].size() > 0);
 
@@ -443,14 +443,13 @@ template <typename T> class img final
         return res;
     }
 
-    static img<T> abs(const img<T>& image){
+    static img<T> abs(const img<T> &image)
+    {
         assert(image.rows() != 0);
         assert(image.cols() != 0);
-        img<T> res(image(0,0), image.rows(), image.cols());
-        
-        img<T>::for_each(image.rows(), image.cols(), [&](idx_t i, idx_t j) {
-            T::abs(image(i,j),res(i,j));
-        });
+        img<T> res(image(0, 0), image.rows(), image.cols());
+
+        img<T>::for_each(image.rows(), image.cols(), [&](idx_t i, idx_t j) { T::abs(image(i, j), res(i, j)); });
 
         return res;
     }
@@ -549,7 +548,7 @@ template <typename T> class img final
         }
         return coordinates;
     }
-    
+
     static img<T> get_window(const img<T> &image, std::pair<idx_t, idx_t> center, std::pair<idx_t, idx_t> shape)
     {
         assert(center.first < image.rows());
@@ -576,9 +575,8 @@ template <typename T> class img final
             }
         }
 
-        return img<T>(static_cast<std::vector<std::vector<T>>&&>(res_window));
+        return img<T>(static_cast<std::vector<std::vector<T>> &&>(res_window));
     }
-
 
     // static std::vector<std::vector<img<T>>> window(const img<T>& image, std::pair<idx_t, idx_t> shape){
     //     std::vector<std::vector<img<T>>> res;
@@ -586,37 +584,35 @@ template <typename T> class img final
     // }
 
 #pragma GCC diagnostic ignored "-Wsign-conversion"
-    static std::vector<std::vector<img<T>>> get_window(const img<T>& image, std::pair<idx_t,idx_t> shape){
+    static std::vector<std::vector<img<T>>> get_window(const img<T> &image, std::pair<idx_t, idx_t> shape)
+    {
         assert(shape.first < image.rows());
         assert(shape.first % 2 == 1);
         assert(shape.second < image.cols());
         assert(shape.second % 2 == 1);
-        
 
         assert(image.rows() < std::numeric_limits<int>::max());
         assert(image.cols() < std::numeric_limits<int>::max());
-        int h  = static_cast<int>(image.rows());
+        int h = static_cast<int>(image.rows());
         int w = static_cast<int>(image.cols());
-
-
 
         assert(shape.first < std::numeric_limits<int>::max());
         assert(shape.second < std::numeric_limits<int>::max());
-        int dh = static_cast<int>(shape.first) - 1, dw = static_cast<int>(shape.second -  1);
+        int dh = static_cast<int>(shape.first) - 1, dw = static_cast<int>(shape.second) - 1;
 
         int di = dh / 2, dj = dw / 2;
 
-        assert(h+dh > 0);
-        assert(w+dw > 0);
-        auto y = std::vector<std::vector<T>>(h+dh, std::vector<T>(w+dw));
+        assert(h + dh > 0);
+        assert(w + dw > 0);
+        auto y = std::vector<std::vector<T>>(h + dh, std::vector<T>(w + dw));
 
-        auto mirror_index = [](int x, int x_max) {
-            return std::abs(std::abs(x-x_max) - x_max);
-        };
+        auto mirror_index = [](int x, int x_max) { return std::abs(std::abs(x - x_max) - x_max); };
 
-        for(int i = -di; i < h + di; ++i){
-            for(int j = -dj; j < w + dj; ++j){
-                y[i+di][j + dj] = image(mirror_index(i,h-1),mirror_index(j, w-1));
+        for (int i = -di; i < h + di; ++i)
+        {
+            for (int j = -dj; j < w + dj; ++j)
+            {
+                y[i + di][j + dj] = image(mirror_index(i, h - 1), mirror_index(j, w - 1));
             }
         }
 
@@ -624,7 +620,7 @@ template <typename T> class img final
 
         res.reserve(shape.first);
 
-        img<T> y_img(static_cast<std::vector<std::vector<T>>&&>(y)); 
+        img<T> y_img(static_cast<std::vector<std::vector<T>> &&>(y));
 
         // std::cout << std::endl;
 
@@ -635,11 +631,13 @@ template <typename T> class img final
         //     std::cout << std::endl;
         // }
 
-        for(idx_t i = 0; i < shape.first; ++i){
+        for (idx_t i = 0; i < shape.first; ++i)
+        {
             std::vector<img<T>> row;
             row.reserve(shape.second);
-            for(idx_t j = 0; j < shape.second;++j){
-                row.push_back(get_subimg(y_img,i,i + h,j,j+w));
+            for (idx_t j = 0; j < shape.second; ++j)
+            {
+                row.push_back(get_subimg(y_img, i, i + h, j, j + w));
             }
             res.push_back(row);
         }
@@ -658,107 +656,142 @@ template <typename T> class img final
         return res;
     }
 
-
-    static img<T> convolution(const img<T> bitmask, const std::vector<std::vector<img<T>>>& window){
+    static img<T> convolution(const img<T> bitmask, const std::vector<std::vector<img<T>>> &window)
+    {
         assert(bitmask.rows() != 0);
         assert(!window.empty());
         assert(bitmask.rows() == window.size());
         assert(bitmask.cols() == window[0].size());
 
-        const T ZERO = T::from_arithmetic_t(bitmask(0,0),0.0f);
+        const T ZERO = T::from_arithmetic_t(bitmask(0, 0), 0);
 
-        img<T> res(window[0][0]);
+        img<T> res(ZERO, window[0][0].rows(), window[0][0].cols());
 
-        //img<T> res(ZERO, window[0][0].rows(),window[0][0].cols());
+        // img<T> res(ZERO, window[0][0].rows(),window[0][0].cols());
 
-        //think about multithreading
-        for(idx_t i = 0; i < bitmask.rows(); ++i){
-            for(idx_t j = 0; j < bitmask.cols();++j){
-                if(bitmask(i,j) != ZERO){
-                    res = res + bitmask(i,j) * window[i][j];
-                    //debug_vecvec(res.vv());
+        // think about multithreading
+        for (idx_t i = 0; i < bitmask.rows(); ++i)
+        {
+            for (idx_t j = 0; j < bitmask.cols(); ++j)
+            {
+                if (bitmask(i, j) != ZERO)
+                {
+                    res = res + bitmask(i, j) * window[i][j];
+                    // debug_vecvec(res.vv());
                 }
             }
         }
 
-        res = res - window[0][0];
         return res;
     }
 
-    static std::vector<img<T>> demosaic(const img<T>& r,const img<T>& g, const img<T>& b){
-        
-        
-        const std::vector<std::vector<float>> mx_temp = {
-            {1.0f, 0.0f, -1.0f},
-            {2.0f, 0.0f, -2.0f},
-            {1.0f, 0.0f, -1.0f}
-        };
+    static img<T> baer_matrix(const img<T> &r, const img<T> &g, const img<T> &b)
+    {
+        assert(r.rows() != 0 && r.rows() == g.rows() && g.rows() == b.rows());
+        assert(r.cols() != 0 && r.cols() == g.cols() && g.cols() == b.cols());
 
-        const std::vector<std::vector<float>> my_temp = {
-            {1.0f, 2.0f, 1.0f},
-            {0.0f, 0.0f, 0.0f},
-            {-1.0f, -2.0f, -1.0f}
-        };
+        idx_t rows = r.rows(), cols = r.cols();
 
-        img<T> mx(r(0,0),mx_temp.size(),mx_temp[0].size());
+        img<T> baer(T::from_arithmetic_t(r(0, 0), 0), r.rows(), r.cols());
 
-        img<T>::for_each(mx.rows(), mx.cols(), [&](idx_t i, idx_t j) {
-            mx(i,j) = T::from_arithmetic_t(mx(i,j),mx_temp[i][j]);
-        });
-    
-        img<T> my(r(0,0),my_temp.size(),my_temp[0].size());
+        for (idx_t i = 0; i < rows; ++i)
+            for (idx_t j = 1 - (i % 2); j < cols; j += 2)
+                baer(i, j) = g(i, j);
 
-        img<T>::for_each(my.rows(), my.cols(), [&](idx_t i, idx_t j) {
-            my(i,j) = T::from_arithmetic_t(my(i,j),my_temp[i][j]);
-        });
+        for (idx_t i = 0; i < rows; i += 2)
+            for (idx_t j = 0; j < cols; j += 2)
+                baer(i, j) = r(i, j);
 
-        auto wg = get_window(g,{3,3});
+        for (idx_t i = 1; i < rows; i += 2)
+            for (idx_t j = 1; j < cols; j += 2)
+                baer(i, j) = b(i, j);
 
-        auto dgx = abs(convolution(mx,wg));
+        return baer;
+    }
 
-        auto dgy = abs(convolution(my,wg));
+    static std::vector<img<T>> baer_split(const img<T> &baer)
+    {
+
+        idx_t rows = baer.rows(), cols = baer.cols();
+
+        img<T> r(T::from_arithmetic_t(baer(0, 0), 0), rows, cols);
+        img<T> g(T::from_arithmetic_t(baer(0, 0), 0), rows, cols);
+        img<T> b(T::from_arithmetic_t(baer(0, 0), 0), rows, cols);
+
+        for (idx_t i = 0; i < rows; ++i)
+            for (idx_t j = 1 - (i % 2); j < cols; j += 2)
+                g(i, j) = baer(i, j);
+
+        for (idx_t i = 0; i < rows; i += 2)
+            for (idx_t j = 0; j < cols; j += 2)
+                r(i, j) = baer(i, j);
+
+        for (idx_t i = 1; i < rows; i += 2)
+            for (idx_t j = 1; j < cols; j += 2)
+                b(i, j) = baer(i, j);
+
+        return {r, g, b};
+    }
+
+    static std::vector<img<T>> demosaic(const img<T> &r, const img<T> &g, const img<T> &b)
+    {
+
+        const std::vector<std::vector<int>> mx_temp = {{1, 0, -1}, {2, 0, -2}, {1, 0, -1}};
+
+        const std::vector<std::vector<int>> my_temp = {{1, 2, 1}, {0, 0, 0}, {-1, -2, -1}};
+
+        img<T> mx(r(0, 0), mx_temp.size(), mx_temp[0].size());
+
+        img<T>::for_each(mx.rows(), mx.cols(),
+                         [&](idx_t i, idx_t j) { mx(i, j) = T::from_arithmetic_t(mx(i, j), mx_temp[i][j]); });
+
+        img<T> my(r(0, 0), my_temp.size(), my_temp[0].size());
+
+        img<T>::for_each(my.rows(), my.cols(),
+                         [&](idx_t i, idx_t j) { my(i, j) = T::from_arithmetic_t(my(i, j), my_temp[i][j]); });
+
+        auto wg = get_window(g, {3, 3});
+
+        auto dgx = abs(convolution(mx, wg));
+
+        auto dgy = abs(convolution(my, wg));
 
         img<T> g_new = wg[1][1];
 
         img<T>::for_each(g_new.rows(), g_new.cols(), [&](idx_t i, idx_t j) {
-            if(dgx(i,j) > dgy(i,j)){
+            if (dgx(i, j) < dgy(i, j))
+            {
                 // g_new(i,j) += (wg[1][0](i,j) + wg[1][2](i,j)) / 2;
-                auto temp = T::from_arithmetic_t(wg[1][0](i,j),0.0f);
-                T::sum(temp,wg[1][0](i,j),temp);
-                T::sum(temp,wg[1][2](i,j), temp);
-                T::mult(temp,T::from_arithmetic_t(temp,0.5f),temp);
-                T::sum(g_new(i,j),temp,g_new(i,j));
+                auto temp = T::from_arithmetic_t(wg[1][0](i, j), 0);
+                T::sum(temp, wg[1][0](i, j), temp);
+                T::sum(temp, wg[1][2](i, j), temp);
+                T::mult(temp, T::from_arithmetic_t(temp, 0.5f), temp);
+                T::sum(g_new(i, j), temp, g_new(i, j));
             }
-            else{
+            else
+            {
                 // g_new(i,j) += (wg[0][1](i,j) + wg[2][1](i,j)) / 2;
-                auto temp = T::from_arithmetic_t(wg[1][0](i,j),0.0f);
-                T::sum(temp,wg[0][1](i,j),temp);
-                T::sum(temp,wg[2][1](i,j), temp);
-                T::mult(temp,T::from_arithmetic_t(temp,0.5f),temp);
-                T::sum(g_new(i,j),temp,g_new(i,j));
-            }     
+                auto temp = T::from_arithmetic_t(wg[1][0](i, j), 0);
+                T::sum(temp, wg[0][1](i, j), temp);
+                T::sum(temp, wg[2][1](i, j), temp);
+                T::mult(temp, T::from_arithmetic_t(temp, 0.5f), temp);
+                T::sum(g_new(i, j), temp, g_new(i, j));
+            }
         });
 
+        // debug_vecvec(g_new.vv());
 
-        debug_vecvec(g_new.vv());
+        std::vector<std::vector<float>> m_temp = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
 
-        std::vector<std::vector<float>> m_temp = {
-            {1.0f, 2.0f, 1.0f},
-            {2.0f, 4.0f, 2.0f},
-            {1.0f, 2.0f, 1.0f}
-        };
+        img<T> m(r(0, 0), m_temp.size(), m_temp[0].size());
 
-        img<T> m(r(0,0),m_temp.size(),m_temp[0].size());
+        img<T>::for_each(m.rows(), m.cols(),
+                         [&](idx_t i, idx_t j) { m(i, j) = T::from_arithmetic_t(m(i, j), m_temp[i][j]); });
 
+        auto g_lpf = convolution(m, wg) / T::from_arithmetic_t(r(0, 0), 8);
+        auto r_lpf = convolution(m, get_window(r, {3, 3})) / T::from_arithmetic_t(r(0, 0), 4);
+        auto b_lpf = convolution(m, get_window(b, {3, 3})) / T::from_arithmetic_t(r(0, 0), 4);
 
-        img<T>::for_each(m.rows(), m.cols(), [&](idx_t i, idx_t j) {
-            m(i,j) = T::from_arithmetic_t(m(i,j),m_temp[i][j]);
-        });
-        
-        auto g_lpf = convolution(m,wg) / T::from_arithmetic_t(r(0,0),8.0f);
-        auto r_lpf = convolution(m, get_window(r,{3,3})) / T::from_arithmetic_t(r(0,0),4.0f);
-        auto b_lpf = convolution(m, get_window(b,{3,3})) / T::from_arithmetic_t(r(0,0),4.0f);
-    
         // debug_vecvec(r_lpf.vv());
 
         // debug_vecvec(g_lpf.vv());
@@ -768,40 +801,42 @@ template <typename T> class img final
         img<T> r_new(r_lpf);
 
         // zero value
-        const T ZERO = T::from_arithmetic_t(g_lpf(0,0),0.0f);
+        const T ZERO = T::from_arithmetic_t(g_lpf(0, 0), 0);
 
         img<T>::for_each(r_new.rows(), r_new.cols(), [&](idx_t i, idx_t j) {
-            if(g_lpf(i,j) != ZERO){
+            if (g_lpf(i, j) != ZERO)
+            {
                 // r_new(i,j) = g_new(i,j) * r_lpf(i,j) / g_lpf(i,j)
-                auto temp = T(g_lpf(i,j));
-                T::inv(temp,temp);
-                T::mult(g_new(i,j), r_lpf(i,j),r_new(i,j));
-                T::mult(r_new(i,j),temp,r_new(i,j));
-            }   
+                auto temp = T(g_lpf(i, j));
+                T::inv(temp, temp);
+                T::mult(g_new(i, j), r_lpf(i, j), r_new(i, j));
+                T::mult(r_new(i, j), temp, r_new(i, j));
+            }
         });
 
         img<T> b_new(b_lpf);
 
         img<T>::for_each(b_new.rows(), b_new.cols(), [&](idx_t i, idx_t j) {
-            if(g_lpf(i,j) != ZERO){
+            if (g_lpf(i, j) != ZERO)
+            {
                 // b_new(i,j) = g_new(i,j) * b_lpf(i,j) / g_lpf(i,j)
-                auto temp = T(g_lpf(i,j));
-                T::inv(temp,temp);
-                T::mult(g_new(i,j), b_lpf(i,j),b_new(i,j));
-                T::mult(b_new(i,j),temp,b_new(i,j));
-            }   
+                auto temp = T(g_lpf(i, j));
+                T::inv(temp, temp);
+                T::mult(g_new(i, j), b_lpf(i, j), b_new(i, j));
+                T::mult(b_new(i, j), temp, b_new(i, j));
+            }
         });
 
         return {r_new, g_new, b_new};
     }
 
   private:
-
-    static img<T> get_subimg(const img<T>& initial, idx_t row_start,idx_t row_end, idx_t col_start, idx_t col_end){
+    static img<T> get_subimg(const img<T> &initial, idx_t row_start, idx_t row_end, idx_t col_start, idx_t col_end)
+    {
         std::vector<std::vector<T>> rect(row_end - row_start, std::vector<T>(col_end - col_start));
         for (idx_t r = row_start; r < row_end; r++)
             for (idx_t c = col_start; c < col_end; c++)
-                rect[r-row_start][c-col_start] = initial(r,c);
+                rect[r - row_start][c - col_start] = initial(r, c);
         return img<T>(rect);
     }
 

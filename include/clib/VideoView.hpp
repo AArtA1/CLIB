@@ -32,7 +32,7 @@ class VideoView
     size_t fps_;
 
   public:
-    using pixel_t = unsigned;
+    using pixel_t = int;
     using idx_t = size_t;
 
     // colors number
