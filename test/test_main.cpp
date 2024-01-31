@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 #endif
 
     doctest::Context context;
-    context.addFilter("test-case", "Test Window New");
+    context.addFilter("test-case", "Test Demosaic");
     context.applyCommandLine(argc, argv);
 
     // overrides

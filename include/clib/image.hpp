@@ -41,8 +41,8 @@ template <typename T> class img final
      */
     img(const img<T> &base, idx_t req_threads = 0) : vv_()
     {
-        assert(base.rows() > 0);
-        assert(base.cols() > 0);
+        // assert(base.rows() > 0);
+        // assert(base.cols() > 0);
 
         auto get_val = [&base](idx_t i, idx_t j) { return base(i, j); };
         _ctor_implt(base.rows(), base.cols(), get_val, req_threads);
@@ -91,14 +91,14 @@ template <typename T> class img final
     }
 
     img(vector<vector<T>> &&base) : vv_()
-    { 
+    {
         assert(base.size() > 0);
         assert(base[0].size() > 0);
 
         rows_ = base.size();
         cols_ = base[0].size();
 
-        vv_ = base;
+        vv_ = std::move(base);
     }
 
     /*! @brief Инициализации изображения массивом
@@ -443,6 +443,17 @@ template <typename T> class img final
         return res;
     }
 
+    static img<T> abs(const img<T> &image)
+    {
+        assert(image.rows() != 0);
+        assert(image.cols() != 0);
+        img<T> res(image(0, 0), image.rows(), image.cols());
+
+        img<T>::for_each(image.rows(), image.cols(), [&](idx_t i, idx_t j) { T::abs(image(i, j), res(i, j)); });
+
+        return res;
+    }
+
     inline T &operator()(idx_t i, idx_t j)
     {
         assert(i < vv_.size());
@@ -522,7 +533,7 @@ template <typename T> class img final
             coordinates.first = 2 * center.first - coordinates.first;
         }
         assert(vv_.size() < std::numeric_limits<int>::max());
-        if (coordinates.first >= static_cast<int>(vv_.size()))
+        if (coordinates.first >= narrow_cast<int>(vv_.size()))
         {
             coordinates.first = 2 * center.first - coordinates.first;
         }
@@ -531,7 +542,7 @@ template <typename T> class img final
             coordinates.second = 2 * center.second - coordinates.second;
         }
         assert(vv_[0].size() < std::numeric_limits<int>::max());
-        if (coordinates.second >= static_cast<int>(vv_[0].size()))
+        if (coordinates.second >= narrow_cast<int>(vv_[0].size()))
         {
             coordinates.second = 2 * center.second - coordinates.second;
         }
@@ -548,8 +559,8 @@ template <typename T> class img final
         assert(shape.second < image.cols());
         assert(shape.second % 2 == 1);
 
-        int top = static_cast<int>(center.first - shape.first / 2);
-        int left = static_cast<int>(center.second - shape.second / 2);
+        int top = narrow_cast<int>(center.first - shape.first / 2);
+        int left = narrow_cast<int>(center.second - shape.second / 2);
 
         vector<vector<T>> res_window(shape.first, vector<T>(shape.second));
 
@@ -559,60 +570,78 @@ template <typename T> class img final
             for (size_t j = 0; j < shape.second; ++j)
             {
                 auto res_coord = transform_coordinates(
-                    image.vv_, {top + static_cast<int>(i), left + static_cast<int>(j)}, {center.first, center.second});
+                    image.vv_, {top + narrow_cast<int>(i), left + narrow_cast<int>(j)}, {center.first, center.second});
                 res_window[i][j] = image.vv_[res_coord.first][res_coord.second];
             }
         }
 
-        return img<T>(std::move(res_window));
+        return img<T>(static_cast<std::vector<std::vector<T>> &&>(res_window));
     }
 
+    // static std::vector<std::vector<img<T>>> window(const img<T>& image, std::pair<idx_t, idx_t> shape){
+    //     std::vector<std::vector<img<T>>> res;
+    //     return res;
+    // }
 
-    static std::vector<std::vector<img<T>>> get_window(const img<T>& image, std::pair<idx_t,idx_t> shape){
+    static std::vector<std::vector<img<T>>> get_window(const img<T> &image, std::pair<idx_t, idx_t> shape)
+    {
         assert(shape.first < image.rows());
         assert(shape.first % 2 == 1);
         assert(shape.second < image.cols());
         assert(shape.second % 2 == 1);
-        
-        int h  = image.rows();
-        int w = image.cols();
 
-        int dh = shape.first - 1, dw = shape.second -  1;
+        assert(image.rows() < std::numeric_limits<int>::max());
+        assert(image.cols() < std::numeric_limits<int>::max());
+        int h = narrow_cast<int>(image.rows());
+        int w = narrow_cast<int>(image.cols());
+
+        assert(shape.first < std::numeric_limits<int>::max());
+        assert(shape.second < std::numeric_limits<int>::max());
+        int dh = narrow_cast<int>(shape.first) - 1, dw = narrow_cast<int>(shape.second) - 1;
 
         int di = dh / 2, dj = dw / 2;
 
-        auto y = std::vector<std::vector<T>>(h+dh, std::vector<T>(w+dw));
+        assert(h + dh > 0);
+        assert(w + dw > 0);
+        auto y = std::vector<std::vector<T>>(narrow_cast<idx_t>(h + dh), std::vector<T>(narrow_cast<idx_t>(w + dw)));
 
-        auto mirror_index = [](int x, int x_max) {
-            return std::abs(std::abs(x-x_max) - x_max);
-        };
+        auto mirror_index = [](int x, int x_max) { return std::abs(std::abs(x - x_max) - x_max); };
 
-        for(int i = -di; i < h + di; ++i){
-            for(int j = -dj; j < w + dj; ++j){
-                y[i+di][j + dj] = image(mirror_index(i,h-1),mirror_index(j, w-1));
+        for (int i = -di; i < h + di; ++i)
+        {
+            for (int j = -dj; j < w + dj; ++j)
+            {
+                y[narrow_cast<idx_t>(i + di)][narrow_cast<idx_t>(j + dj)] = image(narrow_cast<idx_t>(mirror_index(i, h - 1)),  narrow_cast<idx_t>(mirror_index(j, w - 1)));
             }
         }
 
-        auto res = std::vector<std::vector<img<T>>>(shape.first,std::vector<img<T>>(shape.second));
+        std::vector<std::vector<img<T>>> res;
 
-        img<T> y_img(std::move(y)); 
+        res.reserve(shape.first);
 
-        for(int i = 0; i < shape.first; ++i){
-            for(int j = 0; j < shape.second;++j){
-                //res[i][j] = get_subimg(y_img,)
-            }
-        }
+        img<T> y_img(static_cast<std::vector<std::vector<T>> &&>(y));
 
-    #ifdef BOOST_LOGS
-        // for(auto vec : y){
+        // std::cout << std::endl;
+
+        // for(auto vec : y_img.vv()){
         //     for(auto it : vec){
         //         std::cout << it.to_float() << "  ";
         //     }
         //     std::cout << std::endl;
         // }
-    #endif
 
-        //std::vector<std::vector<img<T>>> res(); 
+        for (idx_t i = 0; i < shape.first; ++i)
+        {
+            std::vector<img<T>> row;
+            row.reserve(shape.second);
+            for (idx_t j = 0; j < shape.second; ++j)
+            {
+                row.push_back(get_subimg(y_img, i, i + narrow_cast<idx_t>(h), j, j + narrow_cast<idx_t>(w)));
+            }
+            res.push_back(row);
+        }
+
+        return res;
     }
 
     static img<T> convolution(const img<T> &image, std::pair<idx_t, idx_t> shape, std::function<T(const img<T> &)> func)
@@ -625,18 +654,204 @@ template <typename T> class img final
         return res;
     }
 
-    // static void demosaic(img<T> r, img<T> g, img<T> b){
+    static img<T> convolution(const std::vector<std::vector<img<T>>> &left,
+                              const std::vector<std::vector<img<T>>> &right)
+    {
+        const T ZERO = T::from_arithmetic_t(left[0][0](0, 0), 0);
 
+        img<T> res(ZERO, right[0][0].rows(), right[0][0].cols());
+
+        // img<T> res(ZERO, right[0][0].rows(),right[0][0].cols());
+
+        // think about multithreading
+        for (idx_t i = 0; i < left.size(); ++i)
+        {
+            for (idx_t j = 0; j < left[0].size(); ++j)
+            {
+                assert((left[i][j].cols() == 1 && left[i][j].rows() == 1) ||
+                       (left[i][j].rows() == right[i][j].rows() && left[i][j].cols() == right[i][j].cols()));
+                if (left[i][j].rows() == 1 && left[i][j].cols() == 1)
+                {
+                    res = res + left[i][j](0, 0) * right[i][j];
+                }
+                else
+                {
+                    res = res + left[i][j] * right[i][j];
+                }
+                // debug_vecvec(res.vv());
+            }
+        }
+
+        return res;
+    }
+
+    // DEPRECATED
+    // static img<T> transform(const img<T>& left, const img<T>& right, const std::func<(const &T,const T&,T&)){
+    //     assert(left.rows() == right.rows());
+    //     assert(left.cols() == right.cols());
+    //     assert(left.rows() != 0 && left.cols() != 0);
+
+    //     std::vector<std::vector<T>> result(left.rows(),std::vector<T>(left.cols()));
+
+    //     img<T>::for_each(result.rows(), result.cols(), [&](idx_t i, idx_t j) {
+    //         func(left(i,j),right(i,j),result(i,j));
+    //     });
+
+    //     return result;
     // }
 
+    static img<T> condition(const std::vector<std::vector<bool>> &flags, const img<T> &true_val,
+                            const img<T> &false_val)
+    {
+        assert(flags.size() == true_val.rows() && true_val.rows() == false_val.rows());
+        assert(flags[0].size() == true_val.cols() && true_val.cols() == false_val.cols());
+
+        img<T> result(true_val(0, 0), true_val.rows(), true_val.cols());
+
+        img<T>::for_each(result.rows(), result.cols(),
+                         [&](idx_t i, idx_t j) { result(i, j) = flags[i][j] ? true_val(i, j) : false_val(i, j); });
+
+        return result;
+    }
+
+    static img<T> baer_matrix(const img<T> &r, const img<T> &g, const img<T> &b)
+    {
+        assert(r.rows() != 0 && r.rows() == g.rows() && g.rows() == b.rows());
+        assert(r.cols() != 0 && r.cols() == g.cols() && g.cols() == b.cols());
+
+        idx_t rows = r.rows(), cols = r.cols();
+
+        img<T> baer(T::from_arithmetic_t(r(0, 0), 0), r.rows(), r.cols());
+
+        for (idx_t i = 0; i < rows; ++i)
+            for (idx_t j = 1 - (i % 2); j < cols; j += 2)
+                baer(i, j) = g(i, j);
+
+        for (idx_t i = 0; i < rows; i += 2)
+            for (idx_t j = 0; j < cols; j += 2)
+                baer(i, j) = r(i, j);
+
+        for (idx_t i = 1; i < rows; i += 2)
+            for (idx_t j = 1; j < cols; j += 2)
+                baer(i, j) = b(i, j);
+
+        return baer;
+    }
+
+    static std::vector<img<T>> baer_split(const img<T> &baer)
+    {
+
+        idx_t rows = baer.rows(), cols = baer.cols();
+
+        img<T> r(T::from_arithmetic_t(baer(0, 0), 0), rows, cols);
+        img<T> g(T::from_arithmetic_t(baer(0, 0), 0), rows, cols);
+        img<T> b(T::from_arithmetic_t(baer(0, 0), 0), rows, cols);
+
+        for (idx_t i = 0; i < rows; ++i)
+            for (idx_t j = 1 - (i % 2); j < cols; j += 2)
+                g(i, j) = baer(i, j);
+
+        for (idx_t i = 0; i < rows; i += 2)
+            for (idx_t j = 0; j < cols; j += 2)
+                r(i, j) = baer(i, j);
+
+        for (idx_t i = 1; i < rows; i += 2)
+            for (idx_t j = 1; j < cols; j += 2)
+                b(i, j) = baer(i, j);
+
+        return {r, g, b};
+    }
+
+#define CREATE_T(param, value) T::from_arithmetic_t(param, value)
+
+#define CREATE_IMG(param, value) img<T>({{CREATE_T(param, value)}})
+
+    static std::vector<img<T>> demosaic(const img<T> &r, const img<T> &g, const img<T> &b)
+    {
+
+        const std::vector<std::vector<img<T>>> mx(
+            {{CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), -1)},
+             {CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), -2)},
+             {CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), -1)}});
+
+        const std::vector<std::vector<img<T>>> my(
+            {{CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 1)},
+             {CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), 0)},
+             {CREATE_IMG(r(0, 0), -1), CREATE_IMG(r(0, 0), -2), CREATE_IMG(r(0, 0), 1)}});
+
+        std::vector<std::vector<img<T>>> wg = get_window(g, {3, 3});
+
+        img<T> dgx = abs(convolution(mx, wg));
+
+        img<T> dgy = abs(convolution(my, wg));
+
+        img<T> g_new = wg[1][1] + condition((dgx < dgy), (wg[1][0] + wg[1][2]) / (CREATE_T(r(0, 0), 2)),
+                                            (wg[0][1] + wg[2][1]) / (CREATE_T(r(0, 0), 2)));
+
+        // debug_vecvec(g_new.vv());
+
+        const std::vector<std::vector<img<T>>> m(
+            {{CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 1)},
+             {CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 4), CREATE_IMG(r(0, 0), 2)},
+             {CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 1)}});
+
+        auto g_lpf = convolution(m, wg) / T::from_arithmetic_t(r(0, 0), 8);
+        auto r_lpf = convolution(m, get_window(r, {3, 3})) / T::from_arithmetic_t(r(0, 0), 4);
+        auto b_lpf = convolution(m, get_window(b, {3, 3})) / T::from_arithmetic_t(r(0, 0), 4);
+
+        // debug_vecvec(r_lpf.vv());
+
+        // debug_vecvec(g_lpf.vv());
+
+        // debug_vecvec(b_lpf.vv());
+
+        // zero value
+        const T ZERO = T::from_arithmetic_t(g_lpf(0, 0), 0);
+
+        img<T> r_new = condition(g_lpf == img<T>(ZERO, g_lpf.rows(), g_lpf.cols()), r_lpf, g_new * r_lpf / g_lpf);
+
+        img<T> b_new = condition(g_lpf == img<T>(ZERO, g_lpf.rows(), g_lpf.cols()), b_lpf, g_new * b_lpf / g_lpf);
+
+        return {r_new, g_new, b_new};
+    }
+
+    static std::vector<std::vector<bool>> create_bool_mask(const img<T> &lhs, const img<T> &rhs,
+                                                           std::function<bool(const T &, const T &)> compare)
+    {
+        assert(lhs.rows() == rhs.rows());
+        assert(lhs.cols() == rhs.cols());
+
+        std::vector<std::vector<bool>> flags(lhs.rows(), std::vector<bool>(lhs.cols()));
+
+        img<T>::for_each(lhs.rows(), lhs.cols(),
+                         [&](idx_t i, idx_t j) { flags[i][j] = compare(lhs(i, j), rhs(i, j)); });
+
+        return flags;
+    }
+
+    template <typename U> friend std::vector<std::vector<bool>> operator>(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator>=(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator<(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator<=(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator==(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator!=(const img<U> &lhs, const img<U> &rhs);
+
+#undef CREATE_IMG
+
+#undef CREATE_T
 
   private:
-
-    static img<T> get_subimg(const img<T>& initial, idx_t row_start,idx_t row_end, idx_t col_start, idx_t col_end){
+    static img<T> get_subimg(const img<T> &initial, idx_t row_start, idx_t row_end, idx_t col_start, idx_t col_end)
+    {
         std::vector<std::vector<T>> rect(row_end - row_start, std::vector<T>(col_end - col_start));
-        for (int r = row_start; r < row_end; r++)
-            for (int c = col_start; c < col_end; c++)
-                rect[r-row_start][c-col_start] = initial(r,c);
+        for (idx_t r = row_start; r < row_end; r++)
+            for (idx_t c = col_start; c < col_end; c++)
+                rect[r - row_start][c - col_start] = initial(r, c);
         return img<T>(rect);
     }
 
@@ -761,6 +976,36 @@ template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
     img<T>::for_each(rhs.rows(), rhs.cols(), [&](idx_t i, idx_t j) { T::sub(lhs, res.vv_[i][j], res.vv_[i][j]); });
 
     return res;
+}
+
+template <typename T> std::vector<std::vector<bool>> operator>(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left > right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator>=(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left >= right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator<(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left < right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator<=(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left <= right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator==(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left == right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator!=(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left != right; });
 }
 
 extern template class img<Flexfloat>;
