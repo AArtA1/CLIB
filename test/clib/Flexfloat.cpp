@@ -280,9 +280,10 @@ TEST_CASE("Test Flexfloat inv")
         ff(8, 23, 127, 0, 0, 4194304),   // small value in float
         ff(5, 10, 15, 1, 0, 1023),       // small value in float
         ff(8, 23, 127, 1, 120, ff::max_mant(23)),
+        ff(6, 8, 2, 0, 18, 0)
     };
 
-    ff c(8, 23, 127, 1, 1, 1);
+    ff c(6, 20, 2, 1, 1, 1);
     for (auto &num : nums)
     {
         std::cout << "x in float = " << num.to_float() << std::endl;
@@ -431,6 +432,7 @@ TEST_CASE("Test Flexfloat cos")
 
     auto nums = {
         ff(8, 23, 127, 0, 0, 0),         // 0 in float
+        ff(5, 15, 2, 0, 3, 0),           // 2 in float
         ff(8, 23, 127, 0, 129, 4194304), // 6 in float
         ff(8, 23, 127, 0, 129, 6291456), // 7 in float
         ff(8, 23, 127, 0, 130, 0),       // 8 in float
@@ -445,12 +447,13 @@ TEST_CASE("Test Flexfloat cos")
         ff(8, 23, 127, 0, 120, ff::max_mant(23)),
     };
 
-    ff c(8, 23, 127, 1, 1, 1);
+    ff c(5, 15, 2, 1, 1, 1);
     for (auto &num : nums)
     {
         std::cout << "x in float = " << num.to_float() << std::endl;
         ff::cos(num, c);
-        std::cout << "cos(x) in float = " << c.to_float() << std::endl << std::endl;
+        std::cout << "cos(x) in float = " << c.to_float() << std::endl;
+        std::cout << "real value      = " << std::cos(num.to_float()) << std::endl << std::endl;
     }
 
     CHECK(1);
@@ -520,6 +523,26 @@ TEST_CASE("Test Flexfloat ctan")
         ff::ctan(num, c);
         std::cout << "ctan(x) in float = " << c.to_float() << std::endl;
         std::cout << "real ctan(x)     = " << 1 / std::tan(num.to_float()) << std::endl << std::endl;
+    }
+
+    CHECK(1);
+}
+
+
+TEST_CASE("Test Flexfloat from_arithmetic_t")
+{
+    using ff = clib::Flexfloat;
+
+    auto nums = {
+        0.002093307544016197f,
+        0.003644660123190655f
+    };
+
+    ff c(6, 8, 2, 0, 0, 0);
+    for (auto &num : nums)
+    {
+        std::cout << "x " << num << std::endl;
+        std::cout << "from_arithmetic_t = " << ff::from_arithmetic_t(c, num) << std::endl;
     }
 
     CHECK(1);

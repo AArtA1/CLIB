@@ -105,12 +105,15 @@ class Flexfloat
 
     //! Generate minimal denormalized value = 2^(1-B-M)
     static Flexfloat min_denorm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+    Flexfloat min_denorm() const;
 
     //! Generate maximal denormalized value = 2^(1-B) - min_denorm
     static Flexfloat max_denorm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+    Flexfloat max_denorm() const;
 
     //! Generate minimal normalized value = 2^(1-B)
     static Flexfloat min_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
+    Flexfloat min_norm() const;
 
     //! Generate maximal normalized value = 2^(Emax - B) * (1 - 2^(-M))
     static Flexfloat max_norm(Etype E_n, Mtype M_n, Btype B_n, stype s_n);
@@ -191,11 +194,11 @@ class Flexfloat
     /*! @brief Получение 1/x
      *
      * \param[in] x Число для инвертирования
-     * \param[out] res Результат
+     * \param[out] L_base Параметр polyfit
      *
      * \see gitlab.inviewlab.com/synthesizer/documents/-/blob/master/out/flexfloat_Inv.pdf
      */
-    static void inv(const Flexfloat &x, Flexfloat &res, size_t precision = 0);
+    static void inv(const Flexfloat &x, Flexfloat &res, bool L_base = true, const std::string& coeffs = "inv");
 
     /*! @brief Получение 2**x
      *
@@ -236,6 +239,13 @@ class Flexfloat
      * \param[in] F Битовая ширина дробной части 
      */
     static void ctan(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
+
+    /*! @brief Получение tan(x)
+     *
+     * \param[out] res Результат
+     * \param[in] F Битовая ширина дробной части 
+     */
+    static void tan(const Flexfloat &x, Flexfloat &res, uint8_t F = 16);
 
     /*! @brief Получение нормализованного числа из денормализованного
      *
