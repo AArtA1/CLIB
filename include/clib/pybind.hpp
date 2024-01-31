@@ -2,6 +2,7 @@
 
 #include "image.hpp"
 #include "Flexfloat.hpp"
+#include "polyfit.hpp"
 
 namespace py = pybind11;
 #include "pybind11/numpy.h"
@@ -43,6 +44,25 @@ py::array numpy_img_ff_get(const img<Flexfloat> &base)
     return res;
 }
 
+Flexfloat ff_set(float base, Flexfloat::Mtype E, Flexfloat::Mtype M, Flexfloat::Mtype B)
+{
+    return Flexfloat::from_arithmetic_t(E, M, B, base);
+}
+
+float ff_get(const Flexfloat &base)
+{
+    return base.to_float();
+}
+// float fractional_part(const Flexfloat &base, uint8_t F = 16)
+// {
+//     return static_cast<double>(base.fractional_part(F)) / (1 << F);
+// }
+
+
+polyfit_t polyfit_calc(const std::string &fname, polyfit_t l, unsigned L, unsigned K, bool L_base = true)
+{
+    return polyfit::get()->calc(fname, l, L, K, L_base);
+}
 
 
 } // namespace clib
