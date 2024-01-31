@@ -656,33 +656,64 @@ template <typename T> class img final
         return res;
     }
 
-    static img<T> convolution(const img<T> bitmask, const std::vector<std::vector<img<T>>> &window)
+    static img<T> convolution(const std::vector<std::vector<img<T>>> &left,
+                              const std::vector<std::vector<img<T>>> &right)
     {
-        assert(bitmask.rows() != 0);
-        assert(!window.empty());
-        assert(bitmask.rows() == window.size());
-        assert(bitmask.cols() == window[0].size());
+        const T ZERO = T::from_arithmetic_t(left[0][0](0, 0), 0);
 
-        const T ZERO = T::from_arithmetic_t(bitmask(0, 0), 0);
+        img<T> res(ZERO, right[0][0].rows(), right[0][0].cols());
 
-        img<T> res(ZERO, window[0][0].rows(), window[0][0].cols());
-
-        // img<T> res(ZERO, window[0][0].rows(),window[0][0].cols());
+        // img<T> res(ZERO, right[0][0].rows(),right[0][0].cols());
 
         // think about multithreading
-        for (idx_t i = 0; i < bitmask.rows(); ++i)
+        for (idx_t i = 0; i < left.size(); ++i)
         {
-            for (idx_t j = 0; j < bitmask.cols(); ++j)
+            for (idx_t j = 0; j < left[0].size(); ++j)
             {
-                if (bitmask(i, j) != ZERO)
+                assert((left[i][j].cols() == 1 && left[i][j].rows() == 1) ||
+                       (left[i][j].rows() == right[i][j].rows() && left[i][j].cols() == right[i][j].cols()));
+                if (left[i][j].rows() == 1 && left[i][j].cols() == 1)
                 {
-                    res = res + bitmask(i, j) * window[i][j];
-                    // debug_vecvec(res.vv());
+                    res = res + left[i][j](0, 0) * right[i][j];
                 }
+                else
+                {
+                    res = res + left[i][j] * right[i][j];
+                }
+                // debug_vecvec(res.vv());
             }
         }
 
         return res;
+    }
+
+    // DEPRECATED
+    // static img<T> transform(const img<T>& left, const img<T>& right, const std::func<(const &T,const T&,T&)){
+    //     assert(left.rows() == right.rows());
+    //     assert(left.cols() == right.cols());
+    //     assert(left.rows() != 0 && left.cols() != 0);
+
+    //     std::vector<std::vector<T>> result(left.rows(),std::vector<T>(left.cols()));
+
+    //     img<T>::for_each(result.rows(), result.cols(), [&](idx_t i, idx_t j) {
+    //         func(left(i,j),right(i,j),result(i,j));
+    //     });
+
+    //     return result;
+    // }
+
+    static img<T> condition(const std::vector<std::vector<bool>> &flags, const img<T> &true_val,
+                            const img<T> &false_val)
+    {
+        assert(flags.size() == true_val.rows() && true_val.rows() == false_val.rows());
+        assert(flags[0].size() == true_val.cols() && true_val.cols() == false_val.cols());
+
+        img<T> result(true_val(0, 0), true_val.rows(), true_val.cols());
+
+        img<T>::for_each(result.rows(), result.cols(),
+                         [&](idx_t i, idx_t j) { result(i, j) = flags[i][j] ? true_val(i, j) : false_val(i, j); });
+
+        return result;
     }
 
     static img<T> baer_matrix(const img<T> &r, const img<T> &g, const img<T> &b)
@@ -733,60 +764,38 @@ template <typename T> class img final
         return {r, g, b};
     }
 
+#define CREATE_T(param, value) T::from_arithmetic_t(param, value)
+
+#define CREATE_IMG(param, value) img<T>({{CREATE_T(param, value)}})
+
     static std::vector<img<T>> demosaic(const img<T> &r, const img<T> &g, const img<T> &b)
     {
 
-        const std::vector<std::vector<int>> mx_temp = {{1, 0, -1}, {2, 0, -2}, {1, 0, -1}};
+        const std::vector<std::vector<img<T>>> mx(
+            {{CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), -1)},
+             {CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), -2)},
+             {CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), -1)}});
 
-        const std::vector<std::vector<int>> my_temp = {{1, 2, 1}, {0, 0, 0}, {-1, -2, -1}};
+        const std::vector<std::vector<img<T>>> my(
+            {{CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 1)},
+             {CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), 0), CREATE_IMG(r(0, 0), 0)},
+             {CREATE_IMG(r(0, 0), -1), CREATE_IMG(r(0, 0), -2), CREATE_IMG(r(0, 0), 1)}});
 
-        img<T> mx(r(0, 0), mx_temp.size(), mx_temp[0].size());
+        std::vector<std::vector<img<T>>> wg = get_window(g, {3, 3});
 
-        img<T>::for_each(mx.rows(), mx.cols(),
-                         [&](idx_t i, idx_t j) { mx(i, j) = T::from_arithmetic_t(mx(i, j), mx_temp[i][j]); });
+        img<T> dgx = abs(convolution(mx, wg));
 
-        img<T> my(r(0, 0), my_temp.size(), my_temp[0].size());
+        img<T> dgy = abs(convolution(my, wg));
 
-        img<T>::for_each(my.rows(), my.cols(),
-                         [&](idx_t i, idx_t j) { my(i, j) = T::from_arithmetic_t(my(i, j), my_temp[i][j]); });
-
-        auto wg = get_window(g, {3, 3});
-
-        auto dgx = abs(convolution(mx, wg));
-
-        auto dgy = abs(convolution(my, wg));
-
-        img<T> g_new = wg[1][1];
-
-        img<T>::for_each(g_new.rows(), g_new.cols(), [&](idx_t i, idx_t j) {
-            if (dgx(i, j) < dgy(i, j))
-            {
-                // g_new(i,j) += (wg[1][0](i,j) + wg[1][2](i,j)) / 2;
-                auto temp = T::from_arithmetic_t(wg[1][0](i, j), 0);
-                T::sum(temp, wg[1][0](i, j), temp);
-                T::sum(temp, wg[1][2](i, j), temp);
-                T::mult(temp, T::from_arithmetic_t(temp, 0.5f), temp);
-                T::sum(g_new(i, j), temp, g_new(i, j));
-            }
-            else
-            {
-                // g_new(i,j) += (wg[0][1](i,j) + wg[2][1](i,j)) / 2;
-                auto temp = T::from_arithmetic_t(wg[1][0](i, j), 0);
-                T::sum(temp, wg[0][1](i, j), temp);
-                T::sum(temp, wg[2][1](i, j), temp);
-                T::mult(temp, T::from_arithmetic_t(temp, 0.5f), temp);
-                T::sum(g_new(i, j), temp, g_new(i, j));
-            }
-        });
+        img<T> g_new = wg[1][1] + condition((dgx < dgy), (wg[1][0] + wg[1][2]) / (CREATE_T(r(0, 0), 2)),
+                                            (wg[0][1] + wg[2][1]) / (CREATE_T(r(0, 0), 2)));
 
         // debug_vecvec(g_new.vv());
 
-        std::vector<std::vector<float>> m_temp = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
-
-        img<T> m(r(0, 0), m_temp.size(), m_temp[0].size());
-
-        img<T>::for_each(m.rows(), m.cols(),
-                         [&](idx_t i, idx_t j) { m(i, j) = T::from_arithmetic_t(m(i, j), m_temp[i][j]); });
+        const std::vector<std::vector<img<T>>> m(
+            {{CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 1)},
+             {CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 4), CREATE_IMG(r(0, 0), 2)},
+             {CREATE_IMG(r(0, 0), 1), CREATE_IMG(r(0, 0), 2), CREATE_IMG(r(0, 0), 1)}});
 
         auto g_lpf = convolution(m, wg) / T::from_arithmetic_t(r(0, 0), 8);
         auto r_lpf = convolution(m, get_window(r, {3, 3})) / T::from_arithmetic_t(r(0, 0), 4);
@@ -798,37 +807,45 @@ template <typename T> class img final
 
         // debug_vecvec(b_lpf.vv());
 
-        img<T> r_new(r_lpf);
-
         // zero value
         const T ZERO = T::from_arithmetic_t(g_lpf(0, 0), 0);
 
-        img<T>::for_each(r_new.rows(), r_new.cols(), [&](idx_t i, idx_t j) {
-            if (g_lpf(i, j) != ZERO)
-            {
-                // r_new(i,j) = g_new(i,j) * r_lpf(i,j) / g_lpf(i,j)
-                auto temp = T(g_lpf(i, j));
-                T::inv(temp, temp);
-                T::mult(g_new(i, j), r_lpf(i, j), r_new(i, j));
-                T::mult(r_new(i, j), temp, r_new(i, j));
-            }
-        });
+        img<T> r_new = condition(g_lpf == img<T>(ZERO, g_lpf.rows(), g_lpf.cols()), r_lpf, g_new * r_lpf / g_lpf);
 
-        img<T> b_new(b_lpf);
-
-        img<T>::for_each(b_new.rows(), b_new.cols(), [&](idx_t i, idx_t j) {
-            if (g_lpf(i, j) != ZERO)
-            {
-                // b_new(i,j) = g_new(i,j) * b_lpf(i,j) / g_lpf(i,j)
-                auto temp = T(g_lpf(i, j));
-                T::inv(temp, temp);
-                T::mult(g_new(i, j), b_lpf(i, j), b_new(i, j));
-                T::mult(b_new(i, j), temp, b_new(i, j));
-            }
-        });
+        img<T> b_new = condition(g_lpf == img<T>(ZERO, g_lpf.rows(), g_lpf.cols()), b_lpf, g_new * b_lpf / g_lpf);
 
         return {r_new, g_new, b_new};
     }
+
+    static std::vector<std::vector<bool>> create_bool_mask(const img<T> &lhs, const img<T> &rhs,
+                                                           std::function<bool(const T &, const T &)> compare)
+    {
+        assert(lhs.rows() == rhs.rows());
+        assert(lhs.cols() == rhs.cols());
+
+        std::vector<std::vector<bool>> flags(lhs.rows(), std::vector<bool>(lhs.cols()));
+
+        img<T>::for_each(lhs.rows(), lhs.cols(),
+                         [&](idx_t i, idx_t j) { flags[i][j] = compare(lhs(i, j), rhs(i, j)); });
+
+        return flags;
+    }
+
+    template <typename U> friend std::vector<std::vector<bool>> operator>(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator>=(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator<(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator<=(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator==(const img<U> &lhs, const img<U> &rhs);
+
+    template <typename U> friend std::vector<std::vector<bool>> operator!=(const img<U> &lhs, const img<U> &rhs);
+
+#undef CREATE_IMG
+
+#undef CREATE_T
 
   private:
     static img<T> get_subimg(const img<T> &initial, idx_t row_start, idx_t row_end, idx_t col_start, idx_t col_end)
@@ -961,6 +978,36 @@ template <typename T> img<T> operator-(const T &lhs, const img<T> &rhs)
     img<T>::for_each(rhs.rows(), rhs.cols(), [&](idx_t i, idx_t j) { T::sub(lhs, res.vv_[i][j], res.vv_[i][j]); });
 
     return res;
+}
+
+template <typename T> std::vector<std::vector<bool>> operator>(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left > right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator>=(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left >= right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator<(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left < right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator<=(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left <= right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator==(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left == right; });
+}
+
+template <typename T> std::vector<std::vector<bool>> operator!=(const img<T> &lhs, const img<T> &rhs)
+{
+    return img<T>::create_bool_mask(lhs, rhs, [](const T &left, const T &right) { return left != right; });
 }
 
 extern template class img<Flexfloat>;
