@@ -533,7 +533,7 @@ template <typename T> class img final
             coordinates.first = 2 * center.first - coordinates.first;
         }
         assert(vv_.size() < std::numeric_limits<int>::max());
-        if (coordinates.first >= static_cast<int>(vv_.size()))
+        if (coordinates.first >= narrow_cast<int>(vv_.size()))
         {
             coordinates.first = 2 * center.first - coordinates.first;
         }
@@ -542,7 +542,7 @@ template <typename T> class img final
             coordinates.second = 2 * center.second - coordinates.second;
         }
         assert(vv_[0].size() < std::numeric_limits<int>::max());
-        if (coordinates.second >= static_cast<int>(vv_[0].size()))
+        if (coordinates.second >= narrow_cast<int>(vv_[0].size()))
         {
             coordinates.second = 2 * center.second - coordinates.second;
         }
@@ -559,8 +559,8 @@ template <typename T> class img final
         assert(shape.second < image.cols());
         assert(shape.second % 2 == 1);
 
-        int top = static_cast<int>(center.first - shape.first / 2);
-        int left = static_cast<int>(center.second - shape.second / 2);
+        int top = narrow_cast<int>(center.first - shape.first / 2);
+        int left = narrow_cast<int>(center.second - shape.second / 2);
 
         vector<vector<T>> res_window(shape.first, vector<T>(shape.second));
 
@@ -570,7 +570,7 @@ template <typename T> class img final
             for (size_t j = 0; j < shape.second; ++j)
             {
                 auto res_coord = transform_coordinates(
-                    image.vv_, {top + static_cast<int>(i), left + static_cast<int>(j)}, {center.first, center.second});
+                    image.vv_, {top + narrow_cast<int>(i), left + narrow_cast<int>(j)}, {center.first, center.second});
                 res_window[i][j] = image.vv_[res_coord.first][res_coord.second];
             }
         }
@@ -583,7 +583,6 @@ template <typename T> class img final
     //     return res;
     // }
 
-#pragma GCC diagnostic ignored "-Wsign-conversion"
     static std::vector<std::vector<img<T>>> get_window(const img<T> &image, std::pair<idx_t, idx_t> shape)
     {
         assert(shape.first < image.rows());
@@ -593,18 +592,18 @@ template <typename T> class img final
 
         assert(image.rows() < std::numeric_limits<int>::max());
         assert(image.cols() < std::numeric_limits<int>::max());
-        int h = static_cast<int>(image.rows());
-        int w = static_cast<int>(image.cols());
+        int h = narrow_cast<int>(image.rows());
+        int w = narrow_cast<int>(image.cols());
 
         assert(shape.first < std::numeric_limits<int>::max());
         assert(shape.second < std::numeric_limits<int>::max());
-        int dh = static_cast<int>(shape.first) - 1, dw = static_cast<int>(shape.second) - 1;
+        int dh = narrow_cast<int>(shape.first) - 1, dw = narrow_cast<int>(shape.second) - 1;
 
         int di = dh / 2, dj = dw / 2;
 
         assert(h + dh > 0);
         assert(w + dw > 0);
-        auto y = std::vector<std::vector<T>>(h + dh, std::vector<T>(w + dw));
+        auto y = std::vector<std::vector<T>>(narrow_cast<idx_t>(h + dh), std::vector<T>(narrow_cast<idx_t>(w + dw)));
 
         auto mirror_index = [](int x, int x_max) { return std::abs(std::abs(x - x_max) - x_max); };
 
@@ -612,7 +611,7 @@ template <typename T> class img final
         {
             for (int j = -dj; j < w + dj; ++j)
             {
-                y[i + di][j + dj] = image(mirror_index(i, h - 1), mirror_index(j, w - 1));
+                y[narrow_cast<idx_t>(i + di)][narrow_cast<idx_t>(j + dj)] = image(narrow_cast<idx_t>(mirror_index(i, h - 1)),  narrow_cast<idx_t>(mirror_index(j, w - 1)));
             }
         }
 
@@ -637,14 +636,13 @@ template <typename T> class img final
             row.reserve(shape.second);
             for (idx_t j = 0; j < shape.second; ++j)
             {
-                row.push_back(get_subimg(y_img, i, i + h, j, j + w));
+                row.push_back(get_subimg(y_img, i, i + narrow_cast<idx_t>(h), j, j + narrow_cast<idx_t>(w)));
             }
             res.push_back(row);
         }
 
         return res;
     }
-#pragma GCC diagnostic pop
 
     static img<T> convolution(const img<T> &image, std::pair<idx_t, idx_t> shape, std::function<T(const img<T> &)> func)
     {
