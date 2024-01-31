@@ -53,7 +53,8 @@ template <typename T> T delta(T a, T b)
  */
 template <typename T> uint8_t msb(T val)
 {
-    if (val == 0) return 0;
+    if (val == 0)
+        return 0;
 
     uint8_t msb = 0;
     while (val > 0)
@@ -87,24 +88,23 @@ template <typename T> std::string bits(T val)
     return val_bits.substr(one_pos) + " = " + std::to_string(val_printable);
 }
 
-template<typename T>
-void debug_vecvec(std::vector<std::vector<T>> array){
-    for(auto row : array){
-        for(auto item : row)
+template <typename T> void debug_vecvec(std::vector<std::vector<T>> array)
+{
+    for (auto row : array)
+    {
+        for (auto item : row)
             std::cout << item.to_float() << " ";
         std::cout << std::endl;
     }
     std::cout << std::endl;
 }
 
-template<class Target, class Source>
-Target narrow_cast(Source v)
+template <class Target, class Source> Target narrow_cast(Source v)
 {
     auto r = static_cast<Target>(v);
-    if (static_cast<Source>(r)!=v)
+    if (static_cast<Source>(r) != v)
         throw std::runtime_error("narrow_cast<>() failed");
     return r;
 }
-
 
 } // namespace clib

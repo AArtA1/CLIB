@@ -525,6 +525,8 @@ template <typename T> class img final
         work(nthreads, rows, do_func);
     }
 
+    #ifdef DEPRECATED_METHODS
+
     static std::pair<idx_t, idx_t> transform_coordinates(const vector<vector<T>> &vv_, std::pair<int, int> coordinates,
                                                          std::pair<int, int> center)
     {
@@ -575,13 +577,16 @@ template <typename T> class img final
             }
         }
 
+        std::move(res_window);
         return img<T>(static_cast<std::vector<std::vector<T>> &&>(res_window));
     }
 
-    // static std::vector<std::vector<img<T>>> window(const img<T>& image, std::pair<idx_t, idx_t> shape){
-    //     std::vector<std::vector<img<T>>> res;
-    //     return res;
-    // }
+    static std::vector<std::vector<img<T>>> window(const img<T>& image, std::pair<idx_t, idx_t> shape){
+        std::vector<std::vector<img<T>>> res;
+        return res;
+    }
+
+    #endif
 
     static std::vector<std::vector<img<T>>> get_window(const img<T> &image, std::pair<idx_t, idx_t> shape)
     {
@@ -590,28 +595,33 @@ template <typename T> class img final
         assert(shape.second < image.cols());
         assert(shape.second % 2 == 1);
 
-        assert(image.rows() < std::numeric_limits<int>::max());
-        assert(image.cols() < std::numeric_limits<int>::max());
-        int h = narrow_cast<int>(image.rows());
-        int w = narrow_cast<int>(image.cols());
+        idx_t h = image.rows();
+        idx_t w = image.cols();
 
-        assert(shape.first < std::numeric_limits<int>::max());
-        assert(shape.second < std::numeric_limits<int>::max());
-        int dh = narrow_cast<int>(shape.first) - 1, dw = narrow_cast<int>(shape.second) - 1;
+        idx_t dh = shape.first - 1, dw = shape.second - 1;
 
-        int di = dh / 2, dj = dw / 2;
+        idx_t di = dh / 2, dj = dw / 2;
 
-        assert(h + dh > 0);
-        assert(w + dw > 0);
-        auto y = std::vector<std::vector<T>>(narrow_cast<idx_t>(h + dh), std::vector<T>(narrow_cast<idx_t>(w + dw)));
+        auto y = std::vector<std::vector<T>>(h + dh, std::vector<T>(w + dw));
 
-        auto mirror_index = [](int x, int x_max) { return std::abs(std::abs(x - x_max) - x_max); };
-
-        for (int i = -di; i < h + di; ++i)
-        {
-            for (int j = -dj; j < w + dj; ++j)
+        auto mirror_index = [](idx_t x_first, idx_t x_second, idx_t x_max) -> idx_t {
+            idx_t temp;
+            if (x_first > x_second + x_max)
             {
-                y[narrow_cast<idx_t>(i + di)][narrow_cast<idx_t>(j + dj)] = image(narrow_cast<idx_t>(mirror_index(i, h - 1)),  narrow_cast<idx_t>(mirror_index(j, w - 1)));
+                temp = x_first - x_second - x_max;
+            }
+            else
+            {
+                temp = x_second + x_max - x_first;
+            }
+            return temp > x_max ? temp - x_max : x_max - temp;
+        };
+
+        for (idx_t i = 0; i < h + 2 * di; ++i)
+        {
+            for (idx_t j = 0; j < w + 2 * dj; ++j)
+            {
+                y[i][j] = image(mirror_index(i, di, h - 1), mirror_index(j, dj, w - 1));
             }
         }
 
@@ -619,7 +629,7 @@ template <typename T> class img final
 
         res.reserve(shape.first);
 
-        img<T> y_img(static_cast<std::vector<std::vector<T>> &&>(y));
+        img<T> y_img(std::move(y));
 
         // std::cout << std::endl;
 
@@ -636,7 +646,7 @@ template <typename T> class img final
             row.reserve(shape.second);
             for (idx_t j = 0; j < shape.second; ++j)
             {
-                row.push_back(get_subimg(y_img, i, i + narrow_cast<idx_t>(h), j, j + narrow_cast<idx_t>(w)));
+                row.push_back(get_subimg(y_img, i, i + h, j, j + w));
             }
             res.push_back(row);
         }
