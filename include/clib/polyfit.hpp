@@ -65,7 +65,7 @@ struct polyfit final
      *
      * \return Результат приближения
      */
-    polyfit_t calc(const std::string &fname, polyfit_t l, unsigned L, unsigned K, bool L_base = true)
+    polyfit_t calc(const std::string &fname, polyfit_t l, unsigned L, unsigned K, bool L_base = false)
     {
 #ifdef BOOST_LOGS
         CLOG(trace) << std::endl;
