@@ -654,6 +654,8 @@ template <typename T> class img final
         return res;
     }
 
+#ifdef DEPRECATED_METHODS
+
     static img<T> convolution(const img<T> &image, std::pair<idx_t, idx_t> shape, std::function<T(const img<T> &)> func)
     {
         assert(image.rows() != 0 && image.cols() != 0);
@@ -663,6 +665,8 @@ template <typename T> class img final
         });
         return res;
     }
+
+#endif
 
     static img<T> convolution(const std::vector<std::vector<img<T>>> &left,
                               const std::vector<std::vector<img<T>>> &right)
