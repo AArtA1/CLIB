@@ -1,14 +1,16 @@
 # clib
 
+This is a library that implements image and video algorithms which are used in computer vision tasks by using own floating point representations.
+
 ## Preset
 
 ### Before start 
 
-'''
-sudo apt-get install libavformat-dev ffmpeg libx11-dev doxygen libboost-all-dev libpng-dev libjpeg-dev
-'''
+Add the libraries by using the command line script below:
 
-
+'''
+sudo apt-get install cmake gcc libavformat-dev ffmpeg libx11-dev doxygen libboost-all-dev libpng-dev libjpeg-dev libx11-dev ffmpeg 
+'''
 
 Contents
 --------
